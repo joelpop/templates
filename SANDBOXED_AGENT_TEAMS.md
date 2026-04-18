@@ -21,7 +21,7 @@ template files and a setup checklist executed by the agent.
 **In this section:**
 - [Quick Start](#quick-start) — get up and running without reading the rest
 - [Overview](#overview) — what the template provides
-  - [Team Structure](#team-structure) — the Lead and six teammates
+  - [Team Structure](#team-structure) — the Lead and seven teammates
   - [Features](#features)
     - [Capabilities](#capabilities) — isolation, status tracking, sub-task parallelism, task suspension, cost tracking, multi-developer support
     - [Workflows](#workflows) — coordination, requirements, branching, task lifecycle
@@ -45,7 +45,7 @@ setup will ask you to confirm):
 - CI platform
 - Development branch name
 - Merge method — how completed work reaches the development branch
-  (PR, Lead merge, Human merge, or your own method)
+  (PR, Integrator merge, Human merge, or your own method)
 - If using the **PR** merge method: a platform API token so the Lead
   can create, read, and merge PRs. Bitbucket: app password
   (Settings → App passwords, with Repositories:Read and Pull
@@ -156,12 +156,17 @@ agent does not get its own terminal pane.
 
 ### Team Structure
 
-The team has a **Lead** and six **teammates**, each in their own Git
+The team has a **Lead** and seven **teammates**, each in their own Git
 worktree:
 
-- **Lead** — the main Claude Code session. Coordinates work, drafts
-  task plans, manages the lifecycle of requirements and tasks. Does not
-  implement.
+- **Lead** — the main Claude Code session. Coordinates work, manages
+  the lifecycle of requirements and tasks. Communicates with the
+  human. Does not write files or run commands — delegates all
+  operational and application work to teammates.
+- **Integrator** — the Lead's operational arm. Owns task files,
+  progress tracking, all git operations, PR lifecycle (via platform
+  API), and cost recording. Also the default delegate for tasks that
+  don't clearly map to another teammate.
 - **Analyst** — owns requirement docs in `docs/` and status tracking.
 - **Architect** — architecture guardian; proposes design approaches and reviews code, does not write it.
 - **Coder** — implements features and fixes bugs.
@@ -226,7 +231,7 @@ worktree:
   branch. Requirement changes, implementation tasks, and individual
   agent roles each get dedicated branches. Agents merge (never rebase).
   All merges to the development branch are squash merges. The merge
-  method (PR, Lead merge, human merge, or custom) is configured per
+  method (PR, Integrator merge, human merge, or custom) is configured per
   project.
 - **Task Lifecycle** — Three workflows: the *requirements workflow*
   (classify, draft, approve, merge), the *implementation workflow*
@@ -1173,7 +1178,7 @@ Requirement branch statuses:
 ## Branching
 - Development branch: `<dev-branch>` (e.g., `develop`)
 - Requirement branches: `requirement/<slug>` — branched off `<dev-branch>`
-  by the Lead for the Analyst to draft requirement docs. One branch per
+  by the Integrator for the Analyst to draft requirement docs. One branch per
   topic or related group (e.g., `requirement/authentication`,
   `requirement/dashboard-v2`), not per individual requirement — the
   Analyst freely splits, merges, and cross-references requirements
@@ -1181,7 +1186,7 @@ Requirement branch statuses:
   at different stages. Squash-merged back to `<dev-branch>` after human
   approval. Tracked in `.claude/progress.md`.
 - Task branches: `task/<task-id>` — branched off `<dev-branch>` by the
-  Lead for each implementation task.
+  Integrator for each implementation task.
 - Agent sub-branches: `task/<task-id>/<role>` — each agent branches off
   the task branch to do their work:
   - `task/<task-id>/coder` (or `coder-a`, `coder-b` when the Lead
@@ -1392,7 +1397,7 @@ setup is current:
 
 ## Team Structure
 
-Spawn the following six teammates. Use the most capable reasoning model
+Spawn the following seven teammates. Use the most capable reasoning model
 for the Architect (their judgment-intensive work — structural analysis,
 design decisions, requirements coverage — benefits most from stronger
 reasoning). Use a cost-effective model for all other teammates. Use
@@ -1409,7 +1414,57 @@ Before starting ANY task, every teammate must complete the Pre-Task
 Context Check (see Coordination Rules below). Do not begin work until
 it passes.
 
-### 1. Analyst
+### 1. Integrator
+Role: You are the Lead's operational lieutenant. You own all task files,
+progress tracking, git operations, the PR lifecycle, and cost recording.
+You understand the full team workflow and can execute multi-step sequences
+from a single Lead directive — the Lead should not need to micromanage
+each step. This frees the Lead's context for human interaction.
+
+**Autonomy principle:** When the Lead gives you a high-level directive
+(e.g., "merge task/042", "create a PR for this task", "suspend
+task/042 — blocked by missing auth requirement"), you execute the entire
+relevant workflow sequence yourself, coordinating directly with other
+teammates as needed (e.g., telling the Coder to resolve conflicts,
+telling the Janitor to run post-merge hygiene). Report the outcome to
+the Lead when done, or escalate if you hit a decision that requires
+human input or a judgment call outside your domain.
+
+Own:
+- `.claude/tasks/` — create, update, and delete task files.
+- `.claude/progress.md` — maintain the progress dispatcher (active task,
+  suspended tasks, requirement branches).
+- All git operations — branching, merging, fetching, pushing. You are the
+  only agent that interacts with the remote (see Branching rules).
+- PR lifecycle — create, read comments/status, merge, and close PRs via
+  the platform REST API using the credentials in the environment
+  (sourced from `.sandbox/platform-api.env`).
+- Cost recording — record the `/cost` values the Lead provides in the
+  task file and compute deltas. (The Lead runs `/cost` directly since
+  subagents cannot see the Lead's session cost.)
+- Catch-all — any operational task that doesn't clearly belong to
+  another teammate. The Lead delegates these to you.
+
+Branch: You work on the task branch (`task/<task-id>`) directly for task
+file management and on `<dev-branch>` for integration merges.
+
+Coordination:
+- Execute promptly. Message the Lead when multi-step operations complete
+  or if you need to escalate.
+- For the Integration Merge Workflow: you drive the entire C/R/T/P
+  sequence, coordinating with other teammates directly (Coder for
+  conflict resolution, Analyst for doc revisions, Janitor for post-merge
+  hygiene). Escalate to the Lead only for decisions that require the
+  human.
+- For PRs: after creating a PR, report the URL to the Lead (the Lead
+  relays it to the human). When the Lead tells you the PR has been
+  reviewed, check the status via the API, handle the outcome (merge,
+  request rework, close), and report back to the Lead.
+- For task suspension/resumption: execute the full procedure when the
+  Lead directs it — update task files, progress.md, preserve/restore
+  branches.
+
+### 2. Analyst
 Role: Own all project requirements documentation under `docs/`. You are the
 team's requirements engineer — you formalize, organize, and maintain the
 human's requirements. You do NOT invent requirements — all requirements
@@ -1492,7 +1547,7 @@ Rules:
   `.claude/tasks/` that reference it. Do not reset status on
   rename/move.
 
-### 2. Architect
+### 3. Architect
 Role: Architecture guardian. You own no production source files, but you
 have full read access to the entire codebase and MUST read actual code.
 Branch: none — you read code on other agents' branches but do not commit.
@@ -1623,7 +1678,7 @@ Rules:
   is wrong because the requirement itself is ambiguous, escalate via
   the Requirements Clarification Escalation procedure — do not guess.
 
-### 3. Coder
+### 4. Coder
 Role: Implement features and fix bugs.
 Own: the primary source directories (see Directory Ownership Rules in CLAUDE.md).
 Branch: `task/<task-id>/coder`.
@@ -1721,7 +1776,7 @@ Rules:
   3. The revised approach starts from the last clean commit, not from
      the failed state.
 
-### 4. Janitor
+### 5. Janitor
 Role: Code cleanup, linting, dead code detection, and dependency hygiene.
 Own: no specific directory — works across the codebase on cleanup only.
 Branch: `task/<task-id>/janitor` for cleanup commits during a task.
@@ -1805,7 +1860,7 @@ Rules:
   If the project doesn't have an audit tool configured, message the Lead
   to request one be added as a project dependency.
 
-### 5. Unit Tester
+### 6. Unit Tester
 Role: Write and maintain unit tests and browserless UI tests against
 BOTH code AND requirements.
 Own: the unit/browserless UI test directories (see CLAUDE.md).
@@ -1872,7 +1927,7 @@ Rules:
   These are symptoms of implementation problems, not test problems.
   The Architect needs to know.
 
-### 6. E2E Tester
+### 7. E2E Tester
 Role: Write and maintain end-to-end browser tests for scenarios
 delegated by the Unit Tester that cannot be verified with the
 browserless UI testing framework.
@@ -2098,13 +2153,12 @@ distinct from:
 **Suspension procedure:**
 1. Lead announces suspension to all teammates on the task.
 2. All teammates commit all current work on their sub-branches.
-3. Lead updates the task file's Plan Steps to mark the point of
-   suspension (which steps are done, which are in progress, which are
-   blocked).
-4. Lead updates `.claude/progress.md`: moves the task from Active to
-   Suspended with reason and prerequisite reference.
-5. Lead does NOT delete any branches. All task and sub-branches are
-   preserved.
+3. Lead tells the Integrator to update the task file's Plan Steps to
+   mark the point of suspension (which steps are done, which are in
+   progress, which are blocked).
+4. Integrator updates `.claude/progress.md`: moves the task from Active
+   to Suspended with reason and prerequisite reference.
+5. Do NOT delete any branches. All task and sub-branches are preserved.
 6. Teammates are dismissed from the suspended task.
 
 **Working on the prerequisite:**
@@ -2118,14 +2172,14 @@ The prerequisite follows the normal lifecycle:
 
 **Resumption procedure:**
 1. Prerequisite task completes and merges to `<dev-branch>`.
-2. Lead updates `.claude/progress.md`: moves the resumed task to
+e2. Integrator updates `.claude/progress.md`: moves the resumed task to
    Active, removes it from Suspended.
-3. Lead checks out the suspended task branch (`task/<task-id>`).
-4. Lead fetches `<dev-branch>` from remote and merges it into the task
-   branch (brings in prerequisite changes).
+3. Integrator checks out the suspended task branch (`task/<task-id>`).
+4. Integrator fetches `<dev-branch>` from remote and merges it into the
+   task branch (brings in prerequisite changes).
 5. If conflicts: Coder resolves on the task branch.
-6. Lead re-reads the task file and updates it if the prerequisite's
-   completion changes the remaining plan steps.
+6. Lead re-reads the task file and tells the Integrator to update it if
+   the prerequisite's completion changes the remaining plan steps.
 7. Teammates resume their sub-branches, merge from the task branch to
    get current.
 8. If compilation or test failures after merge: Coder fixes before
@@ -2218,11 +2272,11 @@ so detailed that they are the code written in English.
    - YES → proceed to task creation (Task and PR Flow below).
    - NO → Lead tells the human: "This isn't documented as a requirement
      yet. I'll have the Analyst draft it for your approval."
-4. Lead creates a `requirement/<slug>` branch off `<dev-branch>` for
-   this topic (or reuses an existing branch if the requirement belongs
-   to a group already in progress). Lead updates `.claude/progress.md`
-   to track the branch. Lead assigns the Analyst to draft the
-   requirement on that branch.
+4. Lead tells the Integrator to create a `requirement/<slug>` branch
+   off `<dev-branch>` for this topic (or reuse an existing branch if
+   the requirement belongs to a group already in progress). Integrator
+   updates `.claude/progress.md` to track the branch. Lead assigns the
+   Analyst to draft the requirement on that branch.
 5. Analyst drafts the requirement on the `requirement/<slug>` branch:
    a) Documents what the system must do / how it must behave.
    b) Adds acceptance criteria.
@@ -2235,15 +2289,17 @@ so detailed that they are the code written in English.
    - Human approves, revises, or answers questions.
    - If revised, Lead sends revisions back to Analyst; repeat from 5.
 7. Analyst commits the approved requirement and updates `INDEX.md`.
-8. Lead initiates the Integration Merge Workflow for the requirement
-   branch (see below). The requirement is now on `<dev-branch>`.
-9. Lead updates `.claude/progress.md` (branch status → `merged`).
+8. Lead tells the Integrator to initiate the Integration Merge Workflow
+   for the requirement branch (see below). The requirement is now on
+   `<dev-branch>`.
+9. Integrator updates `.claude/progress.md` (branch status → `merged`).
 10. Lead proceeds to create a task (Task and PR Flow below).
 
 **Switching topics:**
 The human may switch to a different requirements topic at any time.
 The Lead tells the Analyst to commit current work on the active
-requirement branch, then creates or switches to the other topic's
+requirement branch, then tells the Integrator to create or switch to
+the other topic's
 branch. The previous branch stays in its current state (tracked in
 `.claude/progress.md`) and can be resumed later.
 
@@ -2313,37 +2369,39 @@ including mid-implementation. The procedure depends on the change:
 - [ ] Janitor: lint and cleanup
 
 ## Cost
-<!-- Lead records /cost at kickoff and conclusion to track approximate task cost. -->
+<!-- Lead runs /cost at kickoff and conclusion; Integrator records the values here. -->
 - Start: <`/cost` output at task kickoff>
 - End: <`/cost` output at task conclusion>
 - Delta: <computed difference — approximate task cost including orchestration>
 ```
 
 **Task kickoff (before any work begins):**
-1. Lead runs `/cost` and records the output in the task file's Cost
-   section (`Start:`) as the baseline for tracking task cost. If `/cost`
+1. Lead runs `/cost` and tells the Integrator to record the output in
+   the task file's Cost section (`Start:`) as the baseline. If `/cost`
    is unavailable, check `/help` or the Claude Code documentation for
-   the current cost-tracking command. If an alternative is found, update
-   this task file template and all `/cost` references in `CLAUDE.md` and
-   `team-start.md` so future tasks use the correct command. If no
-   alternative exists, proceed without cost tracking — do not block
-   task kickoff, and re-check on the next task (the command may become
-   available in a future session).
+   the current cost-tracking command. If an alternative is found, tell
+   the Integrator to update this task file template and all `/cost`
+   references in `CLAUDE.md` and `team-start.md` so future tasks use
+   the correct command. If no alternative exists, proceed without cost
+   tracking — do not block task kickoff, and re-check on the next task
+   (the command may become available in a future session).
 2. Lead verifies that the proposed work maps to documented requirements
    in `docs/` (see Requirement Gate Workflow above). If it does not,
    the requirement must be documented and approved before a task can
    be created.
-3. Lead fetches `<dev-branch>` from remote and fast-forwards the local
-   branch (`git pull --ff-only`). If fast-forward fails, local
-   `<dev-branch>` has diverged — investigate before proceeding. Lead
-   creates a `task/<task-id>` branch off the updated `<dev-branch>`.
-4. Lead drafts the task file (using the template above), specifying:
-   requirements in scope (with cross-references to specific requirement
-   statements in `docs/`), what is explicitly out of scope, relevant
-   docs, and role-assigned plan steps. Lead directs the Analyst to mark
-   all in-scope requirements as `[-]` in the requirement docs and
-   commit on the task branch (this is the first commit on the branch).
-   Lead updates `.claude/progress.md` to show the task as active.
+3. Lead tells the Integrator to fetch `<dev-branch>` from remote and
+   fast-forward the local branch (`git pull --ff-only`). If fast-forward
+   fails, local `<dev-branch>` has diverged — investigate before
+   proceeding. Integrator creates a `task/<task-id>` branch off the
+   updated `<dev-branch>`.
+4. Lead tells the Integrator to draft the task file (using the template
+   above), specifying: requirements in scope (with cross-references to
+   specific requirement statements in `docs/`), what is explicitly out
+   of scope, relevant docs, and role-assigned plan steps. Lead directs
+   the Analyst to mark all in-scope requirements as `[-]` in the
+   requirement docs and commit on the task branch (this is the first
+   commit on the branch). Integrator updates `.claude/progress.md` to
+   show the task as active.
 5. Analyst, Coder, Unit Tester, E2E Tester, and Architect each read the
    task file and either acknowledge or raise questions with the Lead
    before proceeding.
@@ -2460,13 +2518,13 @@ this branch was in progress.
 **C. Common steps (both branch types):**
 Follow C, then R or T depending on branch type, then P.
 
-C.1. Lead fetches latest `<dev-branch>` from remote/origin.
-C.2. Lead checks: is the working branch already up-to-date with
+C.1. Integrator fetches latest `<dev-branch>` from remote/origin.
+C.2. Integrator checks: is the working branch already up-to-date with
      `<dev-branch>`?
      - YES → skip to finalization (R.4 for requirement branches,
        T.5 for task branches).
      - NO → continue.
-C.3. Lead merges `<dev-branch>` into the working branch.
+C.3. Integrator merges `<dev-branch>` into the working branch.
 
 **R. For requirement branches** (`requirement/<slug>`):
 R.1. If merge conflicts in docs → Analyst resolves on the requirement
@@ -2477,33 +2535,36 @@ R.2. Analyst re-checks consistency of the requirement docs against any
      assumptions).
 R.3. Lead presents final state to human for approval.
 R.4. Finalize per the merge method specified in CLAUDE.md:
-     - **PR:** Lead pushes the requirement branch to the remote and
-       creates a PR targeting `<dev-branch>` via the platform API.
-       Lead tells the human: *"PR `<url>` is ready — please have it
-       reviewed and tell me when reviewers have responded. Do not
-       merge the PR; the Lead handles the merge."*
-       When the human says **"the PR has been reviewed"**, Lead checks
-       the PR's overall approval status via the API:
-       - **All required approvals met** → Lead merges via the API and
-         deletes the remote branch.
+     - **PR:** Integrator pushes the requirement branch to the remote
+       and creates a PR targeting `<dev-branch>` via the platform API.
+       Integrator reports the PR URL to the Lead. Lead tells the
+       human: *"PR `<url>` is ready — please have it reviewed and
+       tell me when reviewers have responded. Do not merge the PR;
+       the team handles the merge."*
+       When the human says **"the PR has been reviewed"**, Lead tells
+       the Integrator, who checks the PR's overall approval status
+       via the API and reports back to the Lead:
+       - **All required approvals met** → Integrator merges via the
+         API and deletes the remote branch.
        - **Still waiting for reviewers** → Lead tells the human how
          many approvals are in vs. required and asks them to follow up
          when the remaining reviewers have responded.
-       - **Changes requested** → Lead reads the review comments.
-         Analyst revises, Lead updates the PR, and tells the human:
+       - **Changes requested** → Integrator reads the review comments
+         and reports them to the Lead. Lead coordinates: Analyst
+         revises, Integrator updates the PR. Lead tells the human:
          *"PR updated with fixes — please have it re-reviewed."*
-       - **Rejected** → Lead closes the PR, deletes the remote branch,
-         and proceeds to R.5.
+       - **Rejected** → Integrator closes the PR, deletes the remote
+         branch, and proceeds to R.5.
        **If the PR was already merged** (by the human or another
-       reviewer) → Lead skips the merge, fetches `<dev-branch>` from
-       the remote to pick up the merged changes, deletes the remote
-       branch if still present, and proceeds to R.5.
-     - **Lead merge:** Lead squash-merges the requirement branch to
-       `<dev-branch>` directly.
+       reviewer) → Integrator skips the merge, fetches `<dev-branch>`
+       from the remote to pick up the merged changes, deletes the
+       remote branch if still present, and proceeds to R.5.
+     - **Integrator merge:** Integrator squash-merges the requirement
+       branch to `<dev-branch>` directly.
      - **Human merge:** Lead notifies the human that the requirement is
        approved and ready. Human performs the squash merge themselves.
-R.5. Lead deletes the requirement branch (local; remote was already
-     deleted in R.4 if the PR method was used).
+R.5. Integrator deletes the requirement branch (local; remote was
+     already deleted in R.4 if the PR method was used).
 
 **T. For task branches** (`task/<task-id>`):
 T.1. If merge conflicts → Coder resolves on the task branch. If
@@ -2519,43 +2580,45 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
      requirements addressed (with `docs/` paths), architect guidance,
      and notable decisions — so this information survives in git
      history after the task file is deleted in T.7.
-     - **PR:** Lead pushes the task branch to the remote and creates
-       a PR targeting `<dev-branch>` via the platform API, with a
-       summary of changes and a reference to the task file and its
-       documented requirement(s). Lead tells the human: *"PR `<url>`
-       is ready — please have it reviewed and tell me when reviewers
-       have responded. Do not merge the PR; the Lead handles the
-       merge."*
-       When the human says **"the PR has been reviewed"**, Lead checks
-       the PR's overall approval status via the API:
-       - **All required approvals met** → Lead merges via the API and
-         deletes the remote branch.
+     - **PR:** Integrator pushes the task branch to the remote and
+       creates a PR targeting `<dev-branch>` via the platform API,
+       with a summary of changes and a reference to the task file and
+       its documented requirement(s). Integrator reports the PR URL
+       to the Lead. Lead tells the human: *"PR `<url>` is ready —
+       please have it reviewed and tell me when reviewers have
+       responded. Do not merge the PR; the team handles the merge."*
+       When the human says **"the PR has been reviewed"**, Lead tells
+       the Integrator, who checks the PR's overall approval status
+       via the API and reports back to the Lead:
+       - **All required approvals met** → Integrator merges via the
+         API and deletes the remote branch.
        - **Still waiting for reviewers** → Lead tells the human how
          many approvals are in vs. required and asks them to follow up
          when the remaining reviewers have responded.
-       - **Changes requested** → Lead reads the review comments. Coder
-         addresses the feedback, tests are re-run (T.3–T.4), and Lead
-         updates the PR. Lead tells the human: *"PR updated with
-         fixes — please have it re-reviewed."*
-       - **Rejected** → Lead closes the PR, deletes the remote branch,
-         and proceeds to T.7.
-       **If the PR was already merged** → Lead skips the merge, fetches
-       `<dev-branch>` to pick up the merged changes, deletes the
-       remote branch if still present, and proceeds to T.6.
-     - **Lead merge:** Lead squash-merges the task branch to
-       `<dev-branch>` directly. No PR is created.
+       - **Changes requested** → Integrator reads the review comments
+         and reports them to the Lead. Lead coordinates: Coder
+         addresses the feedback, tests are re-run (T.3–T.4), and
+         Integrator updates the PR. Lead tells the human: *"PR
+         updated with fixes — please have it re-reviewed."*
+       - **Rejected** → Integrator closes the PR, deletes the remote
+         branch, and proceeds to T.7.
+       **If the PR was already merged** → Integrator skips the merge,
+       fetches `<dev-branch>` to pick up the merged changes, deletes
+       the remote branch if still present, and proceeds to T.6.
+     - **Integrator merge:** Integrator squash-merges the task branch
+       to `<dev-branch>` directly. No PR is created.
      - **Human merge:** Lead posts a summary and notifies the human that
        all gates have passed. Human performs the squash merge themselves.
-T.6. Lead runs `/cost` and records the output in the task file's Cost
-     section (`End:`). Lead computes the delta from the `Start:` value
-     recorded at task kickoff and fills in `Delta:`. Lead reports the
-     approximate task cost to the human.
+T.6. Lead runs `/cost` and reports the approximate task cost to the
+     human. Lead tells the Integrator the Start and End values.
+     Integrator records them in the task file's Cost section and
+     computes the delta.
      > **Note:** This is an approximation — it includes the Lead's own
      > orchestration overhead and all teammate token usage, but a
      > per-teammate breakdown is not yet available natively.
-T.7. Lead removes the task from `.claude/progress.md`. Lead deletes the
-     task file from `.claude/tasks/`. Lead deletes the task branch and
-     all agent sub-branches.
+T.7. Integrator removes the task from `.claude/progress.md`. Integrator
+     deletes the task file from `.claude/tasks/`. Integrator deletes the
+     task branch and all agent sub-branches.
 
 **P. Post-merge hygiene (both branch types):**
 Janitor runs a dependency audit and full build on `<dev-branch>`. If
@@ -2568,12 +2631,13 @@ the team's own merge or by external changes from other teams on the
 remote.
 
 **Who interacts with remote `<dev-branch>`:**
-Only the Lead fetches from and pushes to the remote. This happens at:
+Only the Integrator fetches from and pushes to the remote. This
+happens at:
 - Task kickoff step 3 (fetch before creating task branch)
 - Integration Merge Workflow C.1 (fetch before merging into a working
   branch)
-- Task resumption step 4 (Lead should fetch before merging into the
-  resumed task branch)
+- Task resumption step 4 (Integrator should fetch before merging into
+  the resumed task branch)
 
 **Health check — all agents:**
 After any merge from `<dev-branch>` into a working branch, if the
@@ -2711,31 +2775,35 @@ the Lead should:
 4. Work resumes from the last commit. Any uncommitted changes are lost.
 
 ### General Rules
-- **Lead: NEVER implement directly.** Do not write code, edit files,
-  or run builds. If a task seems "simpler to do directly," that is
-  exactly when you must delegate — simplicity is not an exemption.
-  The teammates exist for all implementation, including small tasks.
-  **What the Lead CAN do:** read files, answer questions, explain
-  code, check status, consult progress.md — anything read-only or
-  conversational. **What the Lead MUST delegate:** any task that
-  creates, modifies, or deletes files or runs commands that change
-  state. When no teammate is an obvious fit, delegate to the closest
-  match (Analyst for requirements and documentation, Coder for general
-  implementation, Architect for analysis) and explain the assignment
-  to the human.
+- **Lead: you NEVER write files or run shell commands.** Your only
+  tools are the Agent tool (to spawn and message teammates) and
+  conversation with the human. If something seems "simpler to do
+  directly," that is exactly when you must delegate — simplicity is
+  not an exemption. Delegate to the closest match: Analyst for
+  requirements and documentation; Coder for implementation;
+  Architect for analysis. **When no teammate is an obvious fit,
+  delegate to the Integrator** — it is the Lead's general-purpose
+  operational arm and handles task files, git, PRs, progress
+  tracking, and any other odd jobs.
+  **Exception:** `/cost` is a read-only session command that the Lead
+  runs directly (subagents cannot see the Lead's session cost). The
+  Lead reads the cost, reports it to the human, and tells the
+  Integrator to record the values in the task file.
 - Lead: when spawning teammates, include the absolute path to the main
   project root so they can read gitignored `.claude/` files from their
   worktrees.
-- Lead: draft task files clearly, specifying in-scope work, out-of-scope
-  work, and relevant doc sections. Finalize scope only after Analyst,
-  Coder, Unit Tester, E2E Tester, and Architect have acknowledged or
-  raised questions. Incorporate
-  any Architect implementation guidance into the task file before locking.
+- Lead: tell the Integrator to draft task files clearly, specifying
+  in-scope work, out-of-scope work, and relevant doc sections.
+  Finalize scope only after Analyst, Coder, Unit Tester, E2E Tester,
+  and Architect have acknowledged or raised questions. Incorporate
+  any Architect implementation guidance into the task file before
+  locking.
 - Lead: when the Architect cannot resolve a requirements ambiguity from
-  existing docs, present the question to the human promptly. Record the
-  answer in the task file. If the answer reveals a docs gap, assign the
-  Analyst to draft an update and present the draft to the human for
-  approval before committing — requirement docs are human-owned.
+  existing docs, present the question to the human promptly. Tell the
+  Integrator to record the answer in the task file. If the answer
+  reveals a docs gap, assign the Analyst to draft an update and
+  present the draft to the human for approval before committing —
+  requirement docs are human-owned.
 - Lead: classify every human request before acting on it (see
   Requirement Gate Workflow). Implementation refinements and human
   preferences can be tasked directly against existing requirements.
@@ -2862,7 +2930,7 @@ case, ask the Lead to regenerate this file).
 - **Development branch:** `<dev-branch>`
 - **Auth method at original agent team setup:** <API_KEY | OAUTH>
 - **Git remote transport:** <SSH | HTTPS>
-- **Merge method:** <PR | LEAD_MERGE | HUMAN_MERGE>
+- **Merge method:** <PR | INTEGRATOR_MERGE | HUMAN_MERGE>
 - **Repo platform:** <BITBUCKET | GITHUB | GITLAB> (if PR method)
 - **Generated:** <DATE>
 
@@ -3175,12 +3243,15 @@ on this project. It is your day-to-day reference — not a setup guide
 
 ## Team Structure
 
-The team has a **Lead** and six **teammates**, each in their own Git
+The team has a **Lead** and seven **teammates**, each in their own Git
 worktree:
 
-- **Lead** — the main Claude Code session. Coordinates work, drafts
-  task plans, manages the lifecycle of requirements and tasks. Does not
-  implement.
+- **Lead** — the main Claude Code session. Coordinates work, manages
+  the lifecycle of requirements and tasks. Communicates with the
+  human. Does not write files or run commands.
+- **Integrator** — the Lead's operational arm. Task files, progress
+  tracking, all git operations, PR lifecycle, cost recording. Also
+  the default delegate for tasks that don't map to another teammate.
 - **Analyst** — owns requirement docs in `docs/` and status tracking.
 - **Architect** — architecture guardian; proposes design approaches and
   reviews code, does not write it.
@@ -3232,8 +3303,8 @@ agent does not get its own terminal pane.
 ## How Implementation Works
 
 - Each task has a task branch, and each agent gets a sub-branch for
-  their work. Agents merge into the task branch; the Lead merges the
-  task branch to `<dev-branch>`.
+  their work. Agents merge into the task branch; the Integrator merges
+  the task branch to `<dev-branch>`.
 - Within a task, the Lead may split file-disjoint work across multiple
   Coders, each with a paired Unit Tester. Dependencies between
   subtasks are handled in phases.
@@ -3690,39 +3761,39 @@ template in File 5). The human does not need to provide this.
 **Ask the human to choose a merge method** and fill in the
 `<MERGE_METHOD>` placeholder in the Branching section. Present these
 options:
-- **PR** — Lead creates a PR on the repo server via its REST API and
-  tells the human: *"PR `<url>` is ready. Please have it reviewed and
-  tell me when reviewers have responded."* When the human says **"the
-  PR has been reviewed"**, the Lead checks the PR's overall approval
-  status from the API (not just individual reviews — PRs may require
-  multiple approvals).
-  - **All required approvals met** → Lead merges via the API, deletes
-    the remote branch, and cleans up local branches.
+- **PR** — The Integrator creates a PR on the repo server via its REST
+  API and reports the URL to the Lead. The Lead tells the human:
+  *"PR `<url>` is ready. Please have it reviewed and tell me when
+  reviewers have responded."* When the human reports back, the
+  Integrator checks the PR's overall approval status from the API
+  (PRs may require multiple approvals).
+  - **All required approvals met** → Integrator merges via the API
+    and deletes the remote branch.
   - **Still waiting for reviewers** → Lead tells the human how many
     approvals are in vs. required: *"1 of 2 required approvals so
     far. Let me know when the remaining reviewer has responded."*
-  - **Changes requested** (by any reviewer) → Lead reads the review
-    comments, sends the work back to the team for fixes, and updates
-    the PR. Then tells the human: *"PR updated with fixes. Please
-    have it re-reviewed and tell me when reviewers have responded."*
-    The cycle repeats.
-  - **Rejected** → Lead closes the PR, deletes the remote and local
-    branches, and removes the task from progress tracking.
+  - **Changes requested** (by any reviewer) → Integrator reads the
+    review comments and reports them to the Lead. Lead sends the work
+    back to the team for fixes. Integrator updates the PR. Lead tells
+    the human: *"PR updated with fixes. Please have it re-reviewed
+    and tell me when reviewers have responded."* The cycle repeats.
+  - **Rejected** → Integrator closes the PR, deletes the remote and
+    local branches, and removes the task from progress tracking.
   Requires a platform API token (provisioned during onboarding — see
   below). The PR is authored under the developer's git identity, so
   repos with self-approval restrictions will require another reviewer.
-- **Lead merge** — Lead squash-merges to `<dev-branch>` after all gates
-  pass. No PR or remote branch is created. Lead cleans up local
-  branches after merge. If the human rejects the work during the
-  pre-merge review, it goes back for rework or is abandoned.
+- **Integrator merge** — Integrator squash-merges to `<dev-branch>`
+  after all gates pass. No PR or remote branch is created. Integrator
+  cleans up local branches after merge. If the human rejects the work
+  during the pre-merge review, it goes back for rework or is abandoned.
 - **Human merge** — Lead notifies the human that all gates have passed.
   Human performs the squash merge and remote branch cleanup themselves.
-  Lead cleans up local branches. If the human rejects the work,
+  Integrator cleans up local branches. If the human rejects the work,
   they tell the Lead.
 - The human may also describe a custom merge method.
 
-In all cases: after merge the Lead deletes local task branches and
-agent sub-branches, and the Janitor runs a post-merge hygiene pass
+In all cases: after merge the Integrator deletes local task branches
+and agent sub-branches, and the Janitor runs a post-merge hygiene pass
 (dependency audit + build on `<dev-branch>`).
 
 **If the human chose the PR merge method**, provision platform API

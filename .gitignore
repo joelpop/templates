@@ -1,0 +1,9 @@
+# IDE
+.idea/
+*.iml
+
+# Claude Code local state
+.claude/
+
+# Older/working copies
+ignored/

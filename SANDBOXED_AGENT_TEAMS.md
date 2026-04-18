@@ -20,6 +20,7 @@ template files and a setup checklist executed by the agent.
 
 **In this section:**
 - [Quick Start](#quick-start) — get up and running without reading the rest
+- [Daily Use](#daily-use) — running the team after setup
 - [Overview](#overview) — what the template provides
   - [Team Structure](#team-structure) — the Lead and seven teammates
   - [Features](#features)
@@ -100,7 +101,7 @@ the sandbox also needs the developer's SSH key, config, and
 automatically and provisions the SSH material into `.sandbox/ssh/`,
 which is injected into the sandbox at each startup.
 
-### Daily Use
+## Daily Use
 
 Once agent team setup is complete:
 
@@ -108,49 +109,63 @@ Once agent team setup is complete:
 their work appears as expandable blocks in the same terminal. Each
 agent does not get its own terminal pane.
 
-1. Start the sandbox: `.sandbox/start.sh`
-2. Start the team: `/project:team-start`
-3. The sandbox runs in **bypass permissions** by default — the Lead
+1. At your host terminal (in the project directory), start the
+   sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
+   session running inside the sandbox. The session's system prompt
+   auto-loads the Lead role (see [Auto-loading Lead in sandbox
+   sessions](#capabilities) under Capabilities), so the team spawns
+   as soon as you send your first message — no slash command
+   required.
+2. The sandboxed Claude Code runs in **bypass permissions** mode by default — the Lead
    and all teammates can spawn agents, run builds, tests, and git
    commands without prompting. `.claude/settings.json` limits which
    commands are allowed. The Lead will not implement directly — this
    is enforced by its instructions in `team-start.md`.
-4. Describe what you want to the Lead. The Lead coordinates the team
+3. Describe what you want to the Lead. The Lead coordinates the team
    and drives the teammates through the workflows described in the
    Overview below.
-5. You can switch between requirements and implementation freely.
+4. You can switch between requirements and implementation freely.
    Requirements can be drafted for future tasks while a current task is
    being implemented. You can also switch requirements topics at any
    time — just tell the Lead. The team tracks all in-flight requirement
    branches so nothing gets lost.
-6. You review and approve requirement drafts and PRs when the Lead
+5. You review and approve requirement drafts and PRs when the Lead
    presents them. You may also provide feedback, answer questions the
    team surfaces, and perform any human-in-the-loop actions (e.g.,
    hardware passkey prompts during E2E testing). You may see multiple
    Coders and Unit Testers working simultaneously in different panes —
    this is by design when the Lead splits a task into parallel subtasks.
-7. The Lead reports approximate cost per task. You can also ask the
+6. The Lead reports approximate cost per task. You can also ask the
    Lead for the current cost at any time.
-8. You can ask agents to take screenshots of the running application
+7. You can ask agents to take screenshots of the running application
    for visual verification — tell the Lead what you want to see.
-9. **If something goes wrong:**
+8. **If something goes wrong:**
    - Agent seems stuck or unresponsive: tell the Lead. The Lead will
      respawn the agent.
-   - The Lead itself loses context: run `/project:team-start` to
-     restart the team.
-   - Sandbox crashes: run `.sandbox/start.sh` to reconnect, then
-     `/project:team-start`. The Lead reads `progress.md` to recover
-     state.
+   - The Lead itself loses context mid-session: run
+     `/project:team-start` at the sandbox's Claude Code prompt to
+     re-invoke the Lead (the auto-load fires only at session start,
+     so mid-session recovery uses the slash command).
+   - Sandbox crashes: back at your host terminal, run
+     `.sandbox/start.sh` to reconnect (which reopens Claude Code
+     inside the sandbox). The new session auto-loads the Lead, which
+     reads `progress.md` to recover state.
    - The Lead may suspend a task to work on a prerequisite it
      discovered — this is normal. It will resume the original task
      after the prerequisite is complete.
-10. **Pausing mid-session:** The sandbox persists when you close the
-    terminal. To resume, run `.sandbox/start.sh` (it reconnects to
-    the existing sandbox), then `/project:team-start`. The Lead reads
-    `progress.md` to pick up where you left off.
-11. When the session ends, the Lead confirms all work is merged and
-    flags anything unresolved for the next session.
-12. When the engagement ends: `.sandbox/teardown.sh`
+9. **Pausing and resuming:** Exiting Claude Code (`/exit` or Ctrl+D)
+    ends your Claude Code session and drops you back to the shell, but the sandbox VM keeps running in the background.
+    To resume: at your host terminal run `.sandbox/start.sh` again
+    — it detects the existing sandbox, connects you to it, and starts a new Claude Code
+    session inside it. The Lead auto-loads and reads `progress.md`
+    to pick up where you left off.
+10. To end a Claude Code session cleanly, tell the Lead you're
+    wrapping up the session. The Lead confirms all work is merged and flags
+    anything unresolved for your next Claude Code session. Then
+    exit Claude Code (`/exit` or Ctrl+D) — the sandbox VM keeps
+    running so you can reconnect later.
+11. To end the engagement (i.e., destroy the sandbox), after ending your final Claude Code
+    session, at your host terminal: `.sandbox/teardown.sh`
 
 ## Overview
 
@@ -183,6 +198,15 @@ worktree:
   handle startup and disposal. Claude Code authentication is
   autodetected and injected via environment variable. SSH keys for
   Git remote access are provisioned into the sandbox automatically.
+- **Auto-loading Lead in sandbox sessions** — The sandbox's Claude
+  Code session starts with the Lead role pre-configured:
+  `.sandbox/start.sh` passes `--append-system-prompt` to `claude` so
+  the first turn reads `team-start.md` and spawns the team
+  automatically. The human does not need to remember
+  `/project:team-start`. Host Claude Code sessions are unaffected
+  (they don't go through `start.sh`). The `/project:team-start`
+  slash command remains available as a manual re-invocation fallback
+  if the Lead needs to be reset mid-session.
 - **Status Tracking** — Requirement status checkboxes (`[ ]`/`[-]`/`[x]`)
   in `docs/` plus role-assigned plan steps in task files. A progress
   dispatcher tracks active and suspended tasks for recovery after
@@ -335,7 +359,7 @@ block without markers):
 | 4 | `docs/INDEX.md` | Master index of requirement documents | Team reads; Analyst maintains |
 | 5 | `CLAUDE.md` | Project context for agents | Auto-loaded by Claude Code at session start |
 | 6 | `.claude/settings.json` | Agent team config and permissions | Auto-loaded by Claude Code at session start |
-| 7 | `.claude/commands/team-start.md` | Slash command to start the team | Human invokes at Claude prompt (`/project:team-start`) |
+| 7 | `.claude/commands/team-start.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `start.sh`); also exposed as `/project:team-start` for manual re-invocation |
 | 8 | `ONBOARDING.md` | Developer onboarding (generated) | New developer tells Claude Code to read and execute |
 | 9 | `TEAM_GUIDE.md` | Daily-use reference for humans (generated) | Human reads for workflows, troubleshooting, recovery |
 
@@ -458,6 +482,16 @@ PARENT_DIR="$(basename "$(dirname "$PROJECT_DIR")")"
 PROJECT_NAME="$(basename "$PROJECT_DIR")"
 TEMPLATE_IMAGE="${PARENT_DIR}-${PROJECT_NAME}-sandbox"
 SANDBOX_NAME="claude-${PARENT_DIR}-${PROJECT_NAME}"
+
+# ── Lead directive injected into Claude Code's system prompt ─────────────────
+# Passed via --append-system-prompt so the sandboxed Claude Code auto-loads
+# the Lead role on first turn — the human does not need to remember
+# /project:team-start. Host Claude Code invocations don't use this script and
+# are unaffected.
+LEAD_DIRECTIVE=$(cat <<'EOF'
+You are the Lead of this project's sandboxed agent team. On your very first response of this session, before responding substantively to any user message, read `.claude/commands/team-start.md` from the project root and follow its instructions to spawn the team and perform the Pre-Start Check. Only after setup is complete should you engage with the user's request. The slash command `/project:team-start` remains available for manual re-invocation (e.g., if the team needs to be re-spawned mid-session).
+EOF
+)
 
 echo "=== Project:  ${PROJECT_DIR} ==="
 echo "=== Template: ${TEMPLATE_IMAGE} ==="
@@ -612,7 +646,10 @@ EXISTING=$(docker sandbox ls 2>/dev/null | grep -w "${SANDBOX_NAME}" || true)
 if [ -n "$EXISTING" ]; then
     echo "=== Reconnecting to existing sandbox ==="
     inject_credentials
-    docker sandbox run "${SANDBOX_NAME}"
+    docker sandbox run "${SANDBOX_NAME}" \
+        claude \
+        --append-system-prompt "${LEAD_DIRECTIVE}" \
+        "${PROJECT_DIR}"
 else
     # New sandbox: docker sandbox run blocks (it is interactive), so we
     # inject credentials from a background job that polls until the sandbox
@@ -633,11 +670,13 @@ else
             --name "${SANDBOX_NAME}" \
             --template "${TEMPLATE_IMAGE}" \
             claude \
+            --append-system-prompt "${LEAD_DIRECTIVE}" \
             "${PROJECT_DIR}"
     else
         docker sandbox run \
             --name "${SANDBOX_NAME}" \
             claude \
+            --append-system-prompt "${LEAD_DIRECTIVE}" \
             "${PROJECT_DIR}"
     fi
 
@@ -1366,8 +1405,11 @@ update `.claude/settings.json` if needed.
 ## File 7: `.claude/commands/team-start.md`
 
 **Note for Claude Code (agent team setup Step 4):** Copy this template
-verbatim — it is not project-specific. The human invokes it later
-with `/project:team-start` (agent team setup Step 13).
+verbatim — it is not project-specific. The sandboxed Claude Code
+session auto-reads this file on first turn (via
+`--append-system-prompt` in `.sandbox/start.sh`), and it is also
+exposed as the `/project:team-start` slash command for manual
+re-invocation when the Lead needs to be reset mid-session.
 
 ~~~~markdown
 # --- BEGIN .claude/commands/team-start.md ---
@@ -2897,28 +2939,113 @@ find it in the repo.
 
 # Developer Onboarding
 
-This document sets up your local development environment for working
-on this project with a Claude Code agent team. It creates a Docker
-sandbox (an isolated environment where the agents run) and configures
-the agent team permissions.
+## Introduction
 
-**Why is this needed?** The sandbox and agent configuration are
-developer-local — they are not versioned with the project because each
-developer may use different authentication credentials and run on
-different hardware. This document contains the project-specific
-settings so Claude Code can recreate them for you.
+This document contains the project-specific settings and a setup
+checklist to prepare your local development environment for working
+on this project's Claude Code agent team. It is version-controlled in
+the repo, so any developer joining the project can invoke it to
+recreate the same local environment.
 
-**How to use this document:** Start a Claude Code session in the
-project directory and say:
+Onboarding creates three things: a **Docker sandbox** (an isolated
+environment where the agents run, built from a project-specific
+Dockerfile), **authentication and SSH material** (provisioned into
+the sandbox at each startup so agents can reach Claude and the Git
+remote), and **agent team permissions** (`.claude/settings.json`
+tailored for this project). These artifacts are developer-local and
+gitignored — each developer generates their own from this file — so
+credentials, SSH keys, and host-specific paths never get committed.
+The end state is a running sandbox with the agent team ready for
+work.
+
+This document has two parts. Everything above the divider is
+human-facing front matter — read this to understand what onboarding
+provides and how to invoke it. Everything below the divider is a
+setup checklist executed by the agent when you point it at this file.
+
+**In this section:**
+- [Quick Start](#quick-start) — invoke the setup checklist
+- [Daily Use](#daily-use) — running the team after setup
+- [Overview](#overview) — project details, troubleshooting, offboarding
+  - [Project Details](#project-details) — values captured at original setup
+  - [Troubleshooting](#troubleshooting) — common sandbox and auth issues
+  - [Offboarding](#offboarding) — steps to clean up when you leave
+
+## Quick Start
+
+### Step 1 — Prepare
+
+Have these ready — Claude Code auto-discovers what it can and prompts
+you for the rest:
+
+- Docker Desktop installed and running
+  (https://www.docker.com/products/docker-desktop/)
+- Git identity configured (`git config user.name` and
+  `git config user.email`)
+- A Claude Code OAuth token or Anthropic API key. On macOS,
+  `start.sh` auto-extracts an OAuth token from the Keychain; on other
+  systems, export `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` in
+  your shell config
+- If the project uses an SSH Git remote: the SSH key referenced in
+  `~/.ssh/config` for that remote
+- If the project uses the **PR** merge method (see [Project
+  Details](#project-details) below): a platform API token (Bitbucket
+  app password, GitHub fine-grained PAT, or GitLab personal access
+  token). Claude Code walks you through creating one if you don't
+  have it ready.
+
+### Step 2 — Prompt
+
+Start a Claude Code session in the project directory in **accept
+edits mode** (press Tab until the mode selector shows "Accept Edits"
+or start Claude Code with `--allowedTools Edit,Write,Read,Glob,Grep`).
+This auto-approves file reads and writes — the setup creates several
+files — while still prompting you for shell commands. Then say:
 
 > Read `ONBOARDING.md` and execute the setup checklist. Ask me before
 > doing anything destructive, and stop when you need my input.
 
-Claude Code will handle the setup autonomously, pausing only when it
-needs you to take action (building the sandbox, confirming
-authentication).
+Throughout setup, Claude Code will prompt you to approve shell
+commands and other tool calls not covered by accept edits mode.
+These are expected — approve them to keep the setup moving. The
+prompt you gave still applies, so Claude Code will pause for your
+input at decision points.
 
-## Project Details
+### Step 3 — Proceed
+
+Claude Code takes it from here. The checklist detects your local
+state and adjusts automatically:
+
+- **Fresh onboarding** — full setup (sandbox files, agent settings,
+  sandbox build, team start)
+- **Re-onboarding** — asks before overwriting existing local setup
+
+Claude Code handles most steps autonomously. It pauses to ask for
+your input when it needs information it cannot discover (e.g., your
+auth method if detection fails) or confirmation (e.g., which SSH key
+to use). When the sandbox files are ready, it asks you to run
+`.sandbox/start.sh` in a separate terminal, then continues setup
+from inside the sandbox session.
+
+## Daily Use
+
+Once onboarding is complete:
+
+1. At your host terminal (in the project directory), start the
+   sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
+   session running inside the sandbox. The session's system prompt
+   auto-loads the Lead role, so the team spawns as soon as you send
+   your first message — no slash command required.
+2. Describe your work to the Lead.
+
+For detailed daily workflows — team structure, requirements and
+implementation lifecycles, pausing and resuming, ending a Claude
+Code session, and what to do when something goes wrong — see
+[`TEAM_GUIDE.md`](TEAM_GUIDE.md).
+
+## Overview
+
+### Project Details
 
 These values were captured during the project's agent team setup.
 Do not modify them unless the project's stack has changed (in which
@@ -2933,6 +3060,61 @@ case, ask the Lead to regenerate this file).
 - **Merge method:** <PR | INTEGRATOR_MERGE | HUMAN_MERGE>
 - **Repo platform:** <BITBUCKET | GITHUB | GITLAB> (if PR method)
 - **Generated:** <DATE>
+
+### Troubleshooting
+
+- **Docker not installed:** Install Docker Desktop from
+  https://www.docker.com/products/docker-desktop/
+- **Sandbox authentication fails:** The sandbox's OAuth token is
+  captured at startup. It can become invalid if:
+  - The access token expired (~24h) and the refresh token also expired
+    (weeks/months) — rare, but happens after long breaks.
+  - You ran `/login` on the host while the sandbox was running — the
+    new login may invalidate the token the sandbox is using.
+  In either case: stop the sandbox with `docker sandbox stop <name>`
+  (the name is printed by `start.sh` at startup), re-run `claude` on
+  the host and `/login` if needed, then restart with
+  `.sandbox/start.sh`. On macOS, `start.sh` automatically picks up the
+  fresh token from the Keychain. On other systems, update
+  `CLAUDE_CODE_OAUTH_TOKEN` in your shell config first.
+- **macOS Keychain password prompt:** On macOS, `start.sh` reads the
+  OAuth token from the Keychain. If the Keychain is locked (e.g.,
+  after a reboot or corporate IT policy), macOS may prompt for your
+  login password. This is expected — enter it to continue. If the
+  Keychain is managed by IT and you cannot unlock it, fall back to
+  exporting `CLAUDE_CODE_OAUTH_TOKEN` manually in your shell config.
+- **SSH remote access fails inside the sandbox:** Git operations over
+  SSH (push, pull, fetch) fail with "Permission denied" or "Host key
+  verification failed."
+  - Verify `.sandbox/ssh/` exists and contains the private key, a
+    `config` file, and a `known_hosts` file.
+  - If the key was rotated since onboarding, either re-run onboarding
+    or manually copy the new key to `.sandbox/ssh/` and restart the
+    sandbox.
+  - If `known_hosts` is missing or stale, regenerate it:
+    `ssh-keyscan <hostname> > .sandbox/ssh/known_hosts 2>/dev/null`
+  - Verify `.sandbox/ssh.source` contains the correct absolute path
+    to the host key — `start.sh` reads this to sync keys on startup.
+- **Sandbox build fails:** Check that Docker Desktop is running.
+  Review the build output for version mismatches or network errors.
+- **`/project:team-start` not found:** Ensure
+  `.claude/commands/team-start.md` exists in the repo. Try `git pull`
+  to get the latest.
+
+### Offboarding
+
+When you leave the project:
+1. Run `.sandbox/teardown.sh` to destroy your sandbox.
+2. Delete `.sandbox/` and `.claude/settings.json` — these are
+   gitignored and not shared.
+3. Optionally delete `.claude/tasks/` and `.claude/progress.md` if
+   no one else needs your local task history.
+
+---
+
+**SETUP CHECKLIST — Agent-Executed Content Below**
+
+---
 
 ## Setup Checklist
 
@@ -3157,9 +3339,11 @@ human to check the sandbox terminal for errors. Common causes:
 *(This step is executed by the sandbox Claude Code session.)*
 
 Write the `Generated:` date from the Project Details section above to
-`.claude/.onboarding-version`. Run `/project:team-start` to spawn the
-team. Then tell the human: "The team is ready. Describe what you'd
-like to work on."
+`.claude/.onboarding-version`. The session's system prompt already
+auto-loaded the Lead role from `.sandbox/start.sh`'s
+`--append-system-prompt`, so the team spawns automatically on the
+first human message. Then tell the human: "The team is ready.
+Describe what you'd like to work on."
 
 ### Step 6 — End the host session
 
@@ -3168,55 +3352,6 @@ team is running, tell them: "Onboarding is complete — the sandbox
 session is running your team. This host session's setup work is done.
 You can close it, or keep it open for any work you want to do outside
 the sandbox (note: work in the host session is not sandboxed)."
-
-## Troubleshooting
-
-- **Docker not installed:** Install Docker Desktop from
-  https://www.docker.com/products/docker-desktop/
-- **Sandbox authentication fails:** The sandbox's OAuth token is
-  captured at startup. It can become invalid if:
-  - The access token expired (~24h) and the refresh token also expired
-    (weeks/months) — rare, but happens after long breaks.
-  - You ran `/login` on the host while the sandbox was running — the
-    new login may invalidate the token the sandbox is using.
-  In either case: stop the sandbox with `docker sandbox stop <name>`
-  (the name is printed by `start.sh` at startup), re-run `claude` on
-  the host and `/login` if needed, then restart with
-  `.sandbox/start.sh`. On macOS, `start.sh` automatically picks up the
-  fresh token from the Keychain. On other systems, update
-  `CLAUDE_CODE_OAUTH_TOKEN` in your shell config first.
-- **macOS Keychain password prompt:** On macOS, `start.sh` reads the
-  OAuth token from the Keychain. If the Keychain is locked (e.g.,
-  after a reboot or corporate IT policy), macOS may prompt for your
-  login password. This is expected — enter it to continue. If the
-  Keychain is managed by IT and you cannot unlock it, fall back to
-  exporting `CLAUDE_CODE_OAUTH_TOKEN` manually in your shell config.
-- **SSH remote access fails inside the sandbox:** Git operations over
-  SSH (push, pull, fetch) fail with "Permission denied" or "Host key
-  verification failed."
-  - Verify `.sandbox/ssh/` exists and contains the private key, a
-    `config` file, and a `known_hosts` file.
-  - If the key was rotated since onboarding, either re-run onboarding
-    or manually copy the new key to `.sandbox/ssh/` and restart the
-    sandbox.
-  - If `known_hosts` is missing or stale, regenerate it:
-    `ssh-keyscan <hostname> > .sandbox/ssh/known_hosts 2>/dev/null`
-  - Verify `.sandbox/ssh.source` contains the correct absolute path
-    to the host key — `start.sh` reads this to sync keys on startup.
-- **Sandbox build fails:** Check that Docker Desktop is running.
-  Review the build output for version mismatches or network errors.
-- **`/project:team-start` not found:** Ensure
-  `.claude/commands/team-start.md` exists in the repo. Try `git pull`
-  to get the latest.
-
-## Offboarding
-
-When you leave the project:
-1. Run `.sandbox/teardown.sh` to destroy your sandbox.
-2. Delete `.sandbox/` and `.claude/settings.json` — these are
-   gitignored and not shared.
-3. Optionally delete `.claude/tasks/` and `.claude/progress.md` if
-   no one else needs your local task history.
 
 <!-- --- END ONBOARDING.md --- -->
 ~~~~
@@ -3269,23 +3404,26 @@ You only talk to the Lead. The Lead coordinates everything else.
 their work appears as expandable blocks in the same terminal. Each
 agent does not get its own terminal pane.
 
-1. Start the sandbox: `.sandbox/start.sh`
-2. Start the team: `/project:team-start`
-3. Describe what you want to the Lead. The Lead coordinates the team
+1. At your host terminal (in the project directory), start the
+   sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
+   session running inside the sandbox. The session's system prompt
+   auto-loads the Lead role, so the team spawns as soon as you send
+   your first message — no slash command required.
+2. Describe what you want to the Lead. The Lead coordinates the team
    and drives the work — it does not implement directly.
-5. You can switch between requirements and implementation freely.
+3. You can switch between requirements and implementation freely.
    Requirements can be drafted for future tasks while a current task
    is being implemented. You can switch requirements topics at any
    time — just tell the Lead.
-6. You review and approve requirement drafts and PRs when the Lead
+4. You review and approve requirement drafts and PRs when the Lead
    presents them. You may also provide feedback, answer questions the
    team surfaces, and perform any human-in-the-loop actions (e.g.,
    hardware passkey prompts during E2E testing). You may see multiple
    Coders and Unit Testers working simultaneously — this is by design
    when the Lead splits a task into parallel subtasks.
-7. The Lead reports approximate cost per task. You can also ask the
+5. The Lead reports approximate cost per task. You can also ask the
    Lead for the current cost at any time.
-8. You can ask agents to take screenshots of the running application
+6. You can ask agents to take screenshots of the running application
    for visual verification — tell the Lead what you want to see.
 
 ## How Requirements Work
@@ -3327,17 +3465,21 @@ without running the app yourself.
 
 - **Agent seems stuck or unresponsive:** Tell the Lead. The Lead will
   respawn the agent.
-- **The Lead itself loses context:** Run `/project:team-start` to
-  restart the team. The Lead reads `progress.md` to recover state.
-- **Sandbox crashes:** Run `.sandbox/start.sh` to reconnect, then
-  `/project:team-start`.
-- **Sandbox authentication fails:** Stop the sandbox with
-  `docker sandbox stop <name>` (the name is printed by `start.sh` at
-  startup), re-run `claude` on the host and `/login` if needed, then
-  restart with `.sandbox/start.sh`. This can happen if the OAuth token
-  expired or if you ran `/login` on the host while the sandbox was
-  running. On macOS, `start.sh` automatically picks up the fresh token
-  from the Keychain.
+- **The Lead itself loses context mid-session:** Run
+  `/project:team-start` at the sandbox's Claude Code prompt to
+  re-invoke the Lead. The auto-load fires only at session start, so
+  mid-session recovery uses the slash command. The Lead reads
+  `progress.md` to recover state.
+- **Sandbox crashes:** Back at your host terminal, run
+  `.sandbox/start.sh` to reconnect (which reopens Claude Code inside
+  the sandbox). The new session auto-loads the Lead.
+- **Sandbox authentication fails:** At your host terminal, stop the
+  sandbox with `docker sandbox stop <name>` (the name is printed by
+  `start.sh` at startup), re-run `claude` on the host and `/login` if
+  needed, then restart with `.sandbox/start.sh`. This can happen if
+  the OAuth token expired or if you ran `/login` on the host while
+  the sandbox was running. On macOS, `start.sh` automatically picks
+  up the fresh token from the Keychain.
 - **SSH remote access fails:** If `git push/pull/fetch` fails with
   "Permission denied" or "Host key verification failed", check that
   `.sandbox/ssh/` contains the correct key, config, and known_hosts.
@@ -3350,20 +3492,30 @@ without running the app yourself.
 
 ## Pausing and Resuming
 
-The sandbox persists when you close the terminal. To resume:
-1. Run `.sandbox/start.sh` (reconnects to the existing sandbox)
-2. Run `/project:team-start`
-3. The Lead reads `progress.md` to pick up where you left off.
+Exiting Claude Code (`/exit` or Ctrl+D) ends your Claude Code
+session and drops you back to the shell, but the sandbox VM keeps
+running in the background. To resume:
+1. At your host terminal: `.sandbox/start.sh` again — it detects the
+   existing sandbox, connects you to it, and starts a new Claude
+   Code session inside it.
+2. The Lead auto-loads and reads `progress.md` to pick up where you
+   left off.
 
 ## Session End
 
-When the session ends, the Lead confirms all work is merged and flags
-anything unresolved for the next session.
+To end a Claude Code session cleanly, tell the Lead you're wrapping
+up the session. The Lead confirms all work is merged and flags
+anything unresolved for your next Claude Code session. Then exit
+Claude Code (`/exit` or Ctrl+D) — the sandbox VM keeps running so
+you can reconnect later (see [Pausing and
+Resuming](#pausing-and-resuming)).
 
 ## Engagement End
 
-Run `.sandbox/teardown.sh` to destroy the sandbox VM. Host files
-remain. Delete the project directory manually per your data retention
+To end the engagement (i.e., destroy the sandbox), after ending
+your final Claude Code session, at your host terminal run
+`.sandbox/teardown.sh` to destroy the sandbox VM. Host files remain.
+Delete the project directory manually per your data retention
 policy.
 
 <!-- --- END TEAM_GUIDE.md --- -->
@@ -3933,7 +4085,11 @@ Suggest adding an early mention in `README.md`:
 > up for the first time.
 
 **Step 13 — Start the agent team.**
-Run `/project:team-start` to spawn the team.
+The session's system prompt already auto-loaded the Lead role from
+`.sandbox/start.sh`'s `--append-system-prompt`, so the team spawns
+automatically on the first human message — no explicit
+`/project:team-start` invocation needed. The slash command remains
+available if the Lead ever needs to be re-invoked mid-session.
 
 **Step 14 — Confirm team is ready.**
 Tell the human:
@@ -3945,6 +4101,7 @@ Tell the human:
 > the sandbox mount. Teammate worktrees are browsable on the host
 > under `.claude/worktrees/`.
 >
-> **When the engagement ends:** Run `.sandbox/teardown.sh` to destroy
-> the sandbox VM. Host files remain. Delete the project directory
-> manually per your data retention policy."
+> **To end the engagement** (i.e., destroy the sandbox): after
+> ending your final Claude Code session, run `.sandbox/teardown.sh`
+> at your host terminal. Host files remain. Delete the project
+> directory manually per your data retention policy."

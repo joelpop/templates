@@ -349,8 +349,8 @@ Infrastructure files go **inside** each project alongside the code:
 ├── ONBOARDING.md                    # Developer onboarding (generated)
 ├── TEAM_GUIDE.md                    # Daily-use reference for humans (generated)
 ├── .claude/
+│   ├── .last-onboarded              # Records when this developer last completed onboarding (compared against ONBOARDING.md's Generated: to detect staleness)
 │   ├── settings.json                # Agent Teams + permissions
-│   ├── .onboarding-version          # Tracks which ONBOARDING.md version was last run
 │   ├── progress.md                  # Dispatcher: which task is active, which are suspended
 │   ├── tasks/                       # One file per active or suspended task
 │   └── commands/
@@ -1462,20 +1462,46 @@ setup is current:
    lights up only after the current session writes this file at the
    end of Team Structure spawn — starting blank ensures the
    indicator is accurate for this session.
-2. Read the `Generated:` UTC timestamp from `ONBOARDING.md` in the
-   project root.
-3. Read `.claude/.onboarding-version` (if it exists).
-4. If the file does not exist or the timestamps do not match: **STOP.**
-   Tell the human: "Your local setup is out of date —
-   `ONBOARDING.md` has been regenerated since you last ran it. Please
-   re-run your developer onboarding before starting the team: *Read
-   `ONBOARDING.md` and execute the setup checklist.*"
-   Do not proceed until the human confirms they have re-run it.
-5. If the dates match: read `/home/agent/.host-terminal` (if it
-   exists) to identify the host terminal. Log it (e.g., "Host
-   terminal: iTerm2") for diagnostic purposes but do not prompt the
-   human — teammates run as subagents within this session, not in
-   separate panes.
+2. Read the top banner of `ONBOARDING.md` in the project root,
+   locate the `Generated:` marker, and leniently parse its value
+   into a normalized timestamp. "Leniently parse and expand" means:
+   accept minor format variations — different ISO 8601 precisions
+   (date only → expand to midnight UTC; date + time without seconds
+   → add `:00`), UTC offset notation (`Z`, `+00:00`, `+0000` →
+   normalize to `Z`), and surrounding whitespace — and reduce to
+   canonical `YYYY-MM-DDTHH:MM:SSZ`. If the attempt does not
+   result in a valid timestamp (file missing, banner absent,
+   `Generated:` marker missing, or value unparseable): **STOP.**
+   This is a project-level issue, not a developer issue. Tell the
+   human: "The `Generated:` banner in `ONBOARDING.md` is missing
+   or malformed. Ask the Lead to regenerate `ONBOARDING.md` before
+   starting the team." Do not proceed until the human confirms.
+   Call the successfully-parsed result `T_setup`.
+
+3. Read `.claude/.last-onboarded` and leniently parse the value
+   after the `Last onboarded:` label using the same rules as
+   step 2. Call the result `T_onboarded`.
+
+4. The developer's local setup is out of date if **either**:
+   - parsing in step 3 did not result in a valid timestamp (file
+     missing, empty, label absent, or value unparseable), OR
+   - `T_setup` is more recent than `T_onboarded` (i.e., the agent
+     team was set up or regenerated after this developer last
+     onboarded).
+
+   In either case: **STOP.** Tell the human: "Your local setup is
+   out of date — either `ONBOARDING.md` has been regenerated
+   since you last onboarded, or your `.claude/.last-onboarded`
+   marker is missing or malformed. Please re-run your developer
+   onboarding before starting the team: *Read `ONBOARDING.md` and
+   execute the setup checklist.*" Do not proceed until the human
+   confirms.
+
+5. Otherwise (`T_onboarded >= T_setup`): read
+   `/home/agent/.host-terminal` (if it exists) to identify the host
+   terminal. Log it (e.g., "Host terminal: iTerm2") for diagnostic
+   purposes but do not prompt the human — teammates run as
+   subagents within this session, not in separate panes.
 6. Proceed to Team Structure.
 
 Once all teammates have been successfully spawned per the Team
@@ -2986,6 +3012,11 @@ find it in the repo.
 
 # Developer Onboarding
 
+> **Generated:** `<UTC_TIMESTAMP>`  <!-- ISO 8601 UTC, e.g. 2026-04-18T14:32:05Z -->
+> This file is generated from the setup kit. **Any human edits will be
+> lost the next time it is regenerated.** Ask the Lead to regenerate
+> this file if the project's stack or configuration has changed.
+
 ## Introduction
 
 This document contains the project-specific settings and a setup
@@ -3108,7 +3139,6 @@ case, ask the Lead to regenerate this file).
 - **Git remote transport:** <SSH | HTTPS>
 - **Merge method:** <PR | INTEGRATOR_MERGE | HUMAN_MERGE>
 - **Repo platform:** <BITBUCKET | GITHUB | GITLAB> (if PR method)
-- **Generated:** <UTC_TIMESTAMP>  <!-- ISO 8601 UTC, e.g. 2026-04-18T14:32:05Z -->
 
 ### Troubleshooting
 
@@ -3372,7 +3402,7 @@ tell them:
 > "In the sandbox session, say: *Read `ONBOARDING.md` and continue
 > from Step 5.*"
 
-Poll for `.claude/.onboarding-version` to appear (visible via the
+Poll for `.claude/.last-onboarded` to appear (visible via the
 bidirectional sandbox mount), confirming that Onboarding Step 5 has
 completed. If the file does not appear within a few minutes, ask the
 human to check the sandbox terminal for errors. Common causes:
@@ -3387,13 +3417,20 @@ human to check the sandbox terminal for errors. Common causes:
 
 *(This step is executed by the sandbox Claude Code session.)*
 
-Write the `Generated:` UTC timestamp from the Project Details
-section above to `.claude/.onboarding-version`. The session's system
-prompt already
-auto-loaded the Lead role from `.sandbox/start.sh`'s
-`--append-system-prompt`, so the team spawns automatically on the
-first human message. Then tell the human: "The team is ready.
-Describe what you'd like to work on."
+Record the current UTC timestamp as this developer's onboarding
+time to `.claude/.last-onboarded`. The file contains one line
+with a `Last onboarded:` label followed by the timestamp in ISO
+8601 UTC format:
+
+```bash
+TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+echo "Last onboarded: $TS" > .claude/.last-onboarded
+```
+
+The session's system prompt already auto-loaded the Lead role
+from `.sandbox/start.sh`'s `--append-system-prompt`, so the team
+spawns automatically on the first human message. Then tell the
+human: "The team is ready. Describe what you'd like to work on."
 
 ### Step 6 — End the host session
 
@@ -3420,11 +3457,14 @@ version-controlled — all developers reference it.
 
 # Agent Team Guide — <PROJECT_NAME>
 
+> **Generated:** <DATE>
+> This file is generated from the setup kit. **Any human edits will be
+> lost the next time it is regenerated.** Ask the Lead to regenerate
+> this file if the project's stack or configuration has changed.
+
 This document describes how to work with the Claude Code agent team
 on this project. It is your day-to-day reference — not a setup guide
 (see [`ONBOARDING.md`](ONBOARDING.md) for setup).
-
-**Generated:** <DATE>
 
 ## Team Structure
 
@@ -3906,7 +3946,7 @@ Append the following (checking first to avoid duplicates):
 # Per-developer agent state
 .claude/settings.json
 .claude/settings.local.json
-.claude/.onboarding-version
+.claude/.last-onboarded
 .claude/.team-active
 .claude/tasks/
 .claude/progress.md
@@ -3918,7 +3958,7 @@ shared project context.
 **Step 6 — Build and start the sandbox.**
 **Do NOT proceed to Steps 7–12 yourself.** Those steps run inside the
 sandbox session. Your role from this point is to wait for the sandbox
-to complete them (poll for `.claude/.onboarding-version`) and then
+to complete them (poll for `.claude/.last-onboarded`) and then
 wrap up the host session.
 
 The sandbox only mounts the project directory, so this template file is
@@ -3939,7 +3979,7 @@ tell them:
 > "In the sandbox session, say: *Read `.sandbox/template.md` and
 > continue the Agent Team Setup checklist from Step 7.*"
 
-Poll for `.claude/.onboarding-version` to appear (visible via the
+Poll for `.claude/.last-onboarded` to appear (visible via the
 bidirectional sandbox mount), confirming that the sandbox session has
 completed the checklist through Step 12. If the file does not appear
 within a few minutes, ask the human to check the sandbox terminal for
@@ -4135,7 +4175,7 @@ belongs to. The team will address these as early tasks after starting.
 If the project is a fresh skeleton with no production code, skip this
 step.
 
-**Step 12 — Generate `ONBOARDING.md`, `TEAM_GUIDE.md`, and write `.onboarding-version`.**
+**Step 12 — Generate `ONBOARDING.md`, `TEAM_GUIDE.md`, and write `.last-onboarded`.**
 **Heads-up:** These are large generated documents. Tell the human:
 "Generating ONBOARDING.md and TEAM_GUIDE.md from templates — I'll
 show you each for review." Report as you finish each document
@@ -4154,11 +4194,13 @@ values:
   commented-out sections.
 - The verbatim `start.sh` and `teardown.sh` content from Step 3.
 - The exact `settings.json` content from Step 4.
-- The current UTC timestamp in the `Generated:` field, formatted as
-  ISO 8601 (e.g., `2026-04-18T14:32:05Z` — obtain via
-  `date -u +%Y-%m-%dT%H:%M:%SZ`). The Pre-Start Check in
-  `team-start.md` compares this against `.claude/.onboarding-version`
-  as a string, so the format must be stable.
+- The current UTC timestamp in the `Generated:` banner at the top
+  of the file, formatted as ISO 8601 (e.g., `2026-04-18T14:32:05Z`
+  — obtain via `date -u +%Y-%m-%dT%H:%M:%SZ`). The Pre-Start Check
+  in `team-start.md` leniently parses this value as `T_setup` and
+  the `Last onboarded:` value in `.claude/.last-onboarded` as
+  `T_onboarded`; if `T_setup` is more recent than `T_onboarded`,
+  the developer's local setup is out of date.
 
 **TEAM_GUIDE.md:** Using the File 9 template, generate `TEAM_GUIDE.md`
 in the project root with all placeholders replaced by project-specific
@@ -4167,11 +4209,17 @@ values:
 - Development branch name from Step 1.
 - Today's date in the `Generated:` field.
 
-Present both generated documents to the human for review before saving.
-Then write the same UTC timestamp used in ONBOARDING.md's `Generated:`
-field to `.claude/.onboarding-version` — this marks the setup developer
-as onboarded so the Pre-Start Check in `team-start.md` passes. All
-three writes must succeed together.
+Present both generated documents to the human for review before
+saving. Then record the current UTC timestamp as the setup
+developer's onboarding time to `.claude/.last-onboarded`:
+
+```bash
+TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+echo "Last onboarded: $TS" > .claude/.last-onboarded
+```
+
+This marks the setup developer as onboarded so the Pre-Start Check
+in `team-start.md` passes. All three writes must succeed together.
 
 Suggest adding an early mention in `README.md`:
 

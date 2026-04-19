@@ -2214,7 +2214,7 @@ The prerequisite follows the normal lifecycle:
 
 **Resumption procedure:**
 1. Prerequisite task completes and merges to `<dev-branch>`.
-e2. Integrator updates `.claude/progress.md`: moves the resumed task to
+2. Integrator updates `.claude/progress.md`: moves the resumed task to
    Active, removes it from Suspended.
 3. Integrator checks out the suspended task branch (`task/<task-id>`).
 4. Integrator fetches `<dev-branch>` from remote and merges it into the

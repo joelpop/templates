@@ -601,10 +601,37 @@ if [ -f "$SSH_SOURCE_FILE" ]; then
         [ -f "${SSH_KEY}.pub" ] && cp "${SSH_KEY}.pub" "$SSH_DIR/"
         echo "=== SSH key synced from ${SSH_KEY} ==="
     else
-        echo "Warning: SSH key '${SSH_KEY}' (from .sandbox/ssh.source) not found."
-        echo "  Git operations over SSH may fail inside the sandbox."
-        echo "  To fix: update .sandbox/ssh.source with the correct key path,"
-        echo "  or re-run onboarding."
+        echo ""
+        echo "SSH key '${SSH_KEY}' (from .sandbox/ssh.source) not found."
+        echo ""
+        echo "  The project declares SSH use but the key at that path is"
+        echo "  missing. Git operations will fail inside the sandbox"
+        echo "  until this is fixed."
+        echo ""
+        echo "  If you know the correct path, enter it now — this script"
+        echo "  will update .sandbox/ssh.source and re-sync. Otherwise,"
+        echo "  press Enter to abort; to reconfigure SSH interactively,"
+        echo "  start a Claude Code session at your host terminal in this"
+        echo "  project directory and say:"
+        echo "    Read ONBOARDING.md and execute the setup checklist."
+        echo ""
+        read -p "  Correct SSH key path (or Enter to abort): " NEW_PATH
+        if [ -z "$NEW_PATH" ]; then
+            echo "Aborting. See the note above on re-running onboarding."
+            exit 1
+        fi
+        NEW_PATH="${NEW_PATH/#\~/$HOME}"
+        if [ ! -f "$NEW_PATH" ]; then
+            echo "File '$NEW_PATH' not found. Aborting."
+            exit 1
+        fi
+        echo "$NEW_PATH" > "$SSH_SOURCE_FILE"
+        SSH_KEY="$NEW_PATH"
+        SSH_DIR="${PROJECT_DIR}/.sandbox/ssh"
+        mkdir -p "$SSH_DIR"
+        cp "$SSH_KEY" "$SSH_DIR/"
+        [ -f "${SSH_KEY}.pub" ] && cp "${SSH_KEY}.pub" "$SSH_DIR/"
+        echo "=== Updated .sandbox/ssh.source and synced SSH key from ${SSH_KEY} ==="
     fi
 fi
 

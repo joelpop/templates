@@ -1267,6 +1267,14 @@ operations and persists across branch switches and task
 suspension/resumption. It carries only IDs and one-line labels for
 recognition — all detail lives in the task files and requirement docs.
 
+**Single writer:** Only the Integrator writes `.claude/progress.md`.
+No other role edits it directly. When state changes (a new task
+becomes active, a task is suspended or resumed, a requirement branch
+is created or merged, etc.), the Lead directs the Integrator to
+update `progress.md`; the Integrator also updates it proactively as
+part of workflows it owns (e.g., the Integration Merge Workflow).
+This single-writer rule prevents concurrent writes to the file.
+
 Structure:
 ```markdown
 # Progress
@@ -1389,8 +1397,9 @@ Critical rules that MUST survive compaction (re-read if in doubt):
 8. Requirement docs (`docs/`) are human-owned. Never commit changes to
    `docs/` without human approval relayed through the Lead.
 
-Keep `.claude/progress.md` current: update it when a task becomes
-active, is suspended, or completes.
+Keep `.claude/progress.md` current: the Integrator updates it when a
+task becomes active, is suspended, or completes. No other role writes
+to this file — see "Single writer" under Project Status above.
 
 # --- END CLAUDE.md ---
 ~~~~

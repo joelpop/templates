@@ -37,8 +37,30 @@ template — look for `ONBOARDING.md` in the project root instead.
 
 ### Step 1 — Prepare
 
-Have the following ready (most are auto-discovered from pom.xml — the
-setup will ask you to confirm):
+You'll need two kinds of things ready: infrastructure on your host
+machine, and project-config values Claude Code will ask about.
+
+**Infrastructure (host machine):**
+
+- Docker Desktop installed and running
+  (https://www.docker.com/products/docker-desktop/). The sandbox
+  feature is required; `start.sh` verifies it at launch.
+- Claude Code installed on the host and authenticated (run `claude`
+  and `/login` if you haven't — you need this to execute this
+  checklist in the first place).
+- Git identity configured (`git config user.name "..."` and
+  `git config user.email "..."`).
+- The project directory is a Git repository (`git init` already run).
+  Scenario A setup checks this up-front.
+- A Git remote configured (`git remote add origin <url>`). Not
+  strictly required at setup time — setup proceeds either way — but
+  needed before you can use the **PR** merge method or push
+  branches to collaborators.
+- If the project's Git remote uses SSH: your SSH key available at
+  the path referenced in `~/.ssh/config` for that remote.
+
+**Project config (Claude Code auto-discovers most of these from
+pom.xml and will ask you to confirm):**
 
 - Java version
 - Vaadin version
@@ -115,7 +137,8 @@ agent does not get its own terminal pane.
    auto-loads the Lead role (see [Auto-loading Lead in sandbox
    sessions](#capabilities) under Capabilities), so the team spawns
    as soon as you send your first message — no slash command
-   required.
+   required. Once setup completes, the statusline shows "Agent Team
+   Mode" as a visible confirmation that you're talking to the team.
 2. The sandboxed Claude Code runs in **bypass permissions** mode by default — the Lead
    and all teammates can spawn agents, run builds, tests, and git
    commands without prompting. `.claude/settings.json` limits which
@@ -207,6 +230,15 @@ worktree:
   (they don't go through `start.sh`). The `/project:team-start`
   slash command remains available as a manual re-invocation fallback
   if the Lead needs to be reset mid-session.
+- **"Agent Team Mode" statusline indicator** — The sandbox's
+  statusline displays "Agent Team Mode" once the Lead has completed
+  the Pre-Start Check and spawned the team, giving a visible cue at
+  the keyboard that the human is interacting with the team (not
+  bare Claude Code). Implemented via a `statusLine` entry in
+  `.claude/settings.json` that checks for a sentinel file
+  (`.claude/.team-active`) written by the Lead at the end of team
+  spawn. The indicator is blank before setup completes and between
+  sessions; it updates each session based on the current state.
 - **Status Tracking** — Requirement status checkboxes (`[ ]`/`[-]`/`[x]`)
   in `docs/` plus role-assigned plan steps in task files. A progress
   dispatcher tracks active and suspended tasks for recovery after
@@ -1379,6 +1411,10 @@ docs for the current flag name or whether the flag is still needed.
       "command": "npm",
       "args": ["exec", "--silent", "--", "fetch-mcp"]
     }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash -c 'if [ -f .claude/.team-active ]; then echo \"Agent Team Mode\"; fi'"
   }
 }
 ```
@@ -1421,21 +1457,32 @@ re-invocation when the Lead needs to be reset mid-session.
 Before spawning any teammates, verify that this developer's local
 setup is current:
 
-1. Read the `Generated:` date from `ONBOARDING.md` in the project
-   root.
-2. Read `.claude/.onboarding-version` (if it exists).
-3. If the file does not exist or the dates do not match: **STOP.**
+1. Clear any stale activation sentinel from a previous session:
+   `rm -f .claude/.team-active`. The statusline ("Agent Team Mode")
+   lights up only after the current session writes this file at the
+   end of Team Structure spawn — starting blank ensures the
+   indicator is accurate for this session.
+2. Read the `Generated:` UTC timestamp from `ONBOARDING.md` in the
+   project root.
+3. Read `.claude/.onboarding-version` (if it exists).
+4. If the file does not exist or the timestamps do not match: **STOP.**
    Tell the human: "Your local setup is out of date —
    `ONBOARDING.md` has been regenerated since you last ran it. Please
    re-run your developer onboarding before starting the team: *Read
    `ONBOARDING.md` and execute the setup checklist.*"
    Do not proceed until the human confirms they have re-run it.
-4. If the dates match: read `/home/agent/.host-terminal` (if it
+5. If the dates match: read `/home/agent/.host-terminal` (if it
    exists) to identify the host terminal. Log it (e.g., "Host
    terminal: iTerm2") for diagnostic purposes but do not prompt the
    human — teammates run as subagents within this session, not in
    separate panes.
-5. Proceed to Team Structure.
+6. Proceed to Team Structure.
+
+Once all teammates have been successfully spawned per the Team
+Structure section below, write the activation sentinel:
+`touch .claude/.team-active`. This signals to the sandbox's
+statusline that the team is running ("Agent Team Mode" displays).
+Do not write the sentinel if the spawn is incomplete.
 
 ## Team Structure
 
@@ -3035,7 +3082,9 @@ Once onboarding is complete:
    sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
    session running inside the sandbox. The session's system prompt
    auto-loads the Lead role, so the team spawns as soon as you send
-   your first message — no slash command required.
+   your first message — no slash command required. Once setup
+   completes, the statusline shows "Agent Team Mode" as a visible
+   confirmation that you're talking to the team.
 2. Describe your work to the Lead.
 
 For detailed daily workflows — team structure, requirements and
@@ -3059,7 +3108,7 @@ case, ask the Lead to regenerate this file).
 - **Git remote transport:** <SSH | HTTPS>
 - **Merge method:** <PR | INTEGRATOR_MERGE | HUMAN_MERGE>
 - **Repo platform:** <BITBUCKET | GITHUB | GITLAB> (if PR method)
-- **Generated:** <DATE>
+- **Generated:** <UTC_TIMESTAMP>  <!-- ISO 8601 UTC, e.g. 2026-04-18T14:32:05Z -->
 
 ### Troubleshooting
 
@@ -3338,8 +3387,9 @@ human to check the sandbox terminal for errors. Common causes:
 
 *(This step is executed by the sandbox Claude Code session.)*
 
-Write the `Generated:` date from the Project Details section above to
-`.claude/.onboarding-version`. The session's system prompt already
+Write the `Generated:` UTC timestamp from the Project Details
+section above to `.claude/.onboarding-version`. The session's system
+prompt already
 auto-loaded the Lead role from `.sandbox/start.sh`'s
 `--append-system-prompt`, so the team spawns automatically on the
 first human message. Then tell the human: "The team is ready.
@@ -3408,7 +3458,9 @@ agent does not get its own terminal pane.
    sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
    session running inside the sandbox. The session's system prompt
    auto-loads the Lead role, so the team spawns as soon as you send
-   your first message — no slash command required.
+   your first message — no slash command required. Once setup
+   completes, the statusline shows "Agent Team Mode" as a visible
+   confirmation that you're talking to the team.
 2. Describe what you want to the Lead. The Lead coordinates the team
    and drives the work — it does not implement directly.
 3. You can switch between requirements and implementation freely.
@@ -3550,7 +3602,32 @@ Individual steps below mark these points with "**Heads-up:**" notes.
 ### Phase 0: Detect project state
 
 **Step 0 — Determine which scenario applies.**
-Before doing anything else, check git state:
+Before doing anything else, verify the project directory is a Git
+repository: run `git rev-parse --git-dir`. If it fails (not a git
+repo), tell the human:
+
+> "This directory is not a Git repository. The agent team relies on
+> branches and per-teammate worktrees, so Git is required. Run
+> `git init` (and `git remote add origin <url>` if you plan to push)
+> before proceeding."
+
+Wait for confirmation, then re-run the check.
+
+Once you've confirmed it's a Git repo, check that a remote is
+configured: run `git remote -v`. If the output is empty, tell the
+human (informational — do not block):
+
+> "No Git remote is configured. Setup will proceed, but you'll need
+> to add one before you can use the **PR** merge method or push
+> branches to collaborators: `git remote add origin <url>`. The PR
+> merge method needs a remote on a supported platform (Bitbucket /
+> GitHub / GitLab) with API access."
+
+Then continue. If the human later picks the PR merge method in
+Phase 1 and a remote is still missing, Phase 1 will surface the
+issue again at that point.
+
+Then check git state:
 - Run `git status`. If there are uncommitted changes, warn the human:
   "You have uncommitted changes. Commit or stash them before
   proceeding — setup will create new files and modify `.gitignore`."
@@ -3830,6 +3907,7 @@ Append the following (checking first to avoid duplicates):
 .claude/settings.json
 .claude/settings.local.json
 .claude/.onboarding-version
+.claude/.team-active
 .claude/tasks/
 .claude/progress.md
 .claude/worktrees/
@@ -3950,7 +4028,19 @@ and agent sub-branches, and the Janitor runs a post-merge hygiene pass
 
 **If the human chose the PR merge method**, provision platform API
 access. This is required for the Lead to create, read, and merge PRs.
-Detect the platform from the remote URL:
+
+First verify a remote is configured — if Phase 0 Step 0 flagged a
+missing remote, re-check now with `git remote -v`. If still empty,
+tell the human:
+
+> "The PR merge method requires a Git remote on a supported platform
+> (Bitbucket / GitHub / GitLab). Please add one now
+> (`git remote add origin <url>`) before continuing."
+
+Wait for the human to add the remote, then re-run `git remote -v`
+to confirm.
+
+Then detect the platform from the remote URL:
 - `bitbucket.org` → Bitbucket Cloud
 - `github.com` → GitHub
 - `gitlab.com` → GitLab
@@ -4064,7 +4154,11 @@ values:
   commented-out sections.
 - The verbatim `start.sh` and `teardown.sh` content from Step 3.
 - The exact `settings.json` content from Step 4.
-- Today's date in the `Generated:` field.
+- The current UTC timestamp in the `Generated:` field, formatted as
+  ISO 8601 (e.g., `2026-04-18T14:32:05Z` — obtain via
+  `date -u +%Y-%m-%dT%H:%M:%SZ`). The Pre-Start Check in
+  `team-start.md` compares this against `.claude/.onboarding-version`
+  as a string, so the format must be stable.
 
 **TEAM_GUIDE.md:** Using the File 9 template, generate `TEAM_GUIDE.md`
 in the project root with all placeholders replaced by project-specific
@@ -4074,9 +4168,10 @@ values:
 - Today's date in the `Generated:` field.
 
 Present both generated documents to the human for review before saving.
-Then write the same `Generated:` date to `.claude/.onboarding-version`
-— this marks the setup developer as onboarded so the Pre-Start Check
-in `team-start.md` passes. All three writes must succeed together.
+Then write the same UTC timestamp used in ONBOARDING.md's `Generated:`
+field to `.claude/.onboarding-version` — this marks the setup developer
+as onboarded so the Pre-Start Check in `team-start.md` passes. All
+three writes must succeed together.
 
 Suggest adding an early mention in `README.md`:
 

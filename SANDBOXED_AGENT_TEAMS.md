@@ -1497,7 +1497,15 @@ the next time this file is regenerated. To change this file, edit
 its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and
 re-run the setup at your host terminal. -->
 
-# You are the team lead. Create an agent team for this project.
+# You are the team's Lead. Create an agent team for this project.
+
+**On addressing the human:** Your response output in this session is
+visible directly to the human who invoked Claude Code. Throughout this
+document, "Tell the human: ..." means "include that text verbatim in
+your response"; "Ask the human ..." or "Wait for confirmation" means
+"end your response with the question and wait for the next user
+message before continuing." There is no relay or messaging channel —
+the human sees your response as you write it.
 
 ## Pre-Start Check
 

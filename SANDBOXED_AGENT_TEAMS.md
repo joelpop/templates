@@ -1965,11 +1965,27 @@ Rules:
        data flow, or working around a framework constraint. Do not fix.
        Escalate to Architect (see Mid-Task Architect Escalation in
        Coordination Rules).
-  3. FIX ATTEMPT LIMIT: If you have made 2 consecutive fix attempts for
-     the same logical problem (not the same error message — the same
-     underlying issue) and it is still failing, STOP. This is evidence
-     you are treating symptoms. Escalate to Architect regardless of
-     classification.
+  3. FIX ATTEMPT LIMIT: If you have made 2 consecutive fix attempts
+     that target the same **root cause** and it is still failing,
+     STOP. Escalate to Architect regardless of classification. This
+     rule counts root causes, not error messages — two attempts
+     addressing the same underlying issue count toward the limit
+     even if the symptoms (stack traces, error strings) differ.
+
+     Examples:
+     - Two attempts treating one root cause (**limit reached**):
+       Attempt 1 adds a null check for a `NullPointerException` in
+       `AuthService.validate`; attempt 2 adds an `instanceof` check
+       when an `IllegalStateException` surfaces in the same method.
+       Both patches are treating symptoms of one root cause —
+       upstream token validation is missing.
+     - Two attempts for distinct root causes (**each counts
+       separately; limit not reached**): Attempt 1 fixes a parser
+       bug. Attempt 2 fixes an unrelated retry-loop bug that the
+       parser bug was masking. Independent defects.
+
+     When in doubt, treat two attempts as targeting the same root
+     cause (escalate sooner rather than later).
   4. WORKAROUND PROHIBITION: Do not add any of the following without
      Architect approval:
      - `@SuppressWarnings`, `noinspection`, `// eslint-disable`, or
@@ -2281,7 +2297,8 @@ Fix Protocol for triggers), use this procedure.
 
 **Triggers** (Coder MUST escalate, not MAY):
 - Failure classified as Structural
-- 2-attempt fix limit reached for the same logical problem
+- 2-attempt fix limit reached for the same root cause (see FIX
+  ATTEMPT LIMIT in the Coder's Diagnosis-First Fix Protocol)
 - Task requires modifying files or interfaces not identified in the
   task file's scope or the Architect's kickoff guidance (if any)
 - Need to add a dependency or change a method signature in a shared

@@ -1440,6 +1440,15 @@ Claude Code has dedicated tools for file reading (Read), searching
 git, and shell utilities needed for piped commands or operations that
 the dedicated tools don't support.
 
+**Permission evaluation order:** Claude Code evaluates `deny` rules
+first, then `ask`, then `allow`; the first matching rule wins
+([source](https://code.claude.com/docs/en/settings.md)). The
+`Bash(git *)` allow below is therefore safely qualified by the
+specific destructive-git deny rules (`Bash(git reset --hard *)`,
+`Bash(git push --force *)`, etc.) — those denies match first and
+block the destructive commands while ordinary git operations still
+fall through to the broad allow.
+
 **Note:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` is an experimental
 flag. If agent teams graduate from experimental, check the Claude Code
 docs for the current flag name or whether the flag is still needed.

@@ -421,6 +421,12 @@ Instead, `start.sh` injects all runtime credentials via
 ```dockerfile
 # --- BEGIN .sandbox/Dockerfile ---
 
+# GENERATED FILE — do not edit directly.
+# Edits here will be lost the next time this file is regenerated.
+# To change this file, edit its template in the team setup kit
+# (SANDBOXED_AGENT_TEAMS.md) and re-run the setup at your host
+# terminal.
+
 FROM docker/sandbox-templates:claude-code
 
 USER root
@@ -495,6 +501,12 @@ Usage: `.sandbox/start.sh` — run from the project root. Builds the template an
 ```bash
 #!/usr/bin/env bash
 # --- BEGIN .sandbox/start.sh ---
+
+# GENERATED FILE — do not edit directly.
+# Edits here will be lost the next time this file is regenerated.
+# To change this file, edit its template in the team setup kit
+# (SANDBOXED_AGENT_TEAMS.md) and re-run the setup at your host
+# terminal.
 
 set -euo pipefail
 
@@ -672,16 +684,35 @@ inject_credentials() {
     echo "=== Credentials injected ==="
 }
 
-# ── Start or reconnect ──────────────────────────────────────────────────────
+# ── Start, reconnect, or recreate ──────────────────────────────────────────
+# Docker bakes the sandbox's entrypoint (the claude invocation and its
+# flags) at creation time. `docker sandbox run <name>` re-attaches to
+# that baked-in entrypoint; extra args here would be ignored. So if
+# LEAD_DIRECTIVE ever changes (e.g., because this script was
+# regenerated from the setup kit), an existing sandbox would keep
+# running with the stale directive.
+#
+# To fix that automatically, we store LEAD_DIRECTIVE alongside the
+# sandbox (in .sandbox/.last-directive, gitignored via the .sandbox/
+# rule). On each run we compare the current directive to the stored
+# one. If they differ, we destroy the sandbox so the new-sandbox
+# branch below recreates it with the updated entrypoint. The
+# recreation is fast because Docker caches the template image.
 EXISTING=$(docker sandbox ls 2>/dev/null | grep -w "${SANDBOX_NAME}" || true)
+DIRECTIVE_FILE="${PROJECT_DIR}/.sandbox/.last-directive"
+STORED_DIRECTIVE="$(cat "$DIRECTIVE_FILE" 2>/dev/null || true)"
+
+if [ -n "$EXISTING" ] && [ "${LEAD_DIRECTIVE}" != "${STORED_DIRECTIVE}" ]; then
+    echo "=== LEAD_DIRECTIVE has changed since last run — recreating sandbox ==="
+    docker sandbox rm "${SANDBOX_NAME}"
+    EXISTING=""
+fi
 
 if [ -n "$EXISTING" ]; then
     echo "=== Reconnecting to existing sandbox ==="
     inject_credentials
-    docker sandbox run "${SANDBOX_NAME}" \
-        claude \
-        --append-system-prompt "${LEAD_DIRECTIVE}" \
-        "${PROJECT_DIR}"
+    # Re-attaches to the baked-in entrypoint set at creation.
+    docker sandbox run "${SANDBOX_NAME}"
 else
     # New sandbox: docker sandbox run blocks (it is interactive), so we
     # inject credentials from a background job that polls until the sandbox
@@ -696,6 +727,10 @@ else
         done
     ) &
     INJECT_PID=$!
+
+    # Record the directive before starting so future runs can detect
+    # changes even if this run is interrupted.
+    echo "${LEAD_DIRECTIVE}" > "$DIRECTIVE_FILE"
 
     if [ -n "$TEMPLATE_IMAGE" ]; then
         docker sandbox run \
@@ -728,6 +763,12 @@ Usage: `.sandbox/teardown.sh` — destroys the sandbox VM. Host files are untouc
 ```bash
 #!/usr/bin/env bash
 # --- BEGIN .sandbox/teardown.sh ---
+
+# GENERATED FILE — do not edit directly.
+# Edits here will be lost the next time this file is regenerated.
+# To change this file, edit its template in the team setup kit
+# (SANDBOXED_AGENT_TEAMS.md) and re-run the setup at your host
+# terminal.
 
 set -euo pipefail
 
@@ -1369,6 +1410,7 @@ docs for the current flag name or whether the flag is still needed.
 
 ```json
 {
+  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and re-run the setup at your host terminal.",
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
@@ -1449,6 +1491,11 @@ re-invocation when the Lead needs to be reset mid-session.
 
 ~~~~markdown
 # --- BEGIN .claude/commands/team-start.md ---
+
+<!-- GENERATED FILE — do not edit directly. Edits here will be lost
+the next time this file is regenerated. To change this file, edit
+its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and
+re-run the setup at your host terminal. -->
 
 # You are the team lead. Create an agent team for this project.
 
@@ -3013,9 +3060,10 @@ find it in the repo.
 # Developer Onboarding
 
 > **Generated:** `<UTC_TIMESTAMP>`  <!-- ISO 8601 UTC, e.g. 2026-04-18T14:32:05Z -->
-> This file is generated from the setup kit. **Any human edits will be
-> lost the next time it is regenerated.** Ask the Lead to regenerate
-> this file if the project's stack or configuration has changed.
+> **GENERATED FILE** — do not edit directly. Edits here will be lost
+> the next time this file is regenerated. To change this file, edit
+> its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and
+> re-run the setup at your host terminal.
 
 ## Introduction
 
@@ -3458,9 +3506,10 @@ version-controlled — all developers reference it.
 # Agent Team Guide — <PROJECT_NAME>
 
 > **Generated:** <DATE>
-> This file is generated from the setup kit. **Any human edits will be
-> lost the next time it is regenerated.** Ask the Lead to regenerate
-> this file if the project's stack or configuration has changed.
+> **GENERATED FILE** — do not edit directly. Edits here will be lost
+> the next time this file is regenerated. To change this file, edit
+> its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and
+> re-run the setup at your host terminal.
 
 This document describes how to work with the Claude Code agent team
 on this project. It is your day-to-day reference — not a setup guide

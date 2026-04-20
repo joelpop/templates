@@ -35,7 +35,7 @@ right thing; re-running is safe and idempotent.
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, usage)
+		fmt.Fprint(os.Stderr, usage)
 		os.Exit(2)
 	}
 

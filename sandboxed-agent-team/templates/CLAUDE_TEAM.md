@@ -25,9 +25,9 @@
 - CI: <CI_PLATFORM — e.g., GitHub Actions, GitLab CI>
 
 ## Documentation Sources (MCP Servers)
-The following MCP servers are configured in `.claude/settings.json` and
-available to all agents. Prefer these over training data — training
-data may be outdated or describe deprecated patterns.
+The following MCP servers are configured in `.mcp.json` at the
+project root and available to all agents. Prefer these over training
+data — training data may be outdated or describe deprecated patterns.
 
 | Server | Provides | Primary Users |
 |--------|----------|---------------|
@@ -50,9 +50,9 @@ investigate test failures. The Coder and E2E Tester are the primary
 users; the Architect may use it when evaluating framework paradigm
 compliance.
 
-**Note for Claude Code:** Customize this table to match the `mcpServers`
-configured in `.claude/settings.json`. Remove entries for servers not
-in use; add entries for any project-specific servers.
+**Note:** Customize this table to match the `mcpServers` configured
+in `.mcp.json`. Remove entries for servers not in use; add entries
+for any project-specific servers.
 
 ## Documentation Index
 

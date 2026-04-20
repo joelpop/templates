@@ -229,6 +229,7 @@ func runSetupRemove() int {
 		"CLAUDE_TEAM.md",
 		"ONBOARDING.md",
 		"TEAM_GUIDE.md",
+		".mcp.json",
 		".claude/team-variables.yaml",
 		".claude/settings.json",
 		".claude/commands/team-start.md",

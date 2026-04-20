@@ -410,6 +410,7 @@ The kit produces these files in a target project:
 | `CLAUDE.md` | Project-owned context file | Kit adds/removes only the bracketed import line; everything else is yours |
 | `.claude/team-variables.yaml` | Per-project persisted variables | Human-readable, hand-editable, survives kit upgrades |
 | `.claude/settings.json` | Agent team config and permissions | Auto-loaded by Claude Code at session start |
+| `.mcp.json` | Project-scoped MCP server config | Auto-loaded by Claude Code at session start (canonical location for project-scoped MCP servers; see Claude Code docs) |
 | `.claude/commands/team-start.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `start.sh`); also exposed as `/project:team-start` for manual re-invocation |
 | `ONBOARDING.md` | Developer onboarding (generated) | New developer runs `sandboxed-agent-team onboard` |
 | `TEAM_GUIDE.md` | Daily-use reference for humans (generated) | Human reads for workflows, troubleshooting, recovery |

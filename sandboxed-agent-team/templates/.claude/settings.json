@@ -1,5 +1,5 @@
 {
-  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the kit template source and re-run `sandboxed-agent-team setup`.",
+  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the kit source and re-run `sandboxed-agent-team setup`.",
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
@@ -20,28 +20,6 @@
       "Bash(git push --force *)",
       "Bash(git push -f *)"
     ]
-  },
-  "mcpServers": {
-    "java": {
-      "type": "http",
-      "url": "https://www.javadocs.dev/mcp"
-    },
-    "vaadin": {
-      "type": "http",
-      "url": "https://mcp.vaadin.com/docs"
-    },
-    "spring-docs": {
-      "command": "npx",
-      "args": ["-y", "@enokdev/springdocs-mcp@latest"]
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp"]
-    },
-    "fetch": {
-      "command": "npm",
-      "args": ["exec", "--silent", "--", "fetch-mcp"]
-    }
   },
   "statusLine": {
     "type": "command",

@@ -136,18 +136,168 @@ func runF1Fresh(projectRoot string) int {
 }
 
 // runF2Existing implements re-running setup on a project that already
-// has the kit installed. See plan "Flow — F2".
-// TODO: implement (Task 6).
+// has the kit installed. See plan "Flow — F2": shut down sandbox →
+// reconcile variables → regenerate → commit → re-onboard.
 func runF2Existing(projectRoot string) int {
-	fmt.Fprintln(os.Stderr, "setup (existing installation): not yet implemented")
-	return 1
+	fmt.Println("Updating existing sandboxed-agent-team kit installation.")
+
+	if err := gitPreflight(projectRoot); err != nil {
+		return fail(err)
+	}
+
+	// Tear down the sandbox before overwriting its scripts.
+	if err := RunSandboxStop(projectRoot); err != nil {
+		fmt.Printf("Warning: sandbox teardown reported: %s\n", err)
+	}
+
+	vars, err := LoadVariables(filepath.Join(projectRoot, DefaultVariablesPath))
+	if err != nil {
+		return fail(err)
+	}
+
+	required, err := ScanPlaceholders(templateFS)
+	if err != nil {
+		return fail(err)
+	}
+	if err := CheckUnknownPlaceholders(required); err != nil {
+		return fail(err)
+	}
+
+	// Re-discover auto-derivable values (git identity may have
+	// changed on a new machine; pom.xml may reflect a version bump).
+	info, err := DiscoverProject(filepath.Join(projectRoot, "pom.xml"))
+	if err != nil {
+		return fail(err)
+	}
+	discovered := info.ToVariables()
+	if name, email := GitIdentity(); name != "" || email != "" {
+		if name != "" {
+			discovered["GIT_USER_NAME"] = name
+		}
+		if email != "" {
+			discovered["GIT_USER_EMAIL"] = email
+		}
+	}
+	// DEV_BRANCH_NAME was recorded during initial setup; don't
+	// re-discover or overwrite it here.
+
+	// Remove orphans, prompt for newly-introduced placeholders.
+	if err := ReconcileVariables(vars, required, discovered, true); err != nil {
+		return fail(err)
+	}
+	if err := SaveVariables(filepath.Join(projectRoot, DefaultVariablesPath), vars); err != nil {
+		return fail(err)
+	}
+
+	written, err := WriteAllTemplates(projectRoot, vars)
+	if err != nil {
+		return fail(err)
+	}
+
+	// Re-adding the import is idempotent; ensures CLAUDE.md is
+	// correct even if it was edited since initial setup.
+	if err := AddClaudeImport(projectRoot); err != nil {
+		return fail(err)
+	}
+
+	toStage := append([]string{DefaultVariablesPath, "CLAUDE.md"}, written...)
+	if err := GitAddForce(toStage...); err != nil {
+		return fail(fmt.Errorf("stage kit files: %w", err))
+	}
+	if err := GitCommit("Update sandboxed-agent-team kit"); err != nil {
+		return fail(fmt.Errorf("commit kit files: %w", err))
+	}
+
+	fmt.Println("\nKit regenerated. Re-onboarding the current user…")
+	return runOnboardInstall()
 }
 
-// runSetupRemove implements `setup --remove`. See plan F9.
-// TODO: implement (Task 7).
+// runSetupRemove implements `setup --remove`: tear down sandbox,
+// delete generated kit files (but leave docs/ alone), excise the
+// CLAUDE.md import, cascade to onboard-remove, commit.
 func runSetupRemove() int {
-	fmt.Fprintln(os.Stderr, "setup --remove: not yet implemented")
-	return 1
+	projectRoot := "."
+
+	if !IsKitInstalled(projectRoot) {
+		fmt.Println("No kit installation detected here. Nothing to remove.")
+		return 0
+	}
+
+	fmt.Println("Removing sandboxed-agent-team kit from this project.")
+	ok, err := PromptYesNo("This tears down the sandbox and deletes kit-generated files. Continue?", false)
+	if err != nil {
+		return fail(err)
+	}
+	if !ok {
+		return fail(fmt.Errorf("aborted by user"))
+	}
+
+	if err := RunSandboxStop(projectRoot); err != nil {
+		fmt.Printf("Warning: sandbox teardown reported: %s\n", err)
+	}
+
+	// Cascade to onboarding-remove (developer-local state).
+	if err := removeDeveloperLocalState(projectRoot); err != nil {
+		return fail(err)
+	}
+
+	// Delete the kit's generated files. Intentionally NOT touching
+	// docs/ — per plan, that belongs to the project.
+	toRemove := []string{
+		"CLAUDE_TEAM.md",
+		"ONBOARDING.md",
+		"TEAM_GUIDE.md",
+		".claude/team-variables.yaml",
+		".claude/settings.json",
+		".claude/commands/team-start.md",
+		".sandbox",
+	}
+	if err := GitRm(toRemove...); err != nil {
+		return fail(fmt.Errorf("remove kit files: %w", err))
+	}
+
+	// Excise the @CLAUDE_TEAM.md import block from CLAUDE.md (or
+	// delete CLAUDE.md entirely if the block was its only content).
+	if err := RemoveClaudeImport(projectRoot); err != nil {
+		return fail(fmt.Errorf("remove CLAUDE.md import: %w", err))
+	}
+	if err := stagePath(projectRoot, "CLAUDE.md"); err != nil {
+		fmt.Printf("Warning: couldn't stage CLAUDE.md: %s\n", err)
+	}
+
+	if err := GitCommit("Remove sandboxed-agent-team kit"); err != nil {
+		return fail(fmt.Errorf("commit removal: %w", err))
+	}
+
+	fmt.Println("Kit removed.")
+	return 0
+}
+
+// stagePath stages a path for commit, choosing `git add -f` if the
+// file exists or `git rm` if it was deleted. Handles the case where a
+// remove operation may have left the path either modified or deleted.
+func stagePath(projectRoot, rel string) error {
+	full := filepath.Join(projectRoot, rel)
+	if _, err := os.Stat(full); err == nil {
+		return GitAddForce(rel)
+	} else if os.IsNotExist(err) {
+		return GitRm(rel)
+	} else {
+		return err
+	}
+}
+
+// removeDeveloperLocalState deletes the per-developer files the kit
+// writes during onboarding.
+func removeDeveloperLocalState(projectRoot string) error {
+	// Only explicit per-developer artifact: the onboarding timestamp.
+	// SSH material, OAuth tokens, and the sandbox container itself
+	// are handled by RunSandboxStop.
+	path := filepath.Join(projectRoot, ".claude", ".last-onboarded")
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove %s: %w", path, err)
+	}
+	return nil
 }
 
 // fail prints the error to stderr and returns a non-zero exit code

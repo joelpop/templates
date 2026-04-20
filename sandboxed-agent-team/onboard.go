@@ -75,9 +75,22 @@ func runOnboardInstall() int {
 	return 0
 }
 
-// runOnboardRemove implements `onboard --remove`. See plan F9.
-// TODO: implement (Task 7).
+// runOnboardRemove implements `onboard --remove`: tear down the
+// developer's sandbox container and delete per-developer state.
+// Leaves the project's versioned kit files intact.
 func runOnboardRemove() int {
-	fmt.Fprintln(os.Stderr, "onboard --remove: not yet implemented")
-	return 1
+	projectRoot := "."
+
+	fmt.Println("Removing developer-local state for this project.")
+
+	if err := RunSandboxStop(projectRoot); err != nil {
+		fmt.Printf("Warning: sandbox teardown reported: %s\n", err)
+	}
+
+	if err := removeDeveloperLocalState(projectRoot); err != nil {
+		return fail(err)
+	}
+
+	fmt.Println("Onboarding removed.")
+	return 0
 }

@@ -3,8 +3,8 @@
 > **Generated:** <DATE>
 > **GENERATED FILE** — do not edit directly. Edits here will be lost
 > the next time this file is regenerated. To change this file, edit
-> its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and
-> re-run the setup at your host terminal.
+> its template in the kit template source and
+> re-run `sandboxed-agent-team setup`.
 
 This document describes how to work with the Claude Code agent team
 on this project. It is your day-to-day reference — not a setup guide

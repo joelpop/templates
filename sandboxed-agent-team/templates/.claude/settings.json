@@ -1,5 +1,5 @@
 {
-  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and re-run the setup at your host terminal.",
+  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the kit template source and re-run `sandboxed-agent-team setup`.",
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },

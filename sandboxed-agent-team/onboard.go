@@ -42,21 +42,42 @@ func runOnboard(args []string) int {
 	return runOnboardInstall()
 }
 
+// runOnboardInstall implements the plan's "Flow — F3":
+// verify kit → tear down existing local sandbox → build + start
+// sandbox → record .last-onboarded.
 func runOnboardInstall() int {
-	// F3: verify kit artifacts exist on current branch, tear down
-	// existing local sandbox if any, write developer-local files,
-	// build local sandbox, record .claude/.last-onboarded.
-	//
-	// TODO: implement
-	fmt.Fprintln(os.Stderr, "onboard: not yet implemented")
-	return 1
+	projectRoot := "."
+
+	if !IsKitInstalled(projectRoot) {
+		return fail(fmt.Errorf(
+			"kit is not installed on this branch.\n" +
+				"  Either you're on the wrong branch, or the kit hasn't been set up yet.\n" +
+				"  Run `sandboxed-agent-team setup` to install the kit, or switch to\n" +
+				"  the branch where it lives."))
+	}
+
+	// Tear down an existing sandbox container if present. Safe to call
+	// even when nothing is running.
+	if err := RunSandboxStop(projectRoot); err != nil {
+		// Non-fatal: the sandbox may simply not be running yet.
+		fmt.Printf("Warning: sandbox teardown reported: %s\n", err)
+	}
+
+	if err := RunSandboxStart(projectRoot); err != nil {
+		return fail(fmt.Errorf("start sandbox: %w", err))
+	}
+
+	if err := recordOnboarding(projectRoot); err != nil {
+		return fail(fmt.Errorf("record onboarding: %w", err))
+	}
+
+	fmt.Println("Onboarding complete.")
+	return 0
 }
 
+// runOnboardRemove implements `onboard --remove`. See plan F9.
+// TODO: implement (Task 7).
 func runOnboardRemove() int {
-	// F9 remove-onboarding: tear down developer's sandbox container,
-	// delete developer-local state. Leaves versioned kit files alone.
-	//
-	// TODO: implement
 	fmt.Fprintln(os.Stderr, "onboard --remove: not yet implemented")
 	return 1
 }

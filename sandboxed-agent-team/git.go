@@ -182,6 +182,50 @@ func FastForward(upstream string) error {
 	return err
 }
 
+// GitAddForce stages the given paths with --force, bypassing the
+// project's .gitignore. The kit owns these paths by design.
+func GitAddForce(paths ...string) error {
+	if len(paths) == 0 {
+		return nil
+	}
+	args := append([]string{"add", "--force", "--"}, paths...)
+	_, err := git(args...)
+	return err
+}
+
+// GitCommit creates a commit with the given message. Returns nil if
+// there's nothing to commit (e.g., a re-run produced no changes).
+func GitCommit(message string) error {
+	// If the index has no staged changes, git commit will fail with
+	// "nothing to commit" — treat that as success (it's a no-op rerun).
+	if clean, err := indexIsClean(); err != nil {
+		return err
+	} else if clean {
+		return nil
+	}
+	_, err := git("commit", "-m", message)
+	return err
+}
+
+// GitRm deletes the given path from the repo (both index and
+// working tree). Skips paths that don't exist.
+func GitRm(paths ...string) error {
+	if len(paths) == 0 {
+		return nil
+	}
+	args := append([]string{"rm", "-rf", "--ignore-unmatch", "--"}, paths...)
+	_, err := git(args...)
+	return err
+}
+
+func indexIsClean() (bool, error) {
+	out, err := git("diff", "--cached", "--name-only")
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(out) == "", nil
+}
+
 func splitLines(s string) []string {
 	s = strings.TrimSpace(s)
 	if s == "" {

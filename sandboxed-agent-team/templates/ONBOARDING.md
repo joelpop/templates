@@ -172,7 +172,7 @@ case, ask the Lead to regenerate this file).
 ### Offboarding
 
 When you leave the project:
-1. Run `.sandbox/teardown.sh` to destroy your sandbox.
+1. Run `.sandbox/stop.sh` to destroy your sandbox.
 2. Delete `.sandbox/` and `.claude/settings.json` — these are
    gitignored and not shared.
 3. Optionally delete `.claude/tasks/` and `.claude/progress.md` if
@@ -295,12 +295,12 @@ Authentication is handled by `start.sh`, not the Dockerfile.
 <VERBATIM_START_SH_CONTENT>
 ```
 
-**`.sandbox/teardown.sh`:**
+**`.sandbox/stop.sh`:**
 ```bash
 <VERBATIM_TEARDOWN_SH_CONTENT>
 ```
 
-Run: `chmod +x .sandbox/start.sh .sandbox/teardown.sh`
+Run: `chmod +x .sandbox/start.sh .sandbox/stop.sh`
 
 If SSH was detected in Step 1, create `.sandbox/ssh/` with the
 developer's SSH material:

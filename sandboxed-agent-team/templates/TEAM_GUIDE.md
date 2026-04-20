@@ -156,6 +156,6 @@ Resuming](#pausing-and-resuming)).
 
 To end the engagement (i.e., destroy the sandbox), after ending
 your final Claude Code session, at your host terminal run
-`.sandbox/teardown.sh` to destroy the sandbox VM. Host files remain.
+`.sandbox/stop.sh` to destroy the sandbox VM. Host files remain.
 Delete the project directory manually per your data retention
 policy.

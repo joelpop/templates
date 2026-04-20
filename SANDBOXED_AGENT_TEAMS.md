@@ -2545,6 +2545,39 @@ requirement and its implementation. Requirements should be at the
 acceptance-criteria level — detailed enough to test against, but not
 so detailed that they are the code written in English.
 
+**Edge cases — decision rule:**
+When the line between "new capability" and "refinement" is fuzzy,
+ask: **does an existing requirement in `docs/` document what the
+system must do in this area, such that the request only adjusts how
+the user gets to that behavior?**
+
+- If **yes** → implementation refinement. The WHAT is covered;
+  the HOW is the Coder's/Architect's professional judgment.
+- If **no** → new capability. Requires a requirement.
+
+Two edge-case walk-throughs:
+
+- *"Add a print-to-PDF button on the export screen."*
+  - If `docs/` has a requirement like *"Users can export the
+    current view to PDF from the export screen,"* the button is
+    one way to expose that existing behavior → refinement.
+  - If `docs/` only has *"System produces PDFs on request via the
+    headless export API,"* then putting a user-facing action in
+    the UI is a new capability not yet documented → new
+    capability.
+
+- *"Sort table by date descending by default."*
+  - If `docs/` has *"Tables are sortable"* or *"Sort order is
+    configurable per user,"* the default choice is an
+    implementation detail → refinement.
+  - If no requirement mentions sorting behavior at all, adding a
+    specific default introduces behavior not yet documented → new
+    capability.
+
+**When in doubt, classify as a new capability.** The extra
+draft-and-approve round through the requirement gate is cheaper than
+shipping behavior the human didn't sanction.
+
 **New requirement (or undocumented work request):**
 1. Human tells the Lead what they want built (or provides a requirement).
 2. Lead classifies the request (see above). If it is an implementation

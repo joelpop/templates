@@ -1,23 +1,10 @@
 # Documentation Index
 
-**Requirement status convention:** Every discrete requirement statement
-in a doc carries a status checkbox: `[ ]` not started, `[-]` in
-progress, `[x]` complete. See "Status Tracking" in CLAUDE.md for
-transition rules. Example format inside a requirement doc:
-
-    ## Authentication
-    - [ ] Users can log in with SSO via SAML 2.0
-      - Acceptance criteria: ...
-    - [-] Passkey-based authentication is supported
-      - Acceptance criteria: ...
-    - [x] Session timeout after 30 minutes of inactivity
-      - Acceptance criteria: ...
+*Sample file.* Setup writes this once if `docs/INDEX.md` does not
+exist. Re-setup and remove do not touch it. Edit freely to reflect
+the project's actual documents.
 
 ## Non-Functional Requirements
-Quality attributes (ISO 25010). Every agent must re-read all of these
-before starting any task. Files listed here that do not yet exist
-should be skipped — their absence is expected early in the project
-and does not indicate missing context.
 
 | Tag | File | Description |
 |-----|------|-------------|
@@ -37,8 +24,6 @@ and does not indicate missing context.
 -->
 
 ## Functional Requirements — Cross-Cutting
-Behavioral requirements spanning multiple features. Every agent must
-re-read all of these before starting any task.
 
 | Tag | File | Description |
 |-----|------|-------------|
@@ -48,7 +33,6 @@ re-read all of these before starting any task.
 | FUNCTIONAL-CROSS-CUTTING | `docs/functional/cross-cutting/integration.md` | External APIs, third-party services, protocols |
 
 ## Functional Requirements — Data
-Data model and persistence. Re-read when working on data-related tasks.
 
 | Tag | File | Description |
 |-----|------|-------------|
@@ -56,8 +40,6 @@ Data model and persistence. Re-read when working on data-related tasks.
 | FUNCTIONAL-DATA | `docs/functional/data/migration.md` | Migration strategy, seed data |
 
 ## Functional Requirements — Features
-Re-read the primary doc and ALL supplementals for the feature you are
-currently working on.
 
 | Tag | File | Description |
 |-----|------|-------------|
@@ -67,7 +49,6 @@ currently working on.
 | FUNCTIONAL-FEATURE | `docs/functional/features/feature-b.md` | <Feature B — one-line summary> |
 
 ## External Interface Requirements
-System boundary and interface specifications.
 
 | Tag | File | Description |
 |-----|------|-------------|
@@ -76,7 +57,6 @@ System boundary and interface specifications.
 | EXTERNAL-INTERFACE | `docs/external-interfaces/communication-interfaces.md` | Network protocols, data exchange formats |
 
 ## Environmental Requirements
-Operating environment and infrastructure.
 
 | Tag | File | Description |
 |-----|------|-------------|
@@ -88,7 +68,6 @@ Operating environment and infrastructure.
 -->
 
 ## Technical Constraints
-Design and implementation constraints.
 
 | Tag | File | Description |
 |-----|------|-------------|
@@ -97,8 +76,6 @@ Design and implementation constraints.
 | TECHNICAL | `docs/technical/constraints.md` | Regulatory, compliance, standards |
 
 ## Architectural
-Known structural debt and design decisions. Every agent must re-read
-before starting any task.
 
 | Tag | File | Description |
 |-----|------|-------------|

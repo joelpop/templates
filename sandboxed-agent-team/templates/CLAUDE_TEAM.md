@@ -54,6 +54,60 @@ compliance.
 configured in `.claude/settings.json`. Remove entries for servers not
 in use; add entries for any project-specific servers.
 
+## Documentation Index
+
+The project's requirement documents are indexed in `docs/INDEX.md`,
+organized by type tag following IEEE 830 / ISO 29148 (SRS structure)
+and ISO 25010 (quality model). `docs/INDEX.md` itself is a sample
+file seeded at setup time — setup does not overwrite it on re-runs,
+so edit it freely as the project's docs evolve.
+
+### Tags and agent reading rules
+
+- **NON-FUNCTIONAL** — quality attribute requirements (ISO 25010).
+  Every agent re-reads all of these before starting any task. Files
+  listed that do not yet exist should be skipped — their absence is
+  expected early in the project and does not indicate missing context.
+- **FUNCTIONAL-CROSS-CUTTING** — behavioral requirements spanning
+  multiple features. Every agent re-reads all of these before any
+  task.
+- **FUNCTIONAL-DATA** — data model and persistence. Re-read when
+  working on data-related tasks.
+- **FUNCTIONAL-FEATURE** — primary doc for a specific feature.
+  Re-read the primary doc AND all supplementals for the feature
+  currently being worked on.
+- **FUNCTIONAL-FEATURE-SUPPLEMENTAL** — additional detail for a
+  feature (views, UX, feature-scoped NFRs, etc.); does not stand
+  alone. Each entry must include an "Also read" pointer to its
+  primary FEATURE doc, and vice versa.
+- **EXTERNAL-INTERFACE** — system boundary and interface
+  requirements. Re-read when touching those interfaces.
+- **ENVIRONMENTAL** — infrastructure and deployment requirements.
+  Re-read when touching deployment or infrastructure.
+- **TECHNICAL** — stack, tooling, and design constraints. Re-read
+  as relevant to the current task.
+- **ARCHITECTURAL** — structural debt and design decisions. Every
+  agent re-reads all of these before any task.
+
+Feature-scoped non-functional requirements (e.g., "dashboard loads in
+2 seconds") live under the feature as FUNCTIONAL-FEATURE-SUPPLEMENTAL,
+not under `docs/non-functional/`.
+
+### Requirement status convention
+
+Every discrete requirement statement in a doc carries a status
+checkbox: `[ ]` not started, `[-]` in progress, `[x]` complete. See
+"Status Tracking" below for transition rules. Example format inside
+a requirement doc:
+
+    ## Authentication
+    - [ ] Users can log in with SSO via SAML 2.0
+      - Acceptance criteria: ...
+    - [-] Passkey-based authentication is supported
+      - Acceptance criteria: ...
+    - [x] Session timeout after 30 minutes of inactivity
+      - Acceptance criteria: ...
+
 ## Repository Structure
 ```
 <paste or refine what Claude discovered>

@@ -1,0 +1,50 @@
+{
+  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the team setup kit (SANDBOXED_AGENT_TEAMS.md) and re-run the setup at your host terminal.",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(mvn *)",
+      "Bash(git *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(chmod *)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(curl * | bash)",
+      "Bash(wget * | bash)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean -f*)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)"
+    ]
+  },
+  "mcpServers": {
+    "java": {
+      "type": "http",
+      "url": "https://www.javadocs.dev/mcp"
+    },
+    "vaadin": {
+      "type": "http",
+      "url": "https://mcp.vaadin.com/docs"
+    },
+    "spring-docs": {
+      "command": "npx",
+      "args": ["-y", "@enokdev/springdocs-mcp@latest"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"]
+    },
+    "fetch": {
+      "command": "npm",
+      "args": ["exec", "--silent", "--", "fetch-mcp"]
+    }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash -c 'if [ -f .claude/.team-active ]; then echo \"Agent Team Mode\"; fi'"
+  }
+}

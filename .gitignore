@@ -4,6 +4,11 @@
 
 # Claude Code local state
 .claude/
+# Exception: kit template files live under a .claude/ subdirectory
+# because that's the target path they'll be written to. Keep them
+# tracked.
+!/sandboxed-agent-team/templates/.claude/
+!/sandboxed-agent-team/templates/.claude/**
 
 # Older/working copies
 ignored/

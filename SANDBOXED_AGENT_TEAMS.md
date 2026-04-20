@@ -258,9 +258,21 @@ worktree:
   status. Resumption merges the latest development branch in and
   continues from the first incomplete step. Nested suspension is
   supported.
-- **Cost Tracking** — `/cost` output recorded at task start and end;
-  the Lead computes the delta and reports approximate task cost to the
-  human.
+- **Cost Tracking** — At task kickoff the Integrator captures a
+  `ccusage daily` baseline; at task conclusion (T.6) it runs
+  `ccusage daily` again, subtracts the baseline, and formats a
+  per-model + totals cost report. The Lead always reports the
+  numbers to the human verbally. Recording the report in the final
+  squash-merge commit message (so it persists in git history) is a
+  **per-project setting** in `CLAUDE.md`'s Branching section
+  (`Include cost report in commit message: yes|no`), chosen at
+  setup and changeable later by asking the Lead. Works for both
+  API-key and subscription users because `ccusage` reads Claude
+  Code's local JSONL session logs directly, sidestepping the
+  billing-mode-dependent `/cost` command (which returns no numbers
+  for subscription users). `ccusage` inside the sandbox sees only
+  sandbox sessions — the human's concurrent host Claude Code work
+  is naturally excluded.
 - **Multi-Developer Support** — Shared context (`CLAUDE.md`,
   `team-start.md`) is version-controlled; developer-local state (tasks,
   progress, worktrees, settings) is gitignored. An `ONBOARDING.md` is
@@ -467,6 +479,15 @@ RUN npm install -g playwright \
 RUN timeout 120 npm install -g @enokdev/springdocs-mcp@latest 2>/dev/null || true \
     && timeout 120 npm install -g @playwright/mcp@latest 2>/dev/null || true \
     && timeout 120 npm install -g fetch-mcp@latest 2>/dev/null || true
+
+# ── Cost tracking (ccusage) ───────────────────────────────────────────────
+# ccusage reads Claude Code's local JSONL session logs and reports token
+# usage and USD cost estimates. Works for both API-key and subscription
+# users (unlike Claude Code's built-in /cost, which gives no numbers to
+# subscription users). The Integrator invokes it at task conclusion to
+# build the cost report included in the final squash-merge commit
+# message. See https://github.com/ryoppippi/ccusage.
+RUN timeout 120 npm install -g ccusage@latest 2>/dev/null || true
 
 # ── Project-specific extras ────────────────────────────────────────────────
 # Pre-install project dependencies so agents don't waste tokens
@@ -1361,6 +1382,17 @@ Requirement branch statuses:
   and affected components (see Integration Merge Workflow T.5 in
   team-start.md).
 - Merge method: `<MERGE_METHOD>`
+- Include cost report in commit message: `<COST_IN_COMMIT>` (`yes` or
+  `no`). When `yes`, the Integrator appends a per-model token/cost
+  delta report (via `ccusage`) to the final squash-merge commit
+  message so it persists in git history. When `no`, the report is
+  still shown to the human at task conclusion but is not recorded
+  in git. See T.6 in `team-start.md` for the exact flow. To change
+  this setting later, ask the Lead ("change `Include cost report
+  in commit message` to `yes`/`no`"). The Lead delegates to the
+  Integrator, which creates a working branch off `<dev-branch>`,
+  updates this line in `CLAUDE.md`, commits, and finalizes per the
+  project's merge method above.
 
 ## What NOT to do
 - Do not add new dependencies without messaging the Lead.
@@ -1646,7 +1678,15 @@ the Lead when done, or escalate if you hit a decision that requires
 human input or a judgment call outside your domain.
 
 Own:
-- `.claude/tasks/` — create, update, and delete task files.
+- `.claude/tasks/` — create, delete, and structurally maintain task
+  files (Out of Scope, Relevant Docs, Architect Guidance, the
+  role-assigned Plan Steps list, Requirements-in-Scope cross-refs,
+  and Cost values). Per-role status marks within a task file are
+  written by each role directly — see "Task file sectional
+  ownership" below the Task File Template. Task files are
+  per-developer local state (gitignored); each task file lives once
+  on the developer's filesystem and is accessed by all teammates in
+  that sandbox via the absolute path to the main project root.
 - `.claude/progress.md` — maintain the progress dispatcher (active task,
   suspended tasks, requirement branches).
 - All git operations — branching, merging, fetching, pushing. You are the
@@ -1654,9 +1694,19 @@ Own:
 - PR lifecycle — create, read comments/status, merge, and close PRs via
   the platform REST API using the credentials in the environment
   (sourced from `.sandbox/platform-api.env`).
-- Cost recording — record the `/cost` values the Lead provides in the
-  task file and compute deltas. (The Lead runs `/cost` directly since
-  subagents cannot see the Lead's session cost.)
+- Cost recording — at task kickoff, capture a `ccusage daily` JSON
+  snapshot for today's date and write it to
+  `.claude/tasks/<task-id>.cost-baseline.json` (the cost baseline
+  sidecar). At task conclusion (T.6), run `ccusage daily` again
+  spanning kickoff date through today, subtract the baseline from
+  the final reading per model, and format the cost report (one
+  line per model used + a totals line). Always hand the report to
+  the Lead for verbal reporting to the human. If `Include cost
+  report in commit message: yes` in `CLAUDE.md`'s Branching
+  section, also append the report to the final squash-merge commit
+  message. At T.7, delete the baseline sidecar alongside the task
+  file. `ccusage` reads Claude Code's local JSONL session logs, so
+  it works regardless of billing mode (API-key or subscription).
 - Catch-all — any operational task that doesn't clearly belong to
   another teammate. The Lead delegates these to you.
 
@@ -2599,24 +2649,57 @@ including mid-implementation. The procedure depends on the change:
 - [ ] E2E Tester: full E2E suite (pre-PR gate, after Unit Tester passes)
 - [ ] Analyst: confirm requirement coverage and mark requirements `[x]`
 - [ ] Janitor: lint and cleanup
-
-## Cost
-<!-- Lead runs /cost at kickoff and conclusion; Integrator records the values here. -->
-- Start: <`/cost` output at task kickoff>
-- End: <`/cost` output at task conclusion>
-- Delta: <computed difference — approximate task cost including orchestration>
 ```
 
+**Cost baseline sidecar file**: `.claude/tasks/<task-id>.cost-baseline.json`.
+At kickoff, the Integrator writes this file with the `ccusage daily`
+JSON snapshot of the kickoff date. At conclusion (T.6), the Integrator
+reads it, runs `ccusage` again, computes the per-model delta, and
+deletes the sidecar alongside the task file at T.7. The sidecar is
+gitignored (under the `.claude/tasks/` rule) and is not part of the
+task file's user-facing structure.
+
+
+
+
+**Task file sectional ownership:**
+
+A task file is a per-developer local file (gitignored) that multiple
+teammates — running as subagents within the Lead's session — may
+read and write concurrently. To prevent one subagent from clobbering
+another's changes, each section has a designated writer:
+
+- **Integrator** — creates the file at kickoff, writes the initial
+  Out of Scope, Relevant Docs, Architect Guidance, Plan Steps
+  (role-assigned), and Requirements-in-Scope cross-refs; records
+  Cost values from the Lead; updates structure when scope changes;
+  deletes the file at task completion.
+- **Analyst** — marks the Requirements-in-Scope checkboxes (`[-]`
+  at kickoff, `[x]` at the pre-PR gate). No other role edits these
+  checkboxes.
+- **Each teammate** (Coder, Janitor, Unit Tester, E2E Tester,
+  Architect, Analyst) — marks their own Plan Steps as `[-]` when
+  starting and `[x]` when done. No teammate marks another
+  teammate's steps.
+- **Lead** — does not edit the task file directly; all Lead-driven
+  updates are delegated to the Integrator.
+
+Because each role writes to distinct lines (Analyst to the
+Requirements-in-Scope list, each teammate to only their own Plan
+Steps, Integrator to structural sections and Cost), concurrent
+writes don't collide in practice. If a role needs to change
+something outside its section, it requests the change via the Lead,
+who delegates to the Integrator.
+
 **Task kickoff (before any work begins):**
-1. Lead runs `/cost` and tells the Integrator to record the output in
-   the task file's Cost section (`Start:`) as the baseline. If `/cost`
-   is unavailable, check `/help` or the Claude Code documentation for
-   the current cost-tracking command. If an alternative is found, tell
-   the Integrator to update this task file template and all `/cost`
-   references in `CLAUDE.md` and `team-start.md` so future tasks use
-   the correct command. If no alternative exists, proceed without cost
-   tracking — do not block task kickoff, and re-check on the next task
-   (the command may become available in a future session).
+1. Lead tells the Integrator to capture a cost baseline: run
+   `ccusage daily --since <today-YYYYMMDD> --until <today-YYYYMMDD> --json --breakdown`
+   and write the JSON output to
+   `.claude/tasks/<task-id>.cost-baseline.json`. This snapshot
+   represents all in-sandbox Claude Code work on today's date
+   **before** this task started. The Integrator reads it back at
+   T.6 to subtract pre-task work from the conclusion reading, so
+   the cost report reflects this task's work only.
 2. Lead verifies that the proposed work maps to documented requirements
    in `docs/` (see Requirement Gate Workflow above). If it does not,
    the requirement must be documented and approved before a task can
@@ -2841,16 +2924,63 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
        to `<dev-branch>` directly. No PR is created.
      - **Human merge:** Lead posts a summary and notifies the human that
        all gates have passed. Human performs the squash merge themselves.
-T.6. Lead runs `/cost` and reports the approximate task cost to the
-     human. Lead tells the Integrator the Start and End values.
-     Integrator records them in the task file's Cost section and
-     computes the delta.
-     > **Note:** This is an approximation — it includes the Lead's own
-     > orchestration overhead and all teammate token usage, but a
-     > per-teammate breakdown is not yet available natively.
+T.6. Integrator builds the per-task cost report by subtracting the
+     kickoff baseline from the current total:
+
+     1. Read the baseline JSON from
+        `.claude/tasks/<task-id>.cost-baseline.json` (written at
+        task kickoff; see "Task kickoff" step 1).
+     2. Run the final reading spanning kickoff date through today:
+        ```
+        ccusage daily \
+            --since <kickoff-YYYYMMDD> \
+            --until <today-YYYYMMDD> \
+            --json --breakdown
+        ```
+     3. For each model that appears in either snapshot, compute the
+        delta across all fields of interest (total tokens and
+        cost): `delta = final_sum - baseline_sum`. A baseline of
+        zero is used for any model that only appears in the final
+        snapshot. Subtraction is straightforward because `ccusage`
+        emits per-model entries with the same field names
+        (`modelBreakdowns[].modelName`, `cost`, and the token
+        counts).
+     4. Format the cost report with one line per model used by this
+        task and a final totals line:
+        ```
+        Cost (via ccusage; task delta from baseline):
+        - <model-id>: <N> tokens, $<X.XX>
+        - <model-id>: <N> tokens, $<X.XX>
+        - Total: <total tokens>, $<total cost>
+        ```
+
+     **Always**: Integrator hands the formatted report to the Lead,
+     who reads the per-model lines and totals to the human verbally
+     at task wrap-up — regardless of the project's commit-message
+     setting.
+
+     **If `Include cost report in commit message: yes`** (in
+     `CLAUDE.md`'s Branching section): Integrator appends the
+     formatted report as a trailing block of the final squash-merge
+     commit message (which already carries the task's scope,
+     Architect guidance, and rationale per T.5). The report
+     persists in git history.
+
+     **If `no`**: skip the commit-message append. The verbal report
+     to the human still happens; no git-history record is created.
+
+     > **Note on precision:** the delta is accurate for the
+     > **current task** as long as the baseline was captured at
+     > kickoff for the same sandbox. Figures use `ccusage`'s
+     > pre-cached Anthropic pricing, which may lag real pricing
+     > slightly. The human's concurrent host Claude Code sessions
+     > are naturally excluded — they write to a different
+     > filesystem invisible to the sandbox.
 T.7. Integrator removes the task from `.claude/progress.md`. Integrator
-     deletes the task file from `.claude/tasks/`. Integrator deletes the
-     task branch and all agent sub-branches.
+     deletes the task file from `.claude/tasks/` and, if present,
+     the cost baseline sidecar file
+     `.claude/tasks/<task-id>.cost-baseline.json`. Integrator
+     deletes the task branch and all agent sub-branches.
 
 **P. Post-merge hygiene (both branch types):**
 Janitor runs a dependency audit and full build on `<dev-branch>`. If
@@ -3017,10 +3147,6 @@ the Lead should:
   delegate to the Integrator** — it is the Lead's general-purpose
   operational arm and handles task files, git, PRs, progress
   tracking, and any other odd jobs.
-  **Exception:** `/cost` is a read-only session command that the Lead
-  runs directly (subagents cannot see the Lead's session cost). The
-  Lead reads the cost, reports it to the human, and tells the
-  Integrator to record the values in the task file.
 - Lead: when spawning teammates, include the absolute path to the main
   project root so they can read gitignored `.claude/` files from their
   worktrees.
@@ -4180,6 +4306,23 @@ options:
   Integrator cleans up local branches. If the human rejects the work,
   they tell the Lead.
 - The human may also describe a custom merge method.
+
+**Ask the human about cost-report policy** and fill in the
+`<COST_IN_COMMIT>` placeholder in the Branching section of
+`CLAUDE.md`. Present these options:
+- **yes** — At task conclusion, the Integrator appends a per-model
+  token/cost delta report (via `ccusage`) to the final squash-merge
+  commit message. The report persists in git history, searchable
+  across the project's lifetime (`git log`). Some teams prefer
+  clean commit messages describing only the change; others want
+  the cost trail preserved. Pick `yes` if your team wants the
+  trail.
+- **no** — The report is still shown to the human at task
+  conclusion (the Lead reads it aloud from the Integrator) but is
+  not recorded in git. Use this for projects where clean commit
+  messages matter more than an audit trail of costs.
+
+Default to `no` if the human has no preference.
 
 In all cases: after merge the Integrator deletes local task branches
 and agent sub-branches, and the Janitor runs a post-merge hygiene pass

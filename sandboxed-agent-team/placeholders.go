@@ -114,6 +114,27 @@ var knownPlaceholders = map[string]PlaceholderDef{
 		Options: []string{"GitHub Actions", "GitLab CI", "Bitbucket Pipelines", "Jenkins", "none"},
 		Default: "GitHub Actions",
 	},
+	"BUILD_TOOL": {
+		Name:    "BUILD_TOOL",
+		Source:  SourceAuto,
+		Prompt:  "Build tool",
+		Default: "Maven",
+	},
+	"STACK_SUMMARY": {
+		Name:   "STACK_SUMMARY",
+		Source: SourceAuto,
+		Prompt: "One-line stack summary",
+	},
+	"DATE": {
+		Name:   "DATE",
+		Source: SourceAuto,
+		Prompt: "Date (YYYY-MM-DD)",
+	},
+	"UTC_TIMESTAMP": {
+		Name:   "UTC_TIMESTAMP",
+		Source: SourceAuto,
+		Prompt: "Current UTC timestamp (ISO 8601)",
+	},
 }
 
 // CheckUnknownPlaceholders returns an error if any placeholder name in

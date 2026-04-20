@@ -1484,8 +1484,8 @@ T.6. Integrator builds the per-task cost report by subtracting the
         task and a final totals line:
         ```
         Cost (via ccusage; task delta from baseline):
-        - <model-id>: <N> tokens, $<X.XX>
-        - <model-id>: <N> tokens, $<X.XX>
+        - model-id: N tokens, $X.XX
+        - model-id: N tokens, $X.XX
         - Total: <total tokens>, $<total cost>
         ```
 

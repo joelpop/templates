@@ -157,5 +157,27 @@ func (p ProjectInfo) ToVariables() Variables {
 	if p.Database != "" {
 		v["DATABASE"] = p.Database
 	}
+	if s := p.StackSummary(); s != "" {
+		v["STACK_SUMMARY"] = s
+	}
 	return v
+}
+
+// StackSummary composes a one-line human-readable stack description
+// suitable for the STACK_SUMMARY placeholder in generated docs.
+func (p ProjectInfo) StackSummary() string {
+	var parts []string
+	if p.VaadinVersion != "" {
+		parts = append(parts, "Vaadin "+p.VaadinVersion)
+	}
+	if p.SpringBootVersion != "" {
+		parts = append(parts, "Spring Boot "+p.SpringBootVersion)
+	}
+	if p.JavaVersion != "" {
+		parts = append(parts, "Java "+p.JavaVersion)
+	}
+	if p.Database != "" {
+		parts = append(parts, p.Database)
+	}
+	return strings.Join(parts, " / ")
 }

@@ -61,38 +61,30 @@ you for the rest:
   token). Claude Code walks you through creating one if you don't
   have it ready.
 
-### Step 2 — Prompt
+### Step 2 — Run onboard
 
-Start a Claude Code session in the project directory in **accept
-edits mode** (press Tab until the mode selector shows "Accept Edits"
-or start Claude Code with `--allowedTools Edit,Write,Read,Glob,Grep`).
-This auto-approves file reads and writes — the setup creates several
-files — while still prompting you for shell commands. Then say:
+From the project root, run the kit's onboard command:
 
-> Read `ONBOARDING.md` and execute the setup checklist. Ask me before
-> doing anything destructive, and stop when you need my input.
+```
+sandboxed-agent-team onboard
+```
 
-Throughout setup, Claude Code will prompt you to approve shell
-commands and other tool calls not covered by accept edits mode.
-These are expected — approve them to keep the setup moving. The
-prompt you gave still applies, so Claude Code will pause for your
-input at decision points.
+The tool auto-detects your local state and does the right thing:
 
-### Step 3 — Proceed
+- **Fresh onboarding** → builds the sandbox container from the
+  project's Dockerfile, provisions SSH material if the project uses
+  an SSH Git remote, and starts the sandbox.
+- **Re-onboarding** (you've onboarded this workspace before) → tears
+  down the existing sandbox and rebuilds from scratch. Idempotent
+  and non-destructive: nothing versioned is touched.
 
-Claude Code takes it from here. The checklist detects your local
-state and adjusts automatically:
+If prompts come up, they're for information the tool can't auto-discover
+(e.g., which SSH key to use when multiple keys are configured). When
+the command finishes, the sandbox is running and a Claude Code session
+is attached to it, ready for the agent team.
 
-- **Fresh onboarding** — full setup (sandbox files, agent settings,
-  sandbox build, team start)
-- **Re-onboarding** — asks before overwriting existing local setup
-
-Claude Code handles most steps autonomously. It pauses to ask for
-your input when it needs information it cannot discover (e.g., your
-auth method if detection fails) or confirmation (e.g., which SSH key
-to use). When the sandbox files are ready, it asks you to run
-`.sandbox/start.sh` in a separate terminal, then continues setup
-from inside the sandbox session.
+To uninstall your local state later: `sandboxed-agent-team onboard
+--remove`.
 
 ## Daily Use
 
@@ -178,253 +170,3 @@ When you leave the project:
 3. Optionally delete `.claude/tasks/` and `.claude/progress.md` if
    no one else needs your local task history.
 
----
-
-**SETUP CHECKLIST — Agent-Executed Content Below**
-
----
-
-## Setup Checklist
-
-### Step 0 — Detect local state
-Check if this developer already has local setup files:
-- Does `.sandbox/Dockerfile` exist?
-- Does `.claude/settings.json` exist?
-
-If both exist, tell the human: "Your local setup already exists. Would
-you like to rebuild it? This will overwrite your sandbox config and
-agent settings." If the human says no, skip to Step 4.
-
-### Step 1 — Detect developer identity and authentication method
-<!-- SYNC NOTE: The auth detection logic below is duplicated in
-     Setup Step 2 of the Agent Team Setup checklist. If you update
-     one, update both. -->
-Auto-discover the developer's git identity from `git config user.name`
-and `git config user.email`. These are needed for the Dockerfile in
-Step 2. If either value is missing, ask the developer to configure
-them before proceeding:
-```
-git config user.name "Your Name"
-git config user.email "your.email@example.com"
-```
-
-The sandbox also needs an API key or OAuth token to authenticate —
-your host Claude Code login does not carry over. On macOS, `start.sh`
-automatically extracts the latest OAuth token from the Keychain at
-each startup, so no manual token management is needed. On other
-systems, a manual export is required.
-
-Detect the auth method so `start.sh` can inject the correct
-credentials into the sandbox at startup:
-
-1. Check if `ANTHROPIC_API_KEY` is set in the current environment.
-   - If set → API key method. Proceed to Step 2.
-2. On macOS: check if the macOS Keychain has Claude Code credentials.
-   Run:
-   ```
-   security dump-keychain 2>/dev/null | grep -i 'claude.*credential'
-   ```
-   - If a match is found → OAuth method. Tell the human: "Your OAuth
-     token is in the macOS Keychain. `start.sh` will extract it
-     automatically at each startup — no manual export needed." Proceed
-     to Step 2.
-   - If no match → go to step 3.
-3. Check if `CLAUDE_CODE_OAUTH_TOKEN` is already exported in the
-   current environment.
-   - If set → OAuth method. Verify it is also in the human's shell
-     config (`~/.zshrc` or equivalent) so it persists across sessions.
-     Proceed to Step 2.
-4. If neither environment variable is set, ask the human for permission
-   to read `~/.claude/.credentials.json`.
-   - If it contains an OAuth token → tell the human: "You're using
-     OAuth but `CLAUDE_CODE_OAUTH_TOKEN` is not exported in your shell
-     config. The sandbox needs this to authenticate." Walk them through:
-     1. Copy the token value from `~/.claude/.credentials.json`.
-     2. Add `export CLAUDE_CODE_OAUTH_TOKEN="<token>"` to `~/.zshrc`
-        or equivalent.
-     3. Confirm when done before proceeding.
-   - If the file doesn't exist or contains no token → go to step 5.
-5. If no method is detected, ask: "I couldn't detect your auth method.
-   Do you authenticate via an Anthropic API key or via OAuth
-   (company/team account)?" Then guide setup accordingly.
-
-**SSH remote access:**
-<!-- SYNC NOTE: The SSH detection logic below is duplicated in
-     Setup Step 1 of the Agent Team Setup checklist. If you update
-     one, update both. -->
-Check if the project's Git remote uses SSH:
-```
-git remote -v
-```
-If any remote URL uses an SSH-style address (starts with `git@` or
-`ssh://`), the sandbox needs the developer's SSH key to access the
-remote.
-
-If SSH is detected:
-1. Extract the host or alias from the remote URL. For example,
-   `git@bb-client:org/repo.git` → host alias is `bb-client`;
-   `git@bitbucket.org:org/repo.git` → host is `bitbucket.org`.
-2. Look up the host/alias in `~/.ssh/config` to find the
-   `IdentityFile` and `HostName` (if different from the alias).
-   If there is no matching entry in `~/.ssh/config` and the host
-   in the URL is a real hostname (e.g., `bitbucket.org`), the
-   default key (`~/.ssh/id_ed25519` or `~/.ssh/id_rsa`) may be
-   used — ask the developer to confirm which key authenticates
-   with this remote.
-3. Confirm the key path with the developer.
-4. Note the SSH key path, host alias, and real hostname for Step 2.
-
-If SSH is not detected (remote uses HTTPS or no remote is configured),
-skip SSH setup.
-
-### Step 2 — Create `.sandbox/` files
-
-Create the following three files. Replace `<GIT_USER_NAME>` and
-`<GIT_USER_EMAIL>` in the Dockerfile with this developer's git identity
-from Step 1. If SSH is not needed, remove `openssh-client` from the
-apt-get line and the SSH directory block from the Dockerfile.
-Authentication is handled by `start.sh`, not the Dockerfile.
-
-**`.sandbox/Dockerfile`:**
-```dockerfile
-<FULLY_CUSTOMIZED_DOCKERFILE_CONTENT>
-```
-
-**`.sandbox/start.sh`:**
-```bash
-<VERBATIM_START_SH_CONTENT>
-```
-
-**`.sandbox/stop.sh`:**
-```bash
-<VERBATIM_TEARDOWN_SH_CONTENT>
-```
-
-Run: `chmod +x .sandbox/start.sh .sandbox/stop.sh`
-
-If SSH was detected in Step 1, create `.sandbox/ssh/` with the
-developer's SSH material:
-1. Copy the SSH key pair:
-   ```
-   mkdir -p .sandbox/ssh
-   cp <IdentityFile> .sandbox/ssh/
-   cp <IdentityFile>.pub .sandbox/ssh/ 2>/dev/null
-   ```
-2. Write an SSH config for the sandbox — the `IdentityFile` must
-   reference the sandbox path (`~/.ssh/<key-filename>`), not the
-   host path:
-   ```
-   cat > .sandbox/ssh/config << 'EOF'
-   Host <alias-or-hostname>
-       HostName <real-hostname>
-       User git
-       IdentityFile ~/.ssh/<key-filename>
-       IdentitiesOnly yes
-   EOF
-   ```
-   If the remote URL uses the real hostname directly (no alias in
-   `~/.ssh/config`), write the config entry with
-   `Host <real-hostname>` instead.
-3. Generate `known_hosts` for the remote host:
-   ```
-   ssh-keyscan <real-hostname> > .sandbox/ssh/known_hosts 2>/dev/null
-   ```
-4. Record the host key path so `start.sh` can sync fresh keys:
-   ```
-   echo "<IdentityFile-absolute-path>" > .sandbox/ssh.source
-   ```
-
-If the merge method is **PR** (see Project Details above), provision
-platform API access. This is required for the Lead to create, read,
-and merge PRs via the repo server's REST API.
-
-Guide the developer through creating an API token:
-- **Bitbucket Cloud:** "Go to
-  https://bitbucket.org/account/settings/app-passwords/ and create an
-  app password with **Repositories:Read** and **Pull requests:Read +
-  Write** permissions. Paste the generated password here."
-- **GitHub:** "Go to Settings → Developer settings → Personal access
-  tokens → Fine-grained tokens. Create a token scoped to this
-  repository with **Pull requests:Read and write** and
-  **Contents:Read** permissions. Paste the token here."
-- **GitLab:** "Go to User Settings → Access Tokens. Create a token
-  with the **api** scope. Paste the token here."
-
-Write `.sandbox/platform-api.env` with the token and repo details
-(detected from the remote URL):
-```
-PLATFORM_TYPE=<PLATFORM_TYPE>
-PLATFORM_API_URL=<API_BASE_URL>
-PLATFORM_API_USER=<USERNAME>
-PLATFORM_API_TOKEN=<TOKEN>
-PLATFORM_REPO_WORKSPACE=<WORKSPACE>
-PLATFORM_REPO_SLUG=<REPO_SLUG>
-PLATFORM_REPO_OWNER=<OWNER>
-PLATFORM_REPO_NAME=<REPO_NAME>
-```
-Include only the fields relevant to the platform.
-
-### Step 3 — Create `.claude/settings.json`
-
-Create `.claude/settings.json` with the following content:
-
-```json
-<EXACT_SETTINGS_JSON_CONTENT>
-```
-
-Do NOT overwrite or modify `.claude/commands/team-start.md` — it is
-versioned and shared across all developers.
-
-### Step 4 — Build and start the sandbox
-
-Tell the human:
-
-> "The sandbox files are ready. Please open a new terminal in the
-> project directory and run: `.sandbox/start.sh`
->
-> This builds the Docker image and starts a new Claude Code session
-> inside the sandbox. Let me know when the sandbox session is ready."
-
-Wait for the human to confirm the sandbox session is running, then
-tell them:
-
-> "In the sandbox session, say: *Read `ONBOARDING.md` and continue
-> from Step 5.*"
-
-Poll for `.claude/.last-onboarded` to appear (visible via the
-bidirectional sandbox mount), confirming that Onboarding Step 5 has
-completed. If the file does not appear within a few minutes, ask the
-human to check the sandbox terminal for errors. Common causes:
-- **Sandbox build failed or hung:** Check the `start.sh` output for Docker
-  build errors (network issues, missing packages, insufficient disk).
-- **Authentication failed:** The OAuth token may be expired or missing.
-  See the Troubleshooting section.
-- **Human closed the sandbox terminal:** Re-run `.sandbox/start.sh` to
-  reconnect.
-
-### Step 5 — Start the agent team
-
-*(This step is executed by the sandbox Claude Code session.)*
-
-Record the current UTC timestamp as this developer's onboarding
-time to `.claude/.last-onboarded`. The file contains one line
-with a `Last onboarded:` label followed by the timestamp in ISO
-8601 UTC format:
-
-```bash
-TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-echo "Last onboarded: $TS" > .claude/.last-onboarded
-```
-
-The session's system prompt already auto-loaded the Lead role
-from `.sandbox/start.sh`'s `--append-system-prompt`, so the team
-spawns automatically on the first human message. Then tell the
-human: "The team is ready. Describe what you'd like to work on."
-
-### Step 6 — End the host session
-
-*(Back in the host session.)* Once the human confirms the sandbox
-team is running, tell them: "Onboarding is complete — the sandbox
-session is running your team. This host session's setup work is done.
-You can close it, or keep it open for any work you want to do outside
-the sandbox (note: work in the host session is not sandboxed)."

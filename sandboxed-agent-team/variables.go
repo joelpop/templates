@@ -121,21 +121,29 @@ func ReconcileVariables(vars Variables, required []string, discovered Variables,
 		}
 	}
 
-	// Fill in every required placeholder.
+	// Fill in every required placeholder. For SourceAuto placeholders,
+	// an up-to-date `discovered` value wins over any persisted value
+	// (so pom.xml bumps, timestamps, etc. refresh on every run). For
+	// SourcePrompt placeholders, a persisted value wins (user edits
+	// to the variables file survive re-runs).
 	for _, name := range required {
-		if _, present := vars[name]; present {
-			continue
-		}
-		// Prefer an auto-discovered value if one was provided.
-		if v, ok := discovered[name]; ok && v != "" {
-			vars[name] = v
-			continue
-		}
-		// Fall back to an interactive prompt.
 		def, ok := knownPlaceholders[name]
 		if !ok {
 			return fmt.Errorf("no source for placeholder %q — add it to knownPlaceholders", name)
 		}
+
+		if def.Source == SourceAuto {
+			if v, has := discovered[name]; has && v != "" {
+				vars[name] = v
+				continue
+			}
+		}
+
+		if _, present := vars[name]; present {
+			continue
+		}
+
+		// Not yet set and no auto value — prompt the user.
 		value, err := def.Resolve()
 		if err != nil {
 			return fmt.Errorf("resolve %s: %w", name, err)

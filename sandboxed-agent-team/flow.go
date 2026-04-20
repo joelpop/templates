@@ -233,3 +233,40 @@ func recordOnboarding(projectRoot string) error {
 	}
 	return os.WriteFile(path, []byte(time.Now().UTC().Format(time.RFC3339)+"\n"), 0o644)
 }
+
+// buildDiscoveredMap collects every auto-discoverable value for the
+// current run: pom.xml fields, git identity, dev branch, build tool,
+// stack summary, and timestamps. Returns a Variables map that
+// ReconcileVariables uses to prefer fresh values over persisted
+// ones for SourceAuto placeholders.
+func buildDiscoveredMap(projectRoot, devBranch string) (Variables, error) {
+	pomPath := filepath.Join(projectRoot, "pom.xml")
+	info, err := DiscoverProject(pomPath)
+	if err != nil {
+		return nil, err
+	}
+	d := info.ToVariables()
+
+	if _, err := os.Stat(pomPath); err == nil {
+		d["BUILD_TOOL"] = "Maven"
+	}
+
+	if name, email := GitIdentity(); name != "" || email != "" {
+		if name != "" {
+			d["GIT_USER_NAME"] = name
+		}
+		if email != "" {
+			d["GIT_USER_EMAIL"] = email
+		}
+	}
+
+	if devBranch != "" {
+		d["DEV_BRANCH_NAME"] = devBranch
+	}
+
+	now := time.Now().UTC()
+	d["UTC_TIMESTAMP"] = now.Format(time.RFC3339)
+	d["DATE"] = now.Format("2006-01-02")
+
+	return d, nil
+}

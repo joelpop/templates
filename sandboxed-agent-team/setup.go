@@ -77,20 +77,10 @@ func runF1Fresh(projectRoot string) int {
 		return fail(err)
 	}
 
-	info, err := DiscoverProject(filepath.Join(projectRoot, "pom.xml"))
+	discovered, err := buildDiscoveredMap(projectRoot, devBranch)
 	if err != nil {
 		return fail(err)
 	}
-	discovered := info.ToVariables()
-	if name, email := GitIdentity(); name != "" || email != "" {
-		if name != "" {
-			discovered["GIT_USER_NAME"] = name
-		}
-		if email != "" {
-			discovered["GIT_USER_EMAIL"] = email
-		}
-	}
-	discovered["DEV_BRANCH_NAME"] = devBranch
 
 	vars, err := LoadVariables(filepath.Join(projectRoot, DefaultVariablesPath))
 	if err != nil {
@@ -164,22 +154,14 @@ func runF2Existing(projectRoot string) int {
 	}
 
 	// Re-discover auto-derivable values (git identity may have
-	// changed on a new machine; pom.xml may reflect a version bump).
-	info, err := DiscoverProject(filepath.Join(projectRoot, "pom.xml"))
+	// changed on a new machine; pom.xml may reflect a version bump;
+	// timestamps refresh each run). DEV_BRANCH_NAME is pulled from
+	// vars, not re-discovered — it was recorded during initial setup.
+	devBranch := vars["DEV_BRANCH_NAME"]
+	discovered, err := buildDiscoveredMap(projectRoot, devBranch)
 	if err != nil {
 		return fail(err)
 	}
-	discovered := info.ToVariables()
-	if name, email := GitIdentity(); name != "" || email != "" {
-		if name != "" {
-			discovered["GIT_USER_NAME"] = name
-		}
-		if email != "" {
-			discovered["GIT_USER_EMAIL"] = email
-		}
-	}
-	// DEV_BRANCH_NAME was recorded during initial setup; don't
-	// re-discover or overwrite it here.
 
 	// Remove orphans, prompt for newly-introduced placeholders.
 	if err := ReconcileVariables(vars, required, discovered, true); err != nil {

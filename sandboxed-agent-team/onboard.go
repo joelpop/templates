@@ -63,6 +63,16 @@ func runOnboardInstall() int {
 		fmt.Printf("Warning: sandbox teardown reported: %s\n", err)
 	}
 
+	// If the project uses an SSH remote, provision the developer's
+	// SSH material into .sandbox/ssh/ so start.sh can inject it.
+	// No-op for HTTPS remotes.
+	if sshInfo := DiscoverSSHRemote(); sshInfo != nil {
+		if err := ProvisionSSH(projectRoot, sshInfo); err != nil {
+			fmt.Printf("Warning: SSH provisioning failed: %s\n", err)
+			fmt.Println("         Sandbox will start, but git operations over SSH may fail.")
+		}
+	}
+
 	if err := RunSandboxStart(projectRoot); err != nil {
 		return fail(fmt.Errorf("start sandbox: %w", err))
 	}

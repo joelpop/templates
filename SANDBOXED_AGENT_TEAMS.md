@@ -4196,8 +4196,21 @@ before writing a single file.
 
 The "development branch" is where all integrated work eventually
 lands (e.g., `develop`, `feature/develop`, or `main` under
-trunk-based development). You need its name before you can place
-setup correctly.
+trunk-based development). You need its name *and* a current view of
+the remote before you can place setup correctly.
+
+First, refresh the view of remotes so remote-tracking branches
+aren't stale:
+```
+git fetch --all --prune
+```
+If a remote is configured and the fetch fails (no network, auth
+required, etc.), stop and tell the human what failed. A stale view
+can make the kit pick an outdated base and silently strand new
+commits. Do not proceed past this step on a fetch error unless the
+human explicitly says "no remote / offline — continue anyway."
+
+Then:
 
 1. Run `git branch -a` to list local and remote branches.
 2. Look for a conventional name in the output: exact matches for
@@ -4210,7 +4223,8 @@ setup correctly.
    trunk-based model.)" Accept the human's answer.
 4. If the named branch exists only on the remote, offer:
    "`<name>` exists on the remote but not locally. Check it out with
-   `git fetch && git checkout <name>`?" Wait for confirmation.
+   `git checkout <name>`?" Wait for confirmation. (The fetch above
+   already pulled the remote ref.)
 5. If the named branch exists nowhere, ask: "`<name>` does not exist
    locally or on the remote. Should I create it off the current
    default branch (`main` or `master`)?" Wait for confirmation before
@@ -4218,6 +4232,28 @@ setup correctly.
 6. **Never** treat `main` or `master` as the development branch by
    default. Only accept `main`/`master` if the human explicitly
    confirms trunk-based development.
+
+Once the name is confirmed, verify the local branch is up to date
+with its remote counterpart (if a remote counterpart exists). Run:
+```
+git rev-list --left-right --count <DEV_BRANCH_NAME>...origin/<DEV_BRANCH_NAME>
+```
+The output is `<ahead>\t<behind>` relative to the remote.
+
+- `0\t0` → local is current. Proceed.
+- `0\tN` (behind only) → offer to fast-forward:
+  `git checkout <DEV_BRANCH_NAME> && git merge --ff-only origin/<DEV_BRANCH_NAME>`.
+  Wait for confirmation. Do not proceed until local matches remote —
+  branching off a stale local base is one of the failure modes this
+  step exists to prevent.
+- `N\t0` (ahead only) → warn the human: "Your local
+  `<DEV_BRANCH_NAME>` has N commits the remote doesn't. That's fine
+  — setup will use your local state as the base — but you'll want
+  to push at some point." Proceed.
+- `N\tM` (diverged) → stop. Tell the human: "Local and remote
+  `<DEV_BRANCH_NAME>` have diverged (N ahead, M behind). Resolve
+  this before re-running setup so the kit lands on a clean, current
+  base." Do not proceed.
 
 Record the confirmed name. It will be written into `CLAUDE.md` as
 `<DEV_BRANCH_NAME>` in Phase 1.

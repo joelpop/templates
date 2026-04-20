@@ -4076,11 +4076,13 @@ issue again at that point.
 Then check git state:
 - Run `git status`. If there are uncommitted changes, warn the human:
   "You have uncommitted changes. Commit or stash them before
-  proceeding — setup will create new files and modify `.gitignore`."
-  Wait for confirmation.
-- Note the current branch. Setup will create files on whatever branch
-  is checked out. If the human intended to work on a specific branch,
-  confirm before proceeding.
+  proceeding — setup will create new files, modify `.gitignore`, and
+  may switch branches (see branch-placement step below)." Wait for
+  confirmation.
+
+The current branch is **not** automatically the right place to run
+setup. Do not begin writing files yet. Branch placement is decided
+after scenario classification, below.
 
 Then check the project directory for existing kit artifacts:
 
@@ -4180,6 +4182,96 @@ files (Step 12).
 If the audit finds no drift and no new placeholders, tell the human
 the kit is already current and stop — there is nothing to do.
 
+**Branch placement (Scenarios A and C only — skip for B):**
+
+Scenarios A and C write versioned files (`CLAUDE.md`,
+`team-start.md`, `docs/INDEX.md`, and at Step 12 `ONBOARDING.md`
+and `TEAM_GUIDE.md`). These **MUST** land on the project's
+development branch — not on a requirement, feature, topic, or ad-hoc
+branch. If setup lands anywhere else, the artifacts are stranded
+until a merge, and the merge can go wrong. Get the branch right
+before writing a single file.
+
+**Step 0a — Identify the development branch.**
+
+The "development branch" is where all integrated work eventually
+lands (e.g., `develop`, `feature/develop`, or `main` under
+trunk-based development). You need its name before you can place
+setup correctly.
+
+1. Run `git branch -a` to list local and remote branches.
+2. Look for a conventional name in the output: exact matches for
+   `develop`, `dev`, `development`, or `feature/develop` (local or
+   remote). If exactly one matches, propose it: "I found `<name>` —
+   is this the project's development branch?" Wait for a yes/no.
+3. If no convention match, or more than one matches, or the human
+   says no, ask: "Which branch is the project's development branch?
+   (Examples: `develop`, `feature/develop`, or `main` if you use a
+   trunk-based model.)" Accept the human's answer.
+4. If the named branch exists only on the remote, offer:
+   "`<name>` exists on the remote but not locally. Check it out with
+   `git fetch && git checkout <name>`?" Wait for confirmation.
+5. If the named branch exists nowhere, ask: "`<name>` does not exist
+   locally or on the remote. Should I create it off the current
+   default branch (`main` or `master`)?" Wait for confirmation before
+   creating.
+6. **Never** treat `main` or `master` as the development branch by
+   default. Only accept `main`/`master` if the human explicitly
+   confirms trunk-based development.
+
+Record the confirmed name. It will be written into `CLAUDE.md` as
+`<DEV_BRANCH_NAME>` in Phase 1.
+
+**Step 0b — Place setup on the right branch.**
+
+Compare the current branch (`git rev-parse --abbrev-ref HEAD`) to
+the development branch from Step 0a.
+
+- **Current branch is the development branch** → stay. Skip to
+  Phase 1.
+- **Current branch is anything else** → stop and ask:
+
+  > "Setup writes versioned shared config that must live on the
+  > development branch. Your development branch is
+  > `<DEV_BRANCH_NAME>`, but you're currently on `<current>`.
+  > How should I proceed?
+  >
+  > 1. Switch to `<DEV_BRANCH_NAME>` and run setup there.
+  > 2. Create a new working branch based on `<DEV_BRANCH_NAME>`
+  >    (you name it) and run setup there; it merges back to
+  >    `<DEV_BRANCH_NAME>` after review.
+  > 3. Stay on `<current>` — only appropriate if you are certain
+  >    this is where the kit artifacts should live."
+
+Execute the chosen option **exactly** as follows, then verify.
+
+- **Option 1 (switch):**
+  ```
+  git checkout <DEV_BRANCH_NAME>
+  git rev-parse --abbrev-ref HEAD   # must print <DEV_BRANCH_NAME>
+  ```
+
+- **Option 2 (new branch off dev):** you **MUST** check out
+  `<DEV_BRANCH_NAME>` first, or `git checkout -b` will silently use
+  the current HEAD as the base — this is how past sessions landed
+  the setup branch on `main` instead of on `develop`. Do not
+  shortcut this.
+  ```
+  git checkout <DEV_BRANCH_NAME>
+  git checkout -b <new-name>
+  git rev-parse --abbrev-ref HEAD                 # must print <new-name>
+  git log --oneline <DEV_BRANCH_NAME>..HEAD       # must be empty
+  ```
+
+- **Option 3 (stay):** no git commands. Re-confirm with the human:
+  "To confirm: kit artifacts (`CLAUDE.md`, `team-start.md`, etc.)
+  will be committed on `<current>`, and `<current>` — not
+  `<DEV_BRANCH_NAME>` — is where new developers and future re-setup
+  runs should look for them. Correct?" Wait for yes.
+
+Do not proceed to Phase 1 until the current branch is confirmed
+correct by one of the verifications above.
+
 ### Phase 1: Gather project information
 
 **Step 1 — Discover and confirm project details.**
@@ -4197,12 +4289,14 @@ If `pom.xml` exists, read it and auto-discover:
 - **JUnit version** (from JUnit dependency — e.g., `junit-jupiter` 5.x
   = JUnit 5, `junit-framework` 6.x = JUnit 6)
 - **Database** (from JDBC driver dependency, if any)
-- **Development branch name** (from `git branch`)
+
+The **development branch** has already been identified and confirmed
+in Phase 0 Step 0a. Carry it forward as `<DEV_BRANCH_NAME>` — do not
+re-ask.
 
 Present the findings to the human for confirmation. Ask for anything
 not discoverable from pom.xml:
 - **CI platform** — e.g., GitHub Actions, GitLab CI, Jenkins.
-- **Development branch name** — if not obvious from git.
 
 **SSH remote access:**
 <!-- SYNC NOTE: The SSH detection logic below is duplicated in

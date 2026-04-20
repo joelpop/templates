@@ -763,7 +763,7 @@ warning.
 3. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
    ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL, ENVIRONMENTAL,
    or EXTERNAL-INTERFACE docs relevant to your current task
-4. `docs/architecture-debt.md` — known structural debt
+4. `docs/reqs/architecture-debt.md` — known structural debt
 5. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
    all FEATURE-SUPPLEMENTAL docs linked from it
 6. `.claude/tasks/<your-task>.md` — your specific assignment

@@ -56,42 +56,54 @@ for any project-specific servers.
 
 ## Documentation Index
 
-The project's requirement documents are indexed in `docs/INDEX.md`,
-organized by type tag following IEEE 830 / ISO 29148 (SRS structure)
-and ISO 25010 (quality model). `docs/INDEX.md` itself is a sample
-file seeded at setup time — setup does not overwrite it on re-runs,
-so edit it freely as the project's docs evolve.
+The kit's documentation convention splits `docs/` into two trees:
+
+- `docs/agnostic/` — project-agnostic patterns, preferences, and
+  standing guidance (not tied to a specific project's requirements).
+- `docs/reqs/` — project-specific requirements following IEEE 830 /
+  ISO 29148 (SRS structure) and ISO 25010 (quality model).
+
+The master index is `docs/INDEX.md`. It is a sample file seeded at
+setup time — setup does not overwrite it on re-runs, so edit it
+freely as the project's docs evolve.
 
 ### Tags and agent reading rules
 
-- **NON-FUNCTIONAL** — quality attribute requirements (ISO 25010).
-  Every agent re-reads all of these before starting any task. Files
-  listed that do not yet exist should be skipped — their absence is
-  expected early in the project and does not indicate missing context.
+- **AGNOSTIC** — project-agnostic patterns, preferences, and
+  standing guidance under `docs/agnostic/`. Every agent re-reads
+  all of these before starting any task.
+- **NON-FUNCTIONAL** — quality attribute requirements under
+  `docs/reqs/non-functional/` (ISO 25010). Every agent re-reads all
+  of these before starting any task. Files listed that do not yet
+  exist should be skipped — their absence is expected early in the
+  project and does not indicate missing context.
 - **FUNCTIONAL-CROSS-CUTTING** — behavioral requirements spanning
-  multiple features. Every agent re-reads all of these before any
-  task.
-- **FUNCTIONAL-DATA** — data model and persistence. Re-read when
-  working on data-related tasks.
-- **FUNCTIONAL-FEATURE** — primary doc for a specific feature.
-  Re-read the primary doc AND all supplementals for the feature
-  currently being worked on.
+  multiple features, under `docs/reqs/functional/cross-cutting/`.
+  Every agent re-reads all of these before any task.
+- **FUNCTIONAL-DATA** — data model and persistence, under
+  `docs/reqs/functional/data/`. Re-read when working on
+  data-related tasks.
+- **FUNCTIONAL-FEATURE** — primary doc for a specific feature,
+  under `docs/reqs/functional/features/`. Re-read the primary doc
+  AND all supplementals for the feature currently being worked on.
 - **FUNCTIONAL-FEATURE-SUPPLEMENTAL** — additional detail for a
   feature (views, UX, feature-scoped NFRs, etc.); does not stand
   alone. Each entry must include an "Also read" pointer to its
   primary FEATURE doc, and vice versa.
 - **EXTERNAL-INTERFACE** — system boundary and interface
-  requirements. Re-read when touching those interfaces.
-- **ENVIRONMENTAL** — infrastructure and deployment requirements.
-  Re-read when touching deployment or infrastructure.
-- **TECHNICAL** — stack, tooling, and design constraints. Re-read
-  as relevant to the current task.
-- **ARCHITECTURAL** — structural debt and design decisions. Every
-  agent re-reads all of these before any task.
+  requirements, under `docs/reqs/external-interfaces/`. Re-read when
+  touching those interfaces.
+- **ENVIRONMENTAL** — infrastructure and deployment requirements,
+  under `docs/reqs/environmental/`. Re-read when touching deployment
+  or infrastructure.
+- **TECHNICAL** — stack, tooling, and design constraints, under
+  `docs/reqs/technical/`. Re-read as relevant to the current task.
+- **ARCHITECTURAL** — structural debt and design decisions, under
+  `docs/reqs/`. Every agent re-reads all of these before any task.
 
 Feature-scoped non-functional requirements (e.g., "dashboard loads in
 2 seconds") live under the feature as FUNCTIONAL-FEATURE-SUPPLEMENTAL,
-not under `docs/non-functional/`.
+not under `docs/reqs/non-functional/`.
 
 ### Requirement status convention
 
@@ -440,11 +452,11 @@ Requirement branch statuses:
 - Do not store secrets in code. Use environment variables.
 
 ## Architecture Debt
-See `docs/architecture-debt.md` for known structural debt and
+See `docs/reqs/architecture-debt.md` for known structural debt and
 recommended resolutions.
 
 ## Non-Functional Requirements
-See `docs/non-functional/` for performance, security, reliability,
+See `docs/reqs/non-functional/` for performance, security, reliability,
 usability, and other quality attribute requirements.
 
 ## Context Compaction Warning
@@ -461,7 +473,7 @@ explicitly re-reading the following files in order:
 3. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
    ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL, ENVIRONMENTAL,
    or EXTERNAL-INTERFACE docs relevant to your current task
-4. `docs/architecture-debt.md` — known structural debt
+4. `docs/reqs/architecture-debt.md` — known structural debt
 5. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
    all FEATURE-SUPPLEMENTAL docs linked from it
 6. `.claude/tasks/<your-task>.md` — your specific assignment

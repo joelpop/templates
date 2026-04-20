@@ -375,24 +375,29 @@ Infrastructure files go **inside** each project alongside the code:
 │   └── commands/
 │       └── team-start.md            # Reusable slash command
 ├── docs/
-│   ├── INDEX.md                     # ← Master doc index (REQUIRED)
-│   ├── architecture-debt.md         # Structural debt findings
-│   ├── non-functional/              # Quality attributes (ISO 25010)
-│   │   ├── performance.md
-│   │   ├── security/                # Auth, authz, hardening, data protection
-│   │   ├── reliability.md
-│   │   └── ...
-│   ├── functional/
-│   │   ├── cross-cutting/           # Error handling, validation, APIs, etc.
-│   │   ├── data/                    # Schema, migrations
-│   │   └── features/               # Feature docs + supplementals
-│   │       ├── feature-a.md
-│   │       ├── feature-a/           # views.md, ux.md, etc.
-│   │       └── ...
-│   ├── external-interfaces/         # UI, software, communication interfaces
-│   ├── environmental/               # Infrastructure, platforms, deployment
-│   └── technical/                   # Stack, build, constraints
-├── .gitignore                       # Add: .sandbox/ and .claude/ local state (see setup checklist Step 5)
+│   ├── INDEX.md                     # ← Master doc index (sample, project-owned)
+│   ├── agnostic/                    # Project-agnostic patterns / preferences / standing guidance
+│   │   ├── patterns.md
+│   │   ├── preferences.md
+│   │   └── standards.md
+│   └── reqs/                        # Project-specific requirements
+│       ├── architecture-debt.md     # Structural debt findings
+│       ├── non-functional/          # Quality attributes (ISO 25010)
+│       │   ├── performance.md
+│       │   ├── security/            # Auth, authz, hardening, data protection
+│       │   ├── reliability.md
+│       │   └── ...
+│       ├── functional/
+│       │   ├── cross-cutting/       # Error handling, validation, APIs, etc.
+│       │   ├── data/                # Schema, migrations
+│       │   └── features/            # Feature docs + supplementals
+│       │       ├── feature-a.md
+│       │       ├── feature-a/       # views.md, ux.md, etc.
+│       │       └── ...
+│       ├── external-interfaces/     # UI, software, communication interfaces
+│       ├── environmental/           # Infrastructure, platforms, deployment
+│       └── technical/               # Stack, build, constraints
+├── .gitignore                       # Kit manages a bracketed block of developer-local patterns
 └── (existing project files)
 ```
 

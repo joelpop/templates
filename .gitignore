@@ -12,3 +12,8 @@
 
 # Older/working copies
 ignored/
+
+# Go build artifacts
+/sandboxed-agent-team/sandboxed-agent-team
+/sandboxed-agent-team/bin/
+/sandboxed-agent-team/release/

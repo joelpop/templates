@@ -162,8 +162,9 @@ agent does not get its own terminal pane.
    hardware passkey prompts during E2E testing). You may see multiple
    Coders and Unit Testers working simultaneously in different panes —
    this is by design when the Lead splits a task into parallel subtasks.
-6. The Lead reports approximate cost per task. You can also ask the
-   Lead for the current cost at any time.
+6. The Lead reports approximate cost per task (token usage and USD
+   estimate per model, plus totals) at task wrap-up. You can also
+   ask the Lead for the current cost at any time.
 7. You can ask agents to take screenshots of the running application
    for visual verification — tell the Lead what you want to see.
 8. **If something goes wrong:**
@@ -640,16 +641,27 @@ if [ -f "$SSH_SOURCE_FILE" ]; then
         echo "  project directory and say:"
         echo "    Read ONBOARDING.md and execute the setup checklist."
         echo ""
-        read -p "  Correct SSH key path (or Enter to abort): " NEW_PATH
-        if [ -z "$NEW_PATH" ]; then
-            echo "Aborting. See the note above on re-running onboarding."
-            exit 1
-        fi
-        NEW_PATH="${NEW_PATH/#\~/$HOME}"
-        if [ ! -f "$NEW_PATH" ]; then
-            echo "File '$NEW_PATH' not found. Aborting."
-            exit 1
-        fi
+        # Retry loop: accept empty input to abort; otherwise re-prompt
+        # if the given path doesn't exist (up to 3 attempts to prevent
+        # runaway loops from clipboard errors etc.).
+        NEW_PATH=""
+        for attempt in 1 2 3; do
+            read -p "  Correct SSH key path (or Enter to abort): " NEW_PATH
+            if [ -z "$NEW_PATH" ]; then
+                echo "Aborting. See the note above on re-running onboarding."
+                exit 1
+            fi
+            NEW_PATH="${NEW_PATH/#\~/$HOME}"
+            if [ -f "$NEW_PATH" ]; then
+                break
+            fi
+            echo "File '$NEW_PATH' not found."
+            if [ $attempt -eq 3 ]; then
+                echo "Aborting after 3 attempts. See the note above on re-running onboarding."
+                exit 1
+            fi
+            echo "Try again (attempt $((attempt + 1)) of 3) or press Enter to abort."
+        done
         echo "$NEW_PATH" > "$SSH_SOURCE_FILE"
         SSH_KEY="$NEW_PATH"
         SSH_DIR="${PROJECT_DIR}/.sandbox/ssh"
@@ -752,10 +764,18 @@ inject_credentials() {
 # recreation is fast because Docker caches the template image.
 EXISTING=$(docker sandbox ls 2>/dev/null | grep -w "${SANDBOX_NAME}" || true)
 DIRECTIVE_FILE="${PROJECT_DIR}/.sandbox/.last-directive"
-STORED_DIRECTIVE="$(cat "$DIRECTIVE_FILE" 2>/dev/null || true)"
+# Hash-based comparison (robust to trailing whitespace, IDE-auto-edits,
+# line-ending differences, etc.). The file holds just the hash, not
+# the directive text.
+DIRECTIVE_HASH=$(printf '%s' "${LEAD_DIRECTIVE}" | shasum -a 256 | awk '{print $1}')
+STORED_HASH=$(cat "$DIRECTIVE_FILE" 2>/dev/null || true)
 
-if [ -n "$EXISTING" ] && [ "${LEAD_DIRECTIVE}" != "${STORED_DIRECTIVE}" ]; then
-    echo "=== LEAD_DIRECTIVE has changed since last run — recreating sandbox ==="
+if [ -n "$EXISTING" ] && [ "${DIRECTIVE_HASH}" != "${STORED_HASH}" ]; then
+    if [ -z "${STORED_HASH}" ]; then
+        echo "=== Sandbox predates directive tracking — recreating with current LEAD_DIRECTIVE ==="
+    else
+        echo "=== LEAD_DIRECTIVE has changed since last run — recreating sandbox ==="
+    fi
     docker sandbox rm "${SANDBOX_NAME}"
     EXISTING=""
 fi
@@ -780,9 +800,9 @@ else
     ) &
     INJECT_PID=$!
 
-    # Record the directive before starting so future runs can detect
-    # changes even if this run is interrupted.
-    echo "${LEAD_DIRECTIVE}" > "$DIRECTIVE_FILE"
+    # Record the directive hash before starting so future runs can
+    # detect changes even if this run is interrupted.
+    echo "${DIRECTIVE_HASH}" > "$DIRECTIVE_FILE"
 
     if [ -n "$TEMPLATE_IMAGE" ]; then
         docker sandbox run \
@@ -1339,6 +1359,8 @@ Structure:
 
 ## Active Task
 - <task-id>: <one-line description>
+  <!-- Optional indented annotation if the task is resumed but held: -->
+  - blocked on `<DEV_BRANCH_NAME>` health since <ISO 8601 UTC>
 
 ## Suspended Tasks
 - <task-id>: Blocked by <prerequisite task-id or description>
@@ -1402,7 +1424,15 @@ Requirement branch statuses:
   in commit message` to `yes`/`no`"). The Lead delegates to the
   Integrator, which creates a working branch off `<DEV_BRANCH_NAME>`,
   updates this line in `CLAUDE.md`, commits, and finalizes per the
-  project's merge method above.
+  project's merge method above. **Caveat:** `CLAUDE.md` is read by
+  every role at task start, so a mid-engagement edit can collide
+  with any task/requirement branch in flight. Prefer to make this
+  change during a quiet period — no active tasks, no open
+  requirement branches — so the new value is in effect uniformly
+  for all subsequent work. If a change must happen while work is
+  in flight, the Lead should pause new task creation until the
+  edit is merged and all teammates have pulled the latest
+  `<DEV_BRANCH_NAME>`.
 
 ## What NOT to do
 - Do not add new dependencies without messaging the Lead.
@@ -1622,11 +1652,17 @@ setup is current:
 
 3. Read `.claude/.last-onboarded` and leniently parse the value
    after the `Last onboarded:` label using the same rules as
-   step 2. Call the result `T_onboarded`.
+   step 2. Call the result `T_onboarded`. Sanity-check:
+   `T_onboarded` must not be in the future (more than a few
+   minutes after the current time) — a future value indicates a
+   typo or clock issue, and would spuriously mark the developer
+   as "current" forever. Treat a future value as if parsing had
+   failed.
 
 4. The developer's local setup is out of date if **either**:
-   - parsing in step 3 did not result in a valid timestamp (file
-     missing, empty, label absent, or value unparseable), OR
+   - parsing in step 3 did not result in a valid non-future
+     timestamp (file missing, empty, label absent, value
+     unparseable, or `T_onboarded` in the future), OR
    - `T_setup` is more recent than `T_onboarded` (i.e., the agent
      team was set up or regenerated after this developer last
      onboarded).
@@ -2473,13 +2509,34 @@ The prerequisite follows the normal lifecycle:
 2. Integrator updates `.claude/progress.md`: moves the resumed task to
    Active, removes it from Suspended.
 3. Integrator checks out the suspended task branch (`task/<task-id>`).
-4. Integrator fetches `<DEV_BRANCH_NAME>` from remote. Before merging,
-   verify `<DEV_BRANCH_NAME>` is not currently degraded — if it is,
-   escalate per Dev-Branch Health in Coordination Rules and hold the
-   resumption until the issue is resolved (merging a broken
-   `<DEV_BRANCH_NAME>` into the resumed task branch propagates the
-   breakage). When the branch is healthy, Integrator merges it into
-   the task branch (brings in prerequisite changes).
+4. Integrator fetches `<DEV_BRANCH_NAME>` from remote. Before
+   merging, verify `<DEV_BRANCH_NAME>` is not currently degraded.
+   - **If healthy:** Integrator merges it into the task branch
+     (brings in prerequisite changes). Proceed to step 5.
+   - **If degraded:** (a) Integrator escalates per Dev-Branch
+     Health in Coordination Rules. (b) Integrator annotates this
+     task's entry in `.claude/progress.md` with an indented
+     sub-bullet `blocked on <DEV_BRANCH_NAME> health since <ISO
+     8601 UTC>` so the hold survives across sessions — without
+     this, the next session would see the task marked Active and
+     assume work can proceed. (c) Do NOT merge into the resumed
+     task branch — breakage would propagate.
+     (d) **Notify the human**: Integrator reports the hold to the
+     Lead; Lead tells the human: *"Resuming task `<task-id>` is
+     held pending `<DEV_BRANCH_NAME>` health — the prerequisite
+     merged but the dev branch is currently degraded, so bringing
+     its changes into this task would propagate the breakage. I'll
+     re-check when you ask, or when the Dev-Branch Health issue is
+     resolved."* At every subsequent session start (after the
+     Pre-Start Check), the Lead re-reads `.claude/progress.md`,
+     notices any `blocked on ...` sub-bullets, and re-surfaces the
+     hold to the human with a brief recap so it cannot be
+     forgotten across sessions.
+     (e) **Release**: on explicit request (human asks about the
+     held task, or the Dev-Branch Health issue is resolved),
+     Integrator re-runs the health check. If the branch is now
+     healthy, Integrator removes the `blocked on ...` sub-bullet
+     and continues from step 4's healthy path.
 5. If conflicts: Coder resolves on the task branch.
 6. Lead re-reads the task file and tells the Integrator to update it if
    the prerequisite's completion changes the remaining plan steps.
@@ -2993,7 +3050,28 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
      - **Human merge:** Lead posts a summary and notifies the human that
        all gates have passed. Human performs the squash merge themselves.
 T.6. Integrator builds the per-task cost report by subtracting the
-     kickoff baseline from the current total:
+     kickoff baseline from the current total.
+
+     **Preflight checks (bail out gracefully if either fails):**
+     - If `ccusage` is not installed or fails to run (e.g., the
+       Dockerfile's `npm install -g ccusage` was skipped due to a
+       network failure during build, or the binary has been
+       removed), Integrator records the reason and proceeds to
+       "Graceful degradation" below.
+     - If `.claude/tasks/<task-id>.cost-baseline.json` is missing
+       (kickoff write failed, or the sidecar was deleted
+       externally), Integrator records the reason and proceeds to
+       "Graceful degradation" below.
+
+     **Graceful degradation:** If either preflight check fails,
+     skip the normal flow. Instead, build a short "unavailable"
+     report like `Cost: report unavailable — <reason>` and hand it
+     to the Lead. The Lead reports this to the human verbally. Do
+     NOT append to the commit message regardless of the project's
+     cost-in-commit setting (don't record a non-report in git
+     history). Continue with the rest of T.7.
+
+     **Normal flow** (both preflight checks pass):
 
      1. Read the baseline JSON from
         `.claude/tasks/<task-id>.cost-baseline.json` (written at
@@ -3834,8 +3912,14 @@ agent does not get its own terminal pane.
    hardware passkey prompts during E2E testing). You may see multiple
    Coders and Unit Testers working simultaneously — this is by design
    when the Lead splits a task into parallel subtasks.
-5. The Lead reports approximate cost per task. You can also ask the
-   Lead for the current cost at any time.
+5. The Lead reports approximate cost per task (token usage and USD
+   estimate per model, plus totals) at task wrap-up. You can also
+   ask the Lead for the current cost at any time. Whether the
+   cost report is also recorded in the final squash-merge commit
+   message (for a persistent audit trail in git history) is a
+   per-project setting (`Include cost report in commit message:
+   yes|no` in `CLAUDE.md`'s Branching section). Ask the Lead to
+   change it if you want a different default.
 6. You can ask agents to take screenshots of the running application
    for visual verification — tell the Lead what you want to see.
 

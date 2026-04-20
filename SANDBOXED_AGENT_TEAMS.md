@@ -667,8 +667,8 @@ if [ -f "$DOCKERFILE" ]; then
     echo "  dependencies and typically takes 2-5 minutes on a fast connection,"
     echo "  longer on slower networks). Subsequent builds use the Docker cache"
     echo "  and are much faster."
-    echo "  The build streams step-by-step output below. If output stops"
-    echo "  progressing for several minutes, the build may be hung — cancel"
+    echo "  The build streams step-by-step output below. If no new output"
+    echo "  appears for more than 5 minutes, the build may be hung — cancel"
     echo "  it (Ctrl+C) and check the Dockerfile for commands that may hang."
     echo "  Note: Playwright may print a 'BEWARE: your OS is not officially"
     echo "  supported' warning on some platforms. This is cosmetic — it uses"
@@ -1251,8 +1251,14 @@ not guess.
 - Fill in gaps using your training data or "common sense" — your
   assumptions may contradict the human's intent
 - Pick the simplest interpretation because it's easier to implement
-- Treat silence as permission — if the docs don't say to do something,
-  that does not mean you should do it; nor does it mean you shouldn't
+- Treat documentation silence as permission OR prohibition — silence
+  on a requirement-level question (WHAT the system must do, WHAT
+  constraints it must satisfy) is ambiguity, and is neither "go
+  ahead" nor "don't". This rule covers only the WHAT; silence at
+  the HOW level (implementation details within the bounds an
+  existing requirement defines) is professional judgment, not
+  ambiguity — see the Requirement Gate Workflow's refinement rule
+  in `team-start.md`.
 - Implement both interpretations and "let the human choose later" —
   this creates dead code and doubles the test surface
 
@@ -1276,7 +1282,7 @@ not guess.
   The description should explain *what changed and why*, not
   itemize files or lines touched.
 - All PRs require passing tests before merge.
-- Do NOT commit directly to `<dev-branch>`.
+- Do NOT commit directly to `<DEV_BRANCH_NAME>`.
 
 ## Status Tracking
 
@@ -1294,7 +1300,7 @@ and do not carry their own checkboxes.
   (first commit on the branch, before sub-branches are created).
 - `[-]` → `[x]`: Analyst marks on the task branch at the pre-PR gate
   (after confirming requirement coverage). The squash merge carries
-  these to `<dev-branch>`. Dev only ever sees `[ ]` → `[x]`.
+  these to `<DEV_BRANCH_NAME>`. Dev only ever sees `[ ]` → `[x]`.
 - `[x]` → `[ ]` or `[-]` → `[ ]`: Analyst resets when adding or
   substantively changing a requirement. Analyst must notify Lead on any
   reset so Lead can assess impact on active or completed tasks.
@@ -1344,20 +1350,20 @@ Structure:
 Requirement branch statuses:
 - `drafting` — Analyst is actively working on this branch
 - `awaiting-approval` — draft submitted to the Lead for human review
-- `approved` — human approved; ready to merge to `<dev-branch>`
-- `merged` — merged to `<dev-branch>`; branch can be deleted
+- `approved` — human approved; ready to merge to `<DEV_BRANCH_NAME>`
+- `merged` — merged to `<DEV_BRANCH_NAME>`; branch can be deleted
 
 ## Branching
-- Development branch: `<dev-branch>` (e.g., `develop`)
-- Requirement branches: `requirement/<slug>` — branched off `<dev-branch>`
+- Development branch: `<DEV_BRANCH_NAME>` (e.g., `develop`)
+- Requirement branches: `requirement/<slug>` — branched off `<DEV_BRANCH_NAME>`
   by the Integrator for the Analyst to draft requirement docs. One branch per
   topic or related group (e.g., `requirement/authentication`,
   `requirement/dashboard-v2`), not per individual requirement — the
   Analyst freely splits, merges, and cross-references requirements
   within a group. Multiple requirement branches can exist simultaneously
-  at different stages. Squash-merged back to `<dev-branch>` after human
+  at different stages. Squash-merged back to `<DEV_BRANCH_NAME>` after human
   approval. Tracked in `.claude/progress.md`.
-- Task branches: `task/<task-id>` — branched off `<dev-branch>` by the
+- Task branches: `task/<task-id>` — branched off `<DEV_BRANCH_NAME>` by the
   Integrator for each implementation task.
 - Agent sub-branches: `task/<task-id>/<role>` — each agent branches off
   the task branch to do their work:
@@ -1378,10 +1384,10 @@ Requirement branch statuses:
   Branch Merge Protocol (see Coordination Rules in team-start.md).
   No agent commits to another agent's branch.
   Sub-branches are local only — they are never pushed to the remote. Only
-  `<dev-branch>` interacts with the remote (via the Integration Merge
+  `<DEV_BRANCH_NAME>` interacts with the remote (via the Integration Merge
   Workflow).
-- Merge strategy: squash merge for all branch-to-`<dev-branch>` merges.
-  This keeps `<dev-branch>` history clean but loses per-commit
+- Merge strategy: squash merge for all branch-to-`<DEV_BRANCH_NAME>` merges.
+  This keeps `<DEV_BRANCH_NAME>` history clean but loses per-commit
   granularity — ensure the squash commit message captures key decisions
   and affected components (see Integration Merge Workflow T.5 in
   team-start.md).
@@ -1394,7 +1400,7 @@ Requirement branch statuses:
   in git. See T.6 in `team-start.md` for the exact flow. To change
   this setting later, ask the Lead ("change `Include cost report
   in commit message` to `yes`/`no`"). The Lead delegates to the
-  Integrator, which creates a working branch off `<dev-branch>`,
+  Integrator, which creates a working branch off `<DEV_BRANCH_NAME>`,
   updates this line in `CLAUDE.md`, commits, and finalizes per the
   project's merge method above.
 
@@ -1715,7 +1721,7 @@ Own:
   another teammate. The Lead delegates these to you.
 
 Branch: You work on the task branch (`task/<task-id>`) directly for task
-file management and on `<dev-branch>` for integration merges.
+file management and on `<DEV_BRANCH_NAME>` for integration merges.
 
 Coordination:
 - Execute promptly. Message the Lead when multi-step operations complete
@@ -1741,7 +1747,7 @@ originate from the human. Your job is to translate the human's intent into
 structured, testable documentation and ensure it stays consistent.
 Own: `docs/` and `INDEX.md`.
 Branch: `requirement/<slug>` — the Lead creates one per topic or related
-group off `<dev-branch>`. You do your primary work here. Multiple
+group off `<DEV_BRANCH_NAME>`. You do your primary work here. Multiple
 requirement branches can exist simultaneously at different stages (see
 progress.md). When the human switches topics, commit your current work
 and switch to the other branch. The only time you commit on a task
@@ -1807,7 +1813,7 @@ Rules:
   commit before sub-branches are created. At the pre-PR gate, after
   confirming requirement coverage, mark those requirements `[x]` —
   commit this on the task branch so the squash merge carries it to
-  `<dev-branch>`. When you add a new requirement statement, mark it
+  `<DEV_BRANCH_NAME>`. When you add a new requirement statement, mark it
   `[ ]`. When you substantively change an existing requirement (not
   just editorial/clarification), reset its status to `[ ]`. In both
   cases, notify the Lead so they can assess impact on active or
@@ -1850,10 +1856,16 @@ Rules:
   whether requirements are covered and whether the proposed
   implementation satisfies them.
 - After the Coder commits, work in parallel with the Unit Tester — do
-  not wait for the Unit Tester's results before starting your review. Do NOT just
-  read the diff. Check out the Coder's branch, open the changed files, and read the
-  FULL classes/modules that were touched. The diff shows what changed.
-  The full file shows whether the change fits.
+  not wait for the Unit Tester's results before starting your review.
+  Do NOT just read the diff. Read the FULL classes/modules that were
+  touched on the Coder's branch — use `git show <coder-branch>:<path>`
+  to load individual files, or spin up an ephemeral read-only
+  worktree (`git worktree add <tmp-path> <coder-branch>`, read via
+  the Read tool, then `git worktree remove <tmp-path>` when done).
+  Do NOT `git checkout` the branch in place — the Architect has no
+  dedicated branch/worktree (CLAUDE.md Branching) and a plain
+  checkout would disrupt other state. The diff shows what changed;
+  the full file shows whether the change fits.
 - Evaluate the Coder's IMPLEMENTATION. Specifically:
   a) INCREMENTAL ROT: Is this change adding a conditional branch, flag
      parameter, type check, or special case to handle something that should
@@ -2094,7 +2106,7 @@ Rules:
   Do NOT write or fix documentation yourself — flag the file, line, and
   issue to the appropriate owner. You own the detection.
 - Message the Lead with a summary before committing.
-- BRANCH CLEANUP: After a branch has been merged to `<dev-branch>`, delete it.
+- BRANCH CLEANUP: After a branch has been merged to `<DEV_BRANCH_NAME>`, delete it.
   This is part of routine hygiene between tasks.
 - DEPENDENCY AUDITING: Run an audit in three situations:
   1. PRE-TASK: Before the Coder begins any task, run a full audit so
@@ -2104,7 +2116,7 @@ Rules:
      The Coder must not begin work until this message arrives.
   2. DEPENDENCY CHANGE: When the Coder messages you about a new or
      removed dependency during implementation, audit immediately.
-  3. POST-MERGE: After each merge to `<dev-branch>` as part of the post-merge
+  3. POST-MERGE: After each merge to `<DEV_BRANCH_NAME>` as part of the post-merge
      hygiene pass (see BRANCH CLEANUP above).
   Never run dependency upgrades while the Coder has open changes, as
   this creates merge conflicts.
@@ -2457,12 +2469,17 @@ The prerequisite follows the normal lifecycle:
   coexisting with the suspended task's file.
 
 **Resumption procedure:**
-1. Prerequisite task completes and merges to `<dev-branch>`.
+1. Prerequisite task completes and merges to `<DEV_BRANCH_NAME>`.
 2. Integrator updates `.claude/progress.md`: moves the resumed task to
    Active, removes it from Suspended.
 3. Integrator checks out the suspended task branch (`task/<task-id>`).
-4. Integrator fetches `<dev-branch>` from remote and merges it into the
-   task branch (brings in prerequisite changes).
+4. Integrator fetches `<DEV_BRANCH_NAME>` from remote. Before merging,
+   verify `<DEV_BRANCH_NAME>` is not currently degraded — if it is,
+   escalate per Dev-Branch Health in Coordination Rules and hold the
+   resumption until the issue is resolved (merging a broken
+   `<DEV_BRANCH_NAME>` into the resumed task branch propagates the
+   breakage). When the branch is healthy, Integrator merges it into
+   the task branch (brings in prerequisite changes).
 5. If conflicts: Coder resolves on the task branch.
 6. Lead re-reads the task file and tells the Integrator to update it if
    the prerequisite's completion changes the remaining plan steps.
@@ -2592,7 +2609,7 @@ shipping behavior the human didn't sanction.
    - NO → Lead tells the human: "This isn't documented as a requirement
      yet. I'll have the Analyst draft it for your approval."
 4. Lead tells the Integrator to create a `requirement/<slug>` branch
-   off `<dev-branch>` for this topic (or reuse an existing branch if
+   off `<DEV_BRANCH_NAME>` for this topic (or reuse an existing branch if
    the requirement belongs to a group already in progress). Integrator
    updates `.claude/progress.md` to track the branch. Lead assigns the
    Analyst to draft the requirement on that branch.
@@ -2610,7 +2627,7 @@ shipping behavior the human didn't sanction.
 7. Analyst commits the approved requirement and updates `INDEX.md`.
 8. Lead tells the Integrator to initiate the Integration Merge Workflow
    for the requirement branch (see below). The requirement is now on
-   `<dev-branch>`.
+   `<DEV_BRANCH_NAME>`.
 9. Integrator updates `.claude/progress.md` (branch status → `merged`).
 10. Lead proceeds to create a task (Task and PR Flow below).
 
@@ -2741,11 +2758,11 @@ who delegates to the Integrator.
    in `docs/` (see Requirement Gate Workflow above). If it does not,
    the requirement must be documented and approved before a task can
    be created.
-3. Lead tells the Integrator to fetch `<dev-branch>` from remote and
+3. Lead tells the Integrator to fetch `<DEV_BRANCH_NAME>` from remote and
    fast-forward the local branch (`git pull --ff-only`). If fast-forward
-   fails, local `<dev-branch>` has diverged — investigate before
+   fails, local `<DEV_BRANCH_NAME>` has diverged — investigate before
    proceeding. Integrator creates a `task/<task-id>` branch off the
-   updated `<dev-branch>`.
+   updated `<DEV_BRANCH_NAME>`.
 4. Lead tells the Integrator to draft the task file (using the template
    above), specifying: requirements in scope (with cross-references to
    specific requirement statements in `docs/`), what is explicitly out
@@ -2781,7 +2798,7 @@ who delegates to the Integrator.
 **Pre-task gate (before the Coder begins):**
 8. Janitor runs a full build on the task branch to verify the baseline
    compiles. If the build fails before any team changes have been made,
-   `<dev-branch>` is degraded — Janitor messages the Lead (see
+   `<DEV_BRANCH_NAME>` is degraded — Janitor messages the Lead (see
    Dev-Branch Health in Coordination Rules) and does not proceed.
    Once the baseline is verified, Janitor creates
    `task/<task-id>/janitor` and runs a pre-task dependency audit. For
@@ -2829,15 +2846,15 @@ who delegates to the Integrator.
     on the task branch as the second gate check.
     **Unrelated regression:** If either full suite reveals a failure in
     code the current task did NOT touch, the Tester reports it to the
-    Lead. The Lead fetches `<dev-branch>` (an intervening push may have
-    landed) and has the Tester run the failing test against `<dev-branch>`
+    Lead. The Lead fetches `<DEV_BRANCH_NAME>` (an intervening push may have
+    landed) and has the Tester run the failing test against `<DEV_BRANCH_NAME>`
     directly.
-    - If the failure exists on `<dev-branch>` → pre-existing issue.
+    - If the failure exists on `<DEV_BRANCH_NAME>` → pre-existing issue.
       Handle via Dev-Branch Health. The pre-PR gate for the current task
       continues — this failure is not caused by the task.
-    - If the failure does NOT exist on `<dev-branch>` (i.e., `<dev-branch>`
+    - If the failure does NOT exist on `<DEV_BRANCH_NAME>` (i.e., `<DEV_BRANCH_NAME>`
       passes, possibly because a fix was pushed since the task branched) →
-      merge the updated `<dev-branch>` into the task branch and re-run
+      merge the updated `<DEV_BRANCH_NAME>` into the task branch and re-run
       the failing test. If it passes, the pre-PR gate continues. If it
       still fails, the task's changes caused an indirect regression —
       the Coder investigates (using the normal Diagnosis-First Fix
@@ -2863,32 +2880,32 @@ who delegates to the Integrator.
 
 ### Integration Merge Workflow
 This procedure is used whenever ANY working branch (requirement or task)
-is ready to merge back to `<dev-branch>`. Its purpose is to incorporate
-changes from other teams or developers that landed on `<dev-branch>` while
+is ready to merge back to `<DEV_BRANCH_NAME>`. Its purpose is to incorporate
+changes from other teams or developers that landed on `<DEV_BRANCH_NAME>` while
 this branch was in progress.
 
 **C. Common steps (both branch types):**
 Follow C, then R or T depending on branch type, then P.
 
-C.1. Integrator fetches latest `<dev-branch>` from remote/origin.
+C.1. Integrator fetches latest `<DEV_BRANCH_NAME>` from remote/origin.
 C.2. Integrator checks: is the working branch already up-to-date with
-     `<dev-branch>`?
+     `<DEV_BRANCH_NAME>`?
      - YES → skip to finalization (R.4 for requirement branches,
        T.5 for task branches).
      - NO → continue.
-C.3. Integrator merges `<dev-branch>` into the working branch.
+C.3. Integrator merges `<DEV_BRANCH_NAME>` into the working branch.
 
 **R. For requirement branches** (`requirement/<slug>`):
 R.1. If merge conflicts in docs → Analyst resolves on the requirement
      branch.
 R.2. Analyst re-checks consistency of the requirement docs against any
-     changes that arrived from `<dev-branch>` (another team may have
+     changes that arrived from `<DEV_BRANCH_NAME>` (another team may have
      landed conflicting requirements or code changes that affect
      assumptions).
 R.3. Lead presents final state to human for approval.
 R.4. Finalize per the merge method specified in CLAUDE.md:
      - **PR:** Integrator pushes the requirement branch to the remote
-       and creates a PR targeting `<dev-branch>` via the platform API.
+       and creates a PR targeting `<DEV_BRANCH_NAME>` via the platform API.
        Integrator reports the PR URL to the Lead. Lead tells the
        human: *"PR `<url>` is ready — please have it reviewed and
        tell me when reviewers have responded. Do not merge the PR;
@@ -2897,7 +2914,14 @@ R.4. Finalize per the merge method specified in CLAUDE.md:
        the Integrator, who checks the PR's overall approval status
        via the API and reports back to the Lead:
        - **All required approvals met** → Integrator merges via the
-         API and deletes the remote branch.
+         API, then fetches `<DEV_BRANCH_NAME>` from the remote and
+         confirms the PR's merge-commit SHA appears in the fetched
+         history (rare flaky-network failure mode: API reports
+         success but the merge isn't visible in the remote branch).
+         If verification fails, retry the fetch; if still inconsistent
+         after a second attempt, escalate to the Lead (the human may
+         need to investigate the remote's state). On success, delete
+         the remote branch.
        - **Still waiting for reviewers** → Lead tells the human how
          many approvals are in vs. required and asks them to follow up
          when the remaining reviewers have responded.
@@ -2908,11 +2932,11 @@ R.4. Finalize per the merge method specified in CLAUDE.md:
        - **Rejected** → Integrator closes the PR, deletes the remote
          branch, and proceeds to R.5.
        **If the PR was already merged** (by the human or another
-       reviewer) → Integrator skips the merge, fetches `<dev-branch>`
+       reviewer) → Integrator skips the merge, fetches `<DEV_BRANCH_NAME>`
        from the remote to pick up the merged changes, deletes the
        remote branch if still present, and proceeds to R.5.
      - **Integrator merge:** Integrator squash-merges the requirement
-       branch to `<dev-branch>` directly.
+       branch to `<DEV_BRANCH_NAME>` directly.
      - **Human merge:** Lead notifies the human that the requirement is
        approved and ready. Human performs the squash merge themselves.
 R.5. Integrator deletes the requirement branch (local; remote was
@@ -2933,7 +2957,7 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
      and notable decisions — so this information survives in git
      history after the task file is deleted in T.7.
      - **PR:** Integrator pushes the task branch to the remote and
-       creates a PR targeting `<dev-branch>` via the platform API,
+       creates a PR targeting `<DEV_BRANCH_NAME>` via the platform API,
        with a summary of changes and a reference to the task file and
        its documented requirement(s). Integrator reports the PR URL
        to the Lead. Lead tells the human: *"PR `<url>` is ready —
@@ -2943,7 +2967,14 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
        the Integrator, who checks the PR's overall approval status
        via the API and reports back to the Lead:
        - **All required approvals met** → Integrator merges via the
-         API and deletes the remote branch.
+         API, then fetches `<DEV_BRANCH_NAME>` from the remote and
+         confirms the PR's merge-commit SHA appears in the fetched
+         history (rare flaky-network failure mode: API reports
+         success but the merge isn't visible in the remote branch).
+         If verification fails, retry the fetch; if still inconsistent
+         after a second attempt, escalate to the Lead (the human may
+         need to investigate the remote's state). On success, delete
+         the remote branch.
        - **Still waiting for reviewers** → Lead tells the human how
          many approvals are in vs. required and asks them to follow up
          when the remaining reviewers have responded.
@@ -2955,10 +2986,10 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
        - **Rejected** → Integrator closes the PR, deletes the remote
          branch, and proceeds to T.7.
        **If the PR was already merged** → Integrator skips the merge,
-       fetches `<dev-branch>` to pick up the merged changes, deletes
+       fetches `<DEV_BRANCH_NAME>` to pick up the merged changes, deletes
        the remote branch if still present, and proceeds to T.6.
      - **Integrator merge:** Integrator squash-merges the task branch
-       to `<dev-branch>` directly. No PR is created.
+       to `<DEV_BRANCH_NAME>` directly. No PR is created.
      - **Human merge:** Lead posts a summary and notifies the human that
        all gates have passed. Human performs the squash merge themselves.
 T.6. Integrator builds the per-task cost report by subtracting the
@@ -3020,16 +3051,16 @@ T.7. Integrator removes the task from `.claude/progress.md`. Integrator
      deletes the task branch and all agent sub-branches.
 
 **P. Post-merge hygiene (both branch types):**
-Janitor runs a dependency audit and full build on `<dev-branch>`. If
+Janitor runs a dependency audit and full build on `<DEV_BRANCH_NAME>`. If
 the build or audit fails, Janitor messages the Lead (see Dev-Branch
 Health in Coordination Rules).
 
 ### Dev-Branch Health
-`<dev-branch>` is the team's shared baseline. It can be degraded by
+`<DEV_BRANCH_NAME>` is the team's shared baseline. It can be degraded by
 the team's own merge or by external changes from other teams on the
 remote.
 
-**Who interacts with remote `<dev-branch>`:**
+**Who interacts with remote `<DEV_BRANCH_NAME>`:**
 Only the Integrator fetches from and pushes to the remote. This
 happens at:
 - Task kickoff step 3 (fetch before creating task branch)
@@ -3039,13 +3070,13 @@ happens at:
   the resumed task branch)
 
 **Health check — all agents:**
-After any merge from `<dev-branch>` into a working branch, if the
-build or tests fail, check whether `<dev-branch>` itself is the cause
-before diagnosing your own code. Build `<dev-branch>` directly. If it
+After any merge from `<DEV_BRANCH_NAME>` into a working branch, if the
+build or tests fail, check whether `<DEV_BRANCH_NAME>` itself is the cause
+before diagnosing your own code. Build `<DEV_BRANCH_NAME>` directly. If it
 fails, message the Lead — do not attempt fixes, and do not count this
 against the Coder's fix attempt limit.
 
-**Lead coordination when `<dev-branch>` is degraded:**
+**Lead coordination when `<DEV_BRANCH_NAME>` is degraded:**
 1. Determine the cause: the team's own merge, or external changes on
    the remote.
 2. **Team's own merge:** Lead coordinates a hotfix task. Escalate to
@@ -3055,12 +3086,12 @@ against the Coder's fix attempt limit.
    team may already be fixing it — the next fetch might resolve the
    issue without this team doing anything. The human decides: wait,
    fix it ourselves, or work on something else.
-4. While `<dev-branch>` is degraded, the Lead holds off on any
+4. While `<DEV_BRANCH_NAME>` is degraded, the Lead holds off on any
    workflow that merges from it:
-   - Task resumption: do not merge `<dev-branch>` into a resumed task
+   - Task resumption: do not merge `<DEV_BRANCH_NAME>` into a resumed task
      branch. Wait for the fix.
    - New task kickoff: do not branch a new task off a degraded
-     `<dev-branch>`.
+     `<DEV_BRANCH_NAME>`.
 
 ### Task Branch Merge Protocol
 When any agent merges their sub-branch into the task branch, they must
@@ -3171,7 +3202,15 @@ the Lead should:
 2. Respawn a replacement in the same worktree.
 3. The replacement reads the task file and checks `git status` and
    `git log` on the sub-branch to determine the last committed state.
-4. Work resumes from the last commit. Any uncommitted changes are lost.
+4. Work resumes from the last commit. **Any uncommitted changes are
+   lost** — this is unavoidable with subagent crashes.
+
+**Soft guideline to minimize loss:** Teammates whose work can be
+broken into logical sub-units (especially the Coder) should commit
+at logical checkpoints rather than only at task-done, so a crash
+loses at most one checkpoint's worth of work. The Task Branch Merge
+Protocol already requires per-commit review cycles, which naturally
+creates checkpoints — follow that rhythm.
 
 ### General Rules
 - **Lead: you NEVER write files or run shell commands.** Your only
@@ -3254,7 +3293,7 @@ validation gate, ambiguity resolution). If the human is unavailable:
   preferences (see Requirement Gate Workflow) do not require human
   approval and can proceed.
 - **Human validation gate cannot be delegated.** The human must
-  review completed work before it is merged to `<dev-branch>`. The
+  review completed work before it is merged to `<DEV_BRANCH_NAME>`. The
   team must wait.
 - **Implementation approach approvals:** If the Architect's proposed
   approach is straightforward and the human has not responded, the
@@ -3415,7 +3454,7 @@ case, ask the Lead to regenerate this file).
 - **Project:** <PROJECT_NAME>
 - **Stack:** <STACK_SUMMARY>
 - **Build tool:** <BUILD_TOOL>
-- **Development branch:** `<dev-branch>`
+- **Development branch:** <DEV_BRANCH_NAME>
 - **Auth method at original agent team setup:** <API_KEY | OAUTH>
 - **Git remote transport:** <SSH | HTTPS>
 - **Merge method:** <PR | INTEGRATOR_MERGE | HUMAN_MERGE>
@@ -3816,7 +3855,7 @@ agent does not get its own terminal pane.
 
 - Each task has a task branch, and each agent gets a sub-branch for
   their work. Agents merge into the task branch; the Integrator merges
-  the task branch to `<dev-branch>`.
+  the task branch to `<DEV_BRANCH_NAME>`.
 - Within a task, the Lead may split file-disjoint work across multiple
   Coders, each with a paired Unit Tester. Dependencies between
   subtasks are handled in phases.
@@ -4334,7 +4373,7 @@ options:
   Requires a platform API token (provisioned during onboarding — see
   below). The PR is authored under the developer's git identity, so
   repos with self-approval restrictions will require another reviewer.
-- **Integrator merge** — Integrator squash-merges to `<dev-branch>`
+- **Integrator merge** — Integrator squash-merges to `<DEV_BRANCH_NAME>`
   after all gates pass. No PR or remote branch is created. Integrator
   cleans up local branches after merge. If the human rejects the work
   during the pre-merge review, it goes back for rework or is abandoned.
@@ -4363,7 +4402,7 @@ Default to `no` if the human has no preference.
 
 In all cases: after merge the Integrator deletes local task branches
 and agent sub-branches, and the Janitor runs a post-merge hygiene pass
-(dependency audit + build on `<dev-branch>`).
+(dependency audit + build on `<DEV_BRANCH_NAME>`).
 
 **If the human chose the PR merge method**, provision platform API
 access. This is required for the Lead to create, read, and merge PRs.

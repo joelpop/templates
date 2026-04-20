@@ -4081,116 +4081,11 @@ Then check git state:
   confirmation.
 
 The current branch is **not** automatically the right place to run
-setup. Do not begin writing files yet. Branch placement is decided
-after scenario classification, below.
-
-Then check the project directory for existing kit artifacts:
-
-- Does `CLAUDE.md` exist?
-- Does `ONBOARDING.md` exist?
-- Does `TEAM_GUIDE.md` exist?
-- Does `.claude/commands/team-start.md` exist?
-- Does `docs/INDEX.md` exist?
-- Does `.sandbox/Dockerfile` exist?
-- Does `.claude/settings.json` exist?
-
-Based on what you find, classify the scenario:
-
-**Scenario A — Agent team setup (kit incomplete or absent):**
-One or more versioned artifacts are missing (`CLAUDE.md`,
-`.claude/commands/team-start.md`, `docs/INDEX.md`, `ONBOARDING.md`,
-`TEAM_GUIDE.md`). Run all phases (1–5). Steps that create files
-already present (e.g., Step 7 with an existing `CLAUDE.md`) will merge
-rather than overwrite.
-
-**Scenario B — Developer onboarding (agent team already set up):**
-All versioned files exist (`CLAUDE.md`, `.claude/commands/team-start.md`,
-`docs/INDEX.md`, `ONBOARDING.md`, `TEAM_GUIDE.md`) but developer-local
-files are missing (no `.sandbox/`, no `.claude/settings.json`).
-
-**Do not run this checklist.** Tell the human:
-
-> "This project has already been onboarded. Your setup is in
-> `ONBOARDING.md` in the project root. Start a Claude Code session in
-> the project directory and say: *Read `ONBOARDING.md` and execute the
-> setup checklist.*"
-
-**Fallback:** If `ONBOARDING.md` does not exist (the project was
-onboarded before this feature was added or it was inadvertently
-removed), fall back to performing the developer onboarding manually
-using the following steps from *this* checklist (the Agent Team Setup
-checklist below, not the ONBOARDING.md checklist):
-Host session:
-- Setup Step 1, SSH detection only (check `git remote -v` and identify
-  SSH key — read stack details from `CLAUDE.md` instead of pom.xml)
-- Setup Step 2 (detect auth method)
-- Setup Step 3 (create `.sandbox/` files — includes `.sandbox/ssh/` if
-  SSH was detected)
-- Setup Step 4 (create `.claude/settings.json`)
-- Setup Step 5 (update `.gitignore` — entries may be missing if the
-  project was set up before they were standardized)
-- Setup Step 6 (build and start the sandbox — tell the sandbox to
-  continue from Setup Step 12 instead of Step 7, since Steps 7–11
-  artifacts already exist)
-
-Sandbox session (picks up from Step 6 handoff):
-- Setup Step 12 (generate `ONBOARDING.md` and `TEAM_GUIDE.md` using
-  Files 8–9 so future developers have them — present to human for
-  review before saving)
-- Setup Step 13 (start the agent team)
-- Setup Step 14 (confirm team is ready)
-
-**Scenario C — Agent team re-setup:**
-All kit artifacts exist including developer-local files (`.sandbox/`,
-`.claude/settings.json`). The human is re-running the checklist,
-possibly to update the kit after a template revision.
-
-Do not ask the human to pick an update path. You have the current
-template in hand (Files 1–9 of this document) and the project's
-copies on disk — detect drift yourself and present a plan.
-
-1. **Render each template file** from Files 1–9, substituting the
-   project's current placeholder values (read from the existing
-   `CLAUDE.md`: `<DEV_BRANCH_NAME>`, `<MERGE_METHOD>`,
-   `<COST_IN_COMMIT>`, stack/version fields, etc.). For files that
-   weave in project-specific content (`CLAUDE.md`, `.sandbox/Dockerfile`,
-   `ONBOARDING.md`, `TEAM_GUIDE.md`), render the template skeleton
-   only — the custom sections are expected.
-2. **Diff each rendered file against the on-disk copy** and classify:
-   - **Match** — skip, no action needed.
-   - **Template drift** — the skeleton differs (new sections, renamed
-     placeholders, updated boilerplate). Needs overwrite or merge.
-   - **Mixed drift** — template differs *and* project-specific edits
-     are present. Call this out; the human must confirm per-file
-     before overwrite.
-3. **Check for new placeholders.** If the current template introduces
-   a placeholder that has no value in the project's `CLAUDE.md` (e.g.,
-   `<COST_IN_COMMIT>` in a project set up before that feature existed),
-   ask the human for that value using the same prompt Phase 1 uses
-   for a fresh setup. Do **not** re-ask about placeholders already
-   filled in — those carry forward.
-4. **Present the plan in one message.** List files grouped by
-   match / template drift / mixed drift, list any new placeholders
-   that need a value, and state the order of operations. Wait for
-   approval, then proceed file-by-file with a per-file diff before
-   each overwrite. Skip matches silently.
-
-`ONBOARDING.md` and `TEAM_GUIDE.md` are regenerated at the end of
-the run regardless — they mirror the current state of the other kit
-files (Step 12).
-
-If the audit finds no drift and no new placeholders, tell the human
-the kit is already current and stop — there is nothing to do.
-
-**Branch placement (Scenarios A and C only — skip for B):**
-
-Scenarios A and C write versioned files (`CLAUDE.md`,
-`team-start.md`, `docs/INDEX.md`, and at Step 12 `ONBOARDING.md`
-and `TEAM_GUIDE.md`). These **MUST** land on the project's
-development branch — not on a requirement, feature, topic, or ad-hoc
-branch. If setup lands anywhere else, the artifacts are stranded
-until a merge, and the merge can go wrong. Get the branch right
-before writing a single file.
+setup. Do not begin writing files yet. Scenario classification and
+drift audit both depend on reading files from disk, so they must
+happen *after* you've placed setup on the correct branch — otherwise
+you will audit or classify based on the wrong working copy (this has
+happened in past sessions). Follow Steps 0a → 0b → 0c in order.
 
 **Step 0a — Identify the development branch.**
 
@@ -4258,13 +4153,66 @@ The output is `<ahead>\t<behind>` relative to the remote.
 Record the confirmed name. It will be written into `CLAUDE.md` as
 `<DEV_BRANCH_NAME>` in Phase 1.
 
-**Step 0b — Place setup on the right branch.**
+**Step 0b — Place setup on the correct branch.**
 
+First, a pre-check: is this a developer onboarding on an
+already-set-up project (Scenario B)? Check whether kit artifacts
+exist on `<DEV_BRANCH_NAME>` without switching to it:
+
+```
+for f in CLAUDE.md ONBOARDING.md TEAM_GUIDE.md \
+         .claude/commands/team-start.md docs/INDEX.md; do
+  git show "<DEV_BRANCH_NAME>:$f" >/dev/null 2>&1 && echo "PRESENT: $f"
+done
+```
+
+If all five files are present on `<DEV_BRANCH_NAME>` **and** the
+current working directory has no `.sandbox/` directory and no
+`.claude/settings.json`, this is **Scenario B — developer
+onboarding.** Do not run the rest of this checklist. Tell the human:
+
+> "This project has already been onboarded. The setup checklist is
+> in `ONBOARDING.md` on branch `<DEV_BRANCH_NAME>`. Run:
+> `git checkout <DEV_BRANCH_NAME>`, then in this directory say:
+> *Read `ONBOARDING.md` and execute the setup checklist.*"
+
+Stop.
+
+**Scenario B fallback:** if `ONBOARDING.md` does NOT exist on
+`<DEV_BRANCH_NAME>` (older project that predates the file) but the
+other four versioned files do, fall back to performing the developer
+onboarding manually. First switch the human to the correct branch
+(`git checkout <DEV_BRANCH_NAME>`), then run these setup steps —
+using `CLAUDE.md` for stack details instead of `pom.xml`:
+
+Host session:
+- Setup Step 1, SSH detection only (check `git remote -v` and identify
+  SSH key — read stack details from `CLAUDE.md` instead of pom.xml)
+- Setup Step 2 (detect auth method)
+- Setup Step 3 (create `.sandbox/` files — includes `.sandbox/ssh/` if
+  SSH was detected)
+- Setup Step 4 (create `.claude/settings.json`)
+- Setup Step 5 (update `.gitignore` — entries may be missing if the
+  project was set up before they were standardized)
+- Setup Step 6 (build and start the sandbox — tell the sandbox to
+  continue from Setup Step 12 instead of Step 7, since Steps 7–11
+  artifacts already exist)
+
+Sandbox session (picks up from Step 6 handoff):
+- Setup Step 12 (generate `ONBOARDING.md` and `TEAM_GUIDE.md` using
+  Files 8–9 so future developers have them — present to human for
+  review before saving)
+- Setup Step 13 (start the agent team)
+- Setup Step 14 (confirm team is ready)
+
+---
+
+Otherwise (not Scenario B), place setup on the development branch.
 Compare the current branch (`git rev-parse --abbrev-ref HEAD`) to
-the development branch from Step 0a.
+`<DEV_BRANCH_NAME>`:
 
-- **Current branch is the development branch** → stay. Skip to
-  Phase 1.
+- **Current branch is `<DEV_BRANCH_NAME>`** → stay. Continue to
+  Step 0c.
 - **Current branch is anything else** → stop and ask:
 
   > "Setup writes versioned shared config that must live on the
@@ -4305,8 +4253,68 @@ Execute the chosen option **exactly** as follows, then verify.
   `<DEV_BRANCH_NAME>` — is where new developers and future re-setup
   runs should look for them. Correct?" Wait for yes.
 
-Do not proceed to Phase 1 until the current branch is confirmed
+Do not continue to Step 0c until the current branch is confirmed
 correct by one of the verifications above.
+
+**Step 0c — Classify Scenario A vs C, and dispatch.**
+
+Now that you are on the correct branch, and only now, check the
+project directory for existing kit artifacts:
+
+- Does `CLAUDE.md` exist?
+- Does `ONBOARDING.md` exist?
+- Does `TEAM_GUIDE.md` exist?
+- Does `.claude/commands/team-start.md` exist?
+- Does `docs/INDEX.md` exist?
+
+Classify:
+
+**Scenario A — Agent team setup (kit incomplete or absent):**
+One or more versioned artifacts are missing. Run all phases (1–5).
+Steps that create files already present (e.g., Step 7 with an
+existing `CLAUDE.md`) will merge rather than overwrite.
+
+**Scenario C — Agent team re-setup:**
+All five versioned artifacts exist on this branch. The human is
+re-running the checklist to update the kit after a template
+revision.
+
+Do not ask the human to pick an update path. You have the current
+template in hand (Files 1–9 of this document) and the project's
+copies on disk — detect drift yourself and present a plan.
+
+1. **Render each template file** from Files 1–9, substituting the
+   project's current placeholder values (read from the existing
+   `CLAUDE.md`: `<DEV_BRANCH_NAME>`, `<MERGE_METHOD>`,
+   `<COST_IN_COMMIT>`, stack/version fields, etc.). For files that
+   weave in project-specific content (`CLAUDE.md`, `.sandbox/Dockerfile`,
+   `ONBOARDING.md`, `TEAM_GUIDE.md`), render the template skeleton
+   only — the custom sections are expected.
+2. **Diff each rendered file against the on-disk copy** and classify:
+   - **Match** — skip, no action needed.
+   - **Template drift** — the skeleton differs (new sections, renamed
+     placeholders, updated boilerplate). Needs overwrite or merge.
+   - **Mixed drift** — template differs *and* project-specific edits
+     are present. Call this out; the human must confirm per-file
+     before overwrite.
+3. **Check for new placeholders.** If the current template introduces
+   a placeholder that has no value in the project's `CLAUDE.md` (e.g.,
+   `<COST_IN_COMMIT>` in a project set up before that feature existed),
+   ask the human for that value using the same prompt Phase 1 uses
+   for a fresh setup. Do **not** re-ask about placeholders already
+   filled in — those carry forward.
+4. **Present the plan in one message.** List files grouped by
+   match / template drift / mixed drift, list any new placeholders
+   that need a value, and state the order of operations. Wait for
+   approval, then proceed file-by-file with a per-file diff before
+   each overwrite. Skip matches silently.
+
+`ONBOARDING.md` and `TEAM_GUIDE.md` are regenerated at the end of
+the run regardless — they mirror the current state of the other kit
+files (Step 12).
+
+If the audit finds no drift and no new placeholders, tell the human
+the kit is already current and stop — there is nothing to do.
 
 ### Phase 1: Gather project information
 

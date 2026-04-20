@@ -3,7 +3,29 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
+
+// maybeProvisionPlatformAPI writes .sandbox/platform-api.env when the
+// project's merge method is PR and the file is not already present.
+// Skips the prompt if the developer already has an env file (common
+// when re-running onboard).
+func maybeProvisionPlatformAPI(projectRoot string) error {
+	envPath := filepath.Join(projectRoot, ".sandbox", "platform-api.env")
+	if _, err := os.Stat(envPath); err == nil {
+		return nil // already provisioned
+	}
+
+	vars, err := LoadVariables(filepath.Join(projectRoot, DefaultVariablesPath))
+	if err != nil {
+		return err
+	}
+	if vars["MERGE_METHOD"] != "PR" {
+		return nil
+	}
+
+	return WritePlatformAPIEnv(projectRoot, DetectPlatform())
+}
 
 const onboardUsage = `onboard — set up developer-local state on a kit-installed project
 
@@ -71,6 +93,15 @@ func runOnboardInstall() int {
 			fmt.Printf("Warning: SSH provisioning failed: %s\n", err)
 			fmt.Println("         Sandbox will start, but git operations over SSH may fail.")
 		}
+	}
+
+	// If the project uses the PR merge method, prompt for a platform
+	// API token so the Integrator can create/merge PRs via the
+	// platform's REST API. Skip if a platform-api.env is already in
+	// place (don't re-prompt on re-onboard).
+	if err := maybeProvisionPlatformAPI(projectRoot); err != nil {
+		fmt.Printf("Warning: platform API provisioning failed: %s\n", err)
+		fmt.Println("         Sandbox will start, but PRs won't go through the API.")
 	}
 
 	if err := RunSandboxStart(projectRoot); err != nil {

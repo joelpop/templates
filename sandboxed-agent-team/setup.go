@@ -112,8 +112,13 @@ func runF1Fresh(projectRoot string) int {
 		return fail(err)
 	}
 
-	// Stage the kit files plus the variables file plus CLAUDE.md.
-	toStage := append([]string{DefaultVariablesPath, "CLAUDE.md"}, written...)
+	if _, err := EnsureKitGitignore(projectRoot); err != nil {
+		return fail(fmt.Errorf("update .gitignore: %w", err))
+	}
+
+	// Stage the kit files plus the variables file, CLAUDE.md, and
+	// .gitignore.
+	toStage := append([]string{DefaultVariablesPath, "CLAUDE.md", ".gitignore"}, written...)
 	if err := GitAddForce(toStage...); err != nil {
 		return fail(fmt.Errorf("stage kit files: %w", err))
 	}
@@ -176,13 +181,17 @@ func runF2Existing(projectRoot string) int {
 		return fail(err)
 	}
 
-	// Re-adding the import is idempotent; ensures CLAUDE.md is
-	// correct even if it was edited since initial setup.
+	// Re-adding the import and refreshing the gitignore block are
+	// both idempotent; they ensure those files are correct even if
+	// they were edited since initial setup.
 	if err := AddClaudeImport(projectRoot); err != nil {
 		return fail(err)
 	}
+	if _, err := EnsureKitGitignore(projectRoot); err != nil {
+		return fail(fmt.Errorf("update .gitignore: %w", err))
+	}
 
-	toStage := append([]string{DefaultVariablesPath, "CLAUDE.md"}, written...)
+	toStage := append([]string{DefaultVariablesPath, "CLAUDE.md", ".gitignore"}, written...)
 	if err := GitAddForce(toStage...); err != nil {
 		return fail(fmt.Errorf("stage kit files: %w", err))
 	}
@@ -240,12 +249,19 @@ func runSetupRemove() int {
 	}
 
 	// Excise the @CLAUDE_TEAM.md import block from CLAUDE.md (or
-	// delete CLAUDE.md entirely if the block was its only content).
+	// delete CLAUDE.md entirely if the block was its only content)
+	// and the kit's block from .gitignore.
 	if err := RemoveClaudeImport(projectRoot); err != nil {
 		return fail(fmt.Errorf("remove CLAUDE.md import: %w", err))
 	}
 	if err := stagePath(projectRoot, "CLAUDE.md"); err != nil {
 		fmt.Printf("Warning: couldn't stage CLAUDE.md: %s\n", err)
+	}
+	if err := RemoveKitGitignore(projectRoot); err != nil {
+		fmt.Printf("Warning: couldn't excise kit block from .gitignore: %s\n", err)
+	}
+	if err := stagePath(projectRoot, ".gitignore"); err != nil {
+		fmt.Printf("Warning: couldn't stage .gitignore: %s\n", err)
 	}
 
 	if err := GitCommit("Remove sandboxed-agent-team kit"); err != nil {

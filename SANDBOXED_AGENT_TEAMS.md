@@ -101,8 +101,9 @@ Claude Code takes it from here. The checklist detects the project's
 current state and adjusts automatically:
 - **Agent team setup** — full setup (all phases), including your own
   developer onboarding as the first developer
-- **Agent team re-setup** — asks what to update and presents diffs
-  before overwriting anything
+- **Agent team re-setup** — auto-detects which kit files have drifted
+  from the current template, asks only about new preferences it can't
+  derive, and shows a diff before overwriting anything
 
 Claude Code will handle most steps autonomously. It will stop and ask
 for your input when it needs information it cannot discover (CI
@@ -4142,21 +4143,42 @@ All kit artifacts exist including developer-local files (`.sandbox/`,
 `.claude/settings.json`). The human is re-running the checklist,
 possibly to update the kit after a template revision.
 
-Ask the human: "This project already has a full kit setup. What would
-you like to update?" Options:
-1. **Refresh sandbox only** — rebuild `.sandbox/Dockerfile` with
-   updated stacks/versions. Does not touch shared files. Also
-   regenerate `ONBOARDING.md` and `TEAM_GUIDE.md` to reflect the
-   updated sandbox config. Present a diff for human approval before
-   overwriting.
-2. **Update shared config** — review and update `CLAUDE.md` and
-   `team-start.md` against the latest template. Present a diff for
-   human approval before overwriting. Also regenerate `ONBOARDING.md`
-   and `TEAM_GUIDE.md` to reflect any changes.
-3. **Full re-setup** — run all phases, but for every file that
-   already exists, present a diff and ask the human to approve before
-   overwriting. Never silently overwrite. `ONBOARDING.md` and
-   `TEAM_GUIDE.md` are regenerated as part of Step 12.
+Do not ask the human to pick an update path. You have the current
+template in hand (Files 1–9 of this document) and the project's
+copies on disk — detect drift yourself and present a plan.
+
+1. **Render each template file** from Files 1–9, substituting the
+   project's current placeholder values (read from the existing
+   `CLAUDE.md`: `<DEV_BRANCH_NAME>`, `<MERGE_METHOD>`,
+   `<COST_IN_COMMIT>`, stack/version fields, etc.). For files that
+   weave in project-specific content (`CLAUDE.md`, `.sandbox/Dockerfile`,
+   `ONBOARDING.md`, `TEAM_GUIDE.md`), render the template skeleton
+   only — the custom sections are expected.
+2. **Diff each rendered file against the on-disk copy** and classify:
+   - **Match** — skip, no action needed.
+   - **Template drift** — the skeleton differs (new sections, renamed
+     placeholders, updated boilerplate). Needs overwrite or merge.
+   - **Mixed drift** — template differs *and* project-specific edits
+     are present. Call this out; the human must confirm per-file
+     before overwrite.
+3. **Check for new placeholders.** If the current template introduces
+   a placeholder that has no value in the project's `CLAUDE.md` (e.g.,
+   `<COST_IN_COMMIT>` in a project set up before that feature existed),
+   ask the human for that value using the same prompt Phase 1 uses
+   for a fresh setup. Do **not** re-ask about placeholders already
+   filled in — those carry forward.
+4. **Present the plan in one message.** List files grouped by
+   match / template drift / mixed drift, list any new placeholders
+   that need a value, and state the order of operations. Wait for
+   approval, then proceed file-by-file with a per-file diff before
+   each overwrite. Skip matches silently.
+
+`ONBOARDING.md` and `TEAM_GUIDE.md` are regenerated at the end of
+the run regardless — they mirror the current state of the other kit
+files (Step 12).
+
+If the audit finds no drift and no new placeholders, tell the human
+the kit is already current and stop — there is nothing to do.
 
 ### Phase 1: Gather project information
 

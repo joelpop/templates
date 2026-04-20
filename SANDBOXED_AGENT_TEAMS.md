@@ -139,11 +139,15 @@ agent does not get its own terminal pane.
    as soon as you send your first message — no slash command
    required. Once setup completes, the statusline shows "Agent Team
    Mode" as a visible confirmation that you're talking to the team.
-2. The sandboxed Claude Code runs in **bypass permissions** mode by default — the Lead
-   and all teammates can spawn agents, run builds, tests, and git
-   commands without prompting. `.claude/settings.json` limits which
-   commands are allowed. The Lead will not implement directly — this
-   is enforced by its instructions in `team-start.md`.
+2. The sandboxed Claude Code pre-authorizes common agent commands
+   (`mvn`, `git`, `ls`, `chmod`, etc.) via `.claude/settings.json`'s
+   allow/deny rules, so teammates can spawn agents, run builds,
+   run tests, and perform routine git operations without being
+   prompted. Destructive or out-of-scope operations
+   (`git reset --hard`, `git push --force`, arbitrary shell through
+   `curl | bash`, etc.) are explicitly denied by the same
+   settings. The Lead will not implement directly — this is
+   enforced by its instructions in `team-start.md`.
 3. Describe what you want to the Lead. The Lead coordinates the team
    and drives the teammates through the workflows described in the
    Overview below.

@@ -7,13 +7,13 @@
 # Exception: kit template files live under a .claude/ subdirectory
 # because that's the target path they'll be written to. Keep them
 # tracked.
-!/sandboxed-agent-team/templates/.claude/
-!/sandboxed-agent-team/templates/.claude/**
+!/sandboxed-agent-team/cmd/templates/.claude/
+!/sandboxed-agent-team/cmd/templates/.claude/**
 
 # Older/working copies
 ignored/
 
-# Go build artifacts
+# Go build artifacts (make build writes the host binary to the kit
+# root; make release writes per-platform binaries to release/).
 /sandboxed-agent-team/sandboxed-agent-team
-/sandboxed-agent-team/bin/
 /sandboxed-agent-team/release/

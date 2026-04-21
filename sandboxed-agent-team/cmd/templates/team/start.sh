@@ -85,28 +85,28 @@ if [ -z "${AUTH_TOKEN}" ]; then
 fi
 
 # ── SSH key sync (host side) ─────────────────────────────────────────────────
-# Refresh the key pair in .sandbox/ssh/ from the host path recorded in
-# .sandbox/ssh.source, in case the developer rotated their key.
-SSH_SOURCE_FILE="${PROJECT_DIR}/.sandbox/ssh.source"
+# Refresh the key pair in .sandbox/.ssh/ from the host path recorded in
+# .sandbox/.ssh.source, in case the developer rotated their key.
+SSH_SOURCE_FILE="${PROJECT_DIR}/.sandbox/.ssh.source"
 if [ -f "$SSH_SOURCE_FILE" ]; then
     SSH_KEY=$(grep -v '^#' "$SSH_SOURCE_FILE" | head -1 | tr -d '[:space:]')
     SSH_KEY="${SSH_KEY/#\~/$HOME}"
     if [ -n "$SSH_KEY" ] && [ -f "$SSH_KEY" ]; then
-        SSH_DIR="${PROJECT_DIR}/.sandbox/ssh"
+        SSH_DIR="${PROJECT_DIR}/.sandbox/.ssh"
         mkdir -p "$SSH_DIR"
         cp "$SSH_KEY" "$SSH_DIR/"
         [ -f "${SSH_KEY}.pub" ] && cp "${SSH_KEY}.pub" "$SSH_DIR/"
         echo "=== SSH key synced from ${SSH_KEY} ==="
     else
         echo ""
-        echo "SSH key '${SSH_KEY}' (from .sandbox/ssh.source) not found."
+        echo "SSH key '${SSH_KEY}' (from .sandbox/.ssh.source) not found."
         echo ""
         echo "  The project declares SSH use but the key at that path is"
         echo "  missing. Git operations will fail inside the sandbox"
         echo "  until this is fixed."
         echo ""
         echo "  If you know the correct path, enter it now — this script"
-        echo "  will update .sandbox/ssh.source and re-sync. Otherwise,"
+        echo "  will update .sandbox/.ssh.source and re-sync. Otherwise,"
         echo "  press Enter to abort; to reconfigure SSH interactively,"
         echo "  start a Claude Code session at your host terminal in this"
         echo "  project directory and say:"
@@ -135,11 +135,11 @@ if [ -f "$SSH_SOURCE_FILE" ]; then
         done
         echo "$NEW_PATH" > "$SSH_SOURCE_FILE"
         SSH_KEY="$NEW_PATH"
-        SSH_DIR="${PROJECT_DIR}/.sandbox/ssh"
+        SSH_DIR="${PROJECT_DIR}/.sandbox/.ssh"
         mkdir -p "$SSH_DIR"
         cp "$SSH_KEY" "$SSH_DIR/"
         [ -f "${SSH_KEY}.pub" ] && cp "${SSH_KEY}.pub" "$SSH_DIR/"
-        echo "=== Updated .sandbox/ssh.source and synced SSH key from ${SSH_KEY} ==="
+        echo "=== Updated .sandbox/.ssh.source and synced SSH key from ${SSH_KEY} ==="
     fi
 fi
 
@@ -192,10 +192,10 @@ inject_credentials() {
 
     # ── SSH keys ──────────────────────────────────────────────────────────
     # The workspace is mounted at PROJECT_DIR inside the sandbox (same path
-    # as on the host). Copy SSH material from .sandbox/ssh/ to /home/agent/.ssh/.
-    if [ -d "${PROJECT_DIR}/.sandbox/ssh" ]; then
+    # as on the host). Copy SSH material from .sandbox/.ssh/ to /home/agent/.ssh/.
+    if [ -d "${PROJECT_DIR}/.sandbox/.ssh" ]; then
         docker sandbox exec "${SANDBOX_NAME}" bash -c \
-            "cp '${PROJECT_DIR}/.sandbox/ssh/'* /home/agent/.ssh/ 2>/dev/null; \
+            "cp '${PROJECT_DIR}/.sandbox/.ssh/'* /home/agent/.ssh/ 2>/dev/null; \
              chmod 600 /home/agent/.ssh/id_* 2>/dev/null; \
              chmod 644 /home/agent/.ssh/*.pub /home/agent/.ssh/config \
                        /home/agent/.ssh/known_hosts 2>/dev/null"
@@ -203,9 +203,9 @@ inject_credentials() {
     fi
 
     # ── Platform API credentials (for PR merge method) ────────────────────
-    if [ -f "${PROJECT_DIR}/.sandbox/platform-api.env" ]; then
+    if [ -f "${PROJECT_DIR}/.sandbox/.platform-api.env" ]; then
         docker sandbox exec "${SANDBOX_NAME}" bash -c \
-            "cat '${PROJECT_DIR}/.sandbox/platform-api.env' >> /home/agent/.bashrc"
+            "cat '${PROJECT_DIR}/.sandbox/.platform-api.env' >> /home/agent/.bashrc"
         echo "=== Platform API credentials injected ==="
     fi
 

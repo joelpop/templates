@@ -119,7 +119,7 @@ func runInstallFresh(projectRoot string) int {
 		return fail(fmt.Errorf("commit kit files: %w", err))
 	}
 
-	printJoinInstructions()
+	offerToJoin(projectRoot)
 	return 0
 }
 
@@ -181,7 +181,7 @@ func runInstallUpdate(projectRoot string) int {
 		return fail(fmt.Errorf("commit kit files: %w", err))
 	}
 
-	printJoinInstructions()
+	offerToJoin(projectRoot)
 	return 0
 }
 
@@ -256,17 +256,39 @@ func runUninstall(args []string) int {
 	return 0
 }
 
-// printJoinInstructions tells the developer what to do next after
-// install writes and commits the kit. Joining is a separate command
-// (team/join.sh) so the install path doesn't carry dev-local logic.
-func printJoinInstructions() {
+// offerToJoin is the last step of install. It asks whether the
+// developer wants to run team/join.sh now, and if yes, shells out.
+// If no (or on any failure), prints instructions to run it later.
+// Install itself carries no joining logic — it just invokes the
+// same script the developer would run.
+func offerToJoin(projectRoot string) {
 	fmt.Println()
 	fmt.Println("Kit installed and committed on this branch.")
 	fmt.Println()
-	fmt.Println("To provision your local sandbox and start the team, run:")
-	fmt.Println()
-	fmt.Println("    ./team/join.sh")
-	fmt.Println()
+
+	ok, err := PromptYesNo("Run ./team/join.sh now to provision your workstation and start the team?", true)
+	if err != nil || !ok {
+		fmt.Println()
+		fmt.Println("When you're ready, run:")
+		fmt.Println()
+		fmt.Println("    ./team/join.sh")
+		fmt.Println()
+		return
+	}
+
+	join := filepath.Join(projectRoot, "team", "join.sh")
+	if _, err := os.Stat(join); err != nil {
+		fmt.Fprintf(os.Stderr, "team/join.sh not found at %s; skipping.\n", join)
+		return
+	}
+	cmd := exec.Command(join)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = projectRoot
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
+	}
 }
 
 // stopSandboxIfInstalled invokes team/stop.sh if it exists. Used

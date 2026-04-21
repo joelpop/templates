@@ -48,16 +48,16 @@ func PromptChoice(question string, options []string, def string) (string, error)
 
 	fmt.Println(question)
 	for i, o := range options {
-		marker := "  "
+		suffix := ""
 		if o == def {
-			marker = "* "
+			suffix = "  (default)"
 		}
-		fmt.Printf("%s%d. %s\n", marker, i+1, o)
+		fmt.Printf("  %d. %s%s\n", i+1, o, suffix)
 	}
 
-	prompt := "> "
+	prompt := "Enter number or name: "
 	if def != "" {
-		prompt = fmt.Sprintf("> [default: %s] ", def)
+		prompt = fmt.Sprintf("Enter number or name [%s]: ", def)
 	}
 
 	for {

@@ -95,7 +95,7 @@ func TestVariablesRoundTrip(t *testing.T) {
 	vars := Variables{
 		"JAVA_VERSION":    "21",
 		"DEV_BRANCH_NAME": "feature/develop",
-		"GIT_USER_NAME":   "Joel Robertson",
+		"GIT_USER_NAME":   "Ada Lovelace",
 	}
 	if err := SaveVariables(path, vars); err != nil {
 		t.Fatal(err)

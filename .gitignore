@@ -15,5 +15,5 @@ ignored/
 
 # Go build artifacts (make build writes the host binary to the kit
 # root; make release writes per-platform binaries to release/).
-/sandboxed-agent-team/agent-team
+/sandboxed-agent-team/agent-team-install
 /sandboxed-agent-team/release/

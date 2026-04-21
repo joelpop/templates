@@ -1,7 +1,7 @@
 <!-- GENERATED FILE — do not edit directly. Edits here will be lost
 the next time this file is regenerated. To change this file, edit
 its template in the kit template source and
-re-run `agent-team install`. -->
+re-run `agent-team-install`. -->
 
 # You are the team's Lead. Create an agent team for this project.
 

@@ -4,7 +4,7 @@
 > **GENERATED FILE** — do not edit directly. Edits here will be lost
 > the next time this file is regenerated. To change this file, edit
 > its template in the kit template source and
-> re-run `agent-team install`.
+> re-run `agent-team-install`.
 
 This document describes how to work with the Claude Code agent team
 on this project. It is your day-to-day reference — not a setup guide

@@ -8,48 +8,10 @@ import (
 	"strings"
 )
 
-const installUsage = `install — install the agent team kit on a project
-
-Usage:
-  agent-team install [--help]
-
-Fresh project → full install: identifies the development branch,
-prompts for inputs, renders templates, commits the kit artifacts.
-
-Existing installation → state-aware re-install: reconciles the
-variables file against the current templates (prompting for any
-new placeholders, cleaning up orphans), regenerates every
-generated file, and commits the update. Sample files (e.g.,
-docs/INDEX.md) are left untouched.
-
-Install does NOT provision developer-local state (Docker sandbox,
-SSH keys, platform API token). Once install finishes, run
-./team/join.sh to provision your workstation and start the team.
-`
-
-const uninstallUsage = `uninstall — remove the kit from a project
-
-Usage:
-  agent-team uninstall [--help]
-
-Stops any running sandbox, deletes the kit's generated files,
-excises the @CLAUDE_TEAM.md import from CLAUDE.md and the kit's
-block from .gitignore, and commits the removal. Does NOT touch
-docs/ — that belongs to the project.
-`
-
-func runInstall(args []string) int {
-	for _, arg := range args {
-		switch arg {
-		case "--help", "-h":
-			fmt.Print(installUsage)
-			return 0
-		default:
-			fmt.Fprintf(os.Stderr, "install: unknown flag %q\n\n%s", arg, installUsage)
-			return 2
-		}
-	}
-
+// runInstall is the binary's single entry point. agent-team-install
+// has no subcommands: the bare invocation runs install (fresh or
+// update, auto-detected). See main.go for the top-level usage text.
+func runInstall() int {
 	projectRoot := "."
 	if IsKitInstalled(projectRoot) {
 		return runInstallUpdate(projectRoot)
@@ -202,8 +164,33 @@ func runInstallUpdate(projectRoot string) int {
 		return fail(fmt.Errorf("commit kit files: %w", err))
 	}
 
-	offerToJoin(projectRoot)
+	finishUpdate(projectRoot)
 	return 0
+}
+
+// finishUpdate closes out the install-update flow. If the developer
+// has already joined this workstation (marker present), re-run
+// team/join.sh automatically so the local sandbox picks up any kit
+// changes. Otherwise, leave a pointer so they can join on their own
+// schedule.
+func finishUpdate(projectRoot string) {
+	fmt.Println()
+	if isWorkstationJoined(projectRoot) {
+		fmt.Println("Your workstation is already provisioned — re-running")
+		fmt.Println("./team/join.sh to sync the local sandbox with the")
+		fmt.Println("updated kit.")
+		fmt.Println()
+		if err := runJoinScript(projectRoot); err != nil {
+			fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
+		}
+		return
+	}
+	fmt.Println("Kit updated and committed on this branch.")
+	fmt.Println()
+	fmt.Println("When you're ready to provision your workstation, run:")
+	fmt.Println()
+	fmt.Println("    ./team/join.sh")
+	fmt.Println()
 }
 
 // printInstallIntro prints a short roadmap so the developer knows
@@ -281,45 +268,6 @@ func confirmProceedWithInstall(vars Variables, fresh bool) (bool, error) {
 	return PromptYesNo("Proceed?", true)
 }
 
-// runUninstall shells out to the target project's own team/uninstall.sh.
-// The script is the single source of truth for the uninstall flow so a
-// developer who no longer has the Go installer on their machine can
-// still remove the kit. agent-team uninstall is just a convenience for
-// people who do have the binary — it invokes the same script they
-// would run directly.
-func runUninstall(args []string) int {
-	for _, arg := range args {
-		switch arg {
-		case "--help", "-h":
-			fmt.Print(uninstallUsage)
-			return 0
-		default:
-			fmt.Fprintf(os.Stderr, "uninstall: unknown flag %q\n\n%s", arg, uninstallUsage)
-			return 2
-		}
-	}
-
-	projectRoot := "."
-	script := filepath.Join(projectRoot, "team", "uninstall.sh")
-	if _, err := os.Stat(script); err != nil {
-		return fail(fmt.Errorf(
-			"uninstall script not found at %s.\n" +
-				"  The kit may not be installed on this branch,\n" +
-				"  or team/uninstall.sh was deleted.",
-			script))
-	}
-
-	cmd := exec.Command(script)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = projectRoot
-	if err := cmd.Run(); err != nil {
-		return fail(fmt.Errorf("team/uninstall.sh: %w", err))
-	}
-	return 0
-}
-
 // offerToJoin is the last step of install. It asks whether the
 // developer wants to run team/join.sh now, and if yes, shells out.
 // If no (or on any failure), prints instructions to run it later.
@@ -340,19 +288,35 @@ func offerToJoin(projectRoot string) {
 		return
 	}
 
+	if err := runJoinScript(projectRoot); err != nil {
+		fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
+	}
+}
+
+// runJoinScript execs team/join.sh with stdio inherited. A missing
+// script is treated as a non-fatal condition (warning + nil).
+// A non-zero exit from the script is returned to the caller.
+func runJoinScript(projectRoot string) error {
 	join := filepath.Join(projectRoot, "team", "join.sh")
 	if _, err := os.Stat(join); err != nil {
 		fmt.Fprintf(os.Stderr, "team/join.sh not found at %s; skipping.\n", join)
-		return
+		return nil
 	}
 	cmd := exec.Command(join)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = projectRoot
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
-	}
+	return cmd.Run()
+}
+
+// isWorkstationJoined reports whether this checkout has the local
+// .claude/.last-onboarded marker (written by team/join.sh, removed
+// by team/leave.sh). Used to decide whether an install-update should
+// auto-re-run join to keep the sandbox in sync.
+func isWorkstationJoined(projectRoot string) bool {
+	_, err := os.Stat(filepath.Join(projectRoot, ".claude", ".last-onboarded"))
+	return err == nil
 }
 
 // stopSandboxIfInstalled invokes team/stop.sh if it exists. Used

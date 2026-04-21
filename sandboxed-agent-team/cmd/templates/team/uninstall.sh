@@ -3,13 +3,14 @@
 # GENERATED FILE — do not edit directly.
 # Edits here will be lost the next time this file is regenerated.
 # To change this file, edit its template in the kit source and
-# re-run `agent-team install`.
+# re-run `agent-team-install`.
 
 # uninstall.sh — remove the agent team kit from this project.
 #
-# Stops the sandbox, deletes kit-generated files, excises the
-# @CLAUDE_TEAM.md import block from CLAUDE.md and the kit's block
-# from .gitignore, commits the removal.
+# Delegates teardown of developer-local state to team/leave.sh,
+# then deletes the kit's versioned files, excises the
+# @CLAUDE_TEAM.md import block from CLAUDE.md and the kit's
+# block from .gitignore, and commits the removal.
 #
 # Does NOT touch docs/ — that belongs to the project.
 #
@@ -20,9 +21,15 @@
 # them, so user additions don't survive a re-install; that's a
 # known asymmetry.)
 #
-# A developer can run this directly (`./team/uninstall.sh`) without
-# the Go installer being available. `agent-team uninstall` simply
-# shells out to this script.
+# This script is the only programmatic way to uninstall the kit.
+# Run it directly from the project root:
+#
+#   ./team/uninstall.sh
+#
+# (The agent-team-install binary only handles installs and updates;
+# lifecycle commands (join, leave, start, stop, uninstall) live
+# here in team/ so they stay in lockstep with the kit version
+# committed to the project.)
 
 set -euo pipefail
 
@@ -73,28 +80,20 @@ if [ ${#warnings[@]} -gt 0 ]; then
     echo ""
 fi
 
-read -r -p "Proceed with uninstall? [y/N] " resp
-case "${resp:-}" in
-    y|Y|yes|YES) ;;
-    *) echo "Aborted."; exit 0 ;;
-esac
+while : ; do
+    read -r -p "Uninstall the kit AND tear down your workstation's local sandbox state? [yes/NO] " resp
+    case "${resp:-}" in
+        yes|Yes|YES) break ;;
+        no|No|NO|"") echo "Aborted."; exit 0 ;;
+        *) echo "?invalid response: ${resp}" ;;
+    esac
+done
 
-# Stop the sandbox BEFORE we delete team/stop.sh.
-if [ -x "${PROJECT_DIR}/team/stop.sh" ]; then
-    "${PROJECT_DIR}/team/stop.sh" || true
-fi
-
-# Remove developer-local state (the same paths team/leave.sh targets).
-rm -rf "${PROJECT_DIR}/.sandbox/.ssh"
-rm -f  "${PROJECT_DIR}/.sandbox/.ssh.source"
-rm -f  "${PROJECT_DIR}/.sandbox/.platform-api.env"
-rm -f  "${PROJECT_DIR}/.sandbox/.oauth-token"
-rm -f  "${PROJECT_DIR}/.sandbox/.last-directive"
-rm -f  "${PROJECT_DIR}/.claude/.last-onboarded"
-rm -f  "${PROJECT_DIR}/.claude/.team-active"
-rm -rf "${PROJECT_DIR}/.claude/.tasks"
-rm -f  "${PROJECT_DIR}/.claude/.progress.md"
-rm -rf "${PROJECT_DIR}/.claude/.worktrees"
+# Tear down developer-local state by delegating to team/leave.sh.
+# --yes bypasses leave.sh's own prompt since we already confirmed
+# the combined action above. leave.sh also stops the sandbox before
+# removing state, so we don't need a separate team/stop.sh call.
+"${PROJECT_DIR}/team/leave.sh" --yes
 
 # Delete tracked kit files. --ignore-unmatch makes this idempotent.
 # Intentionally omitted from the delete list:

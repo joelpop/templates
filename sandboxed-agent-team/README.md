@@ -74,11 +74,16 @@ pom.xml and will ask you to confirm):**
 
 ### Step 2 — Run setup
 
-From the project root, run:
+From the project root, run the `agent-team-install` binary — either
+on `PATH` or via its explicit path:
 
 ```
-agent-team install
+agent-team-install
 ```
+
+The binary is self-contained: every template file is bundled into
+it via Go's `go:embed`, so it has no runtime dependency on the
+kit source directory and can live anywhere.
 
 The tool auto-detects the project's state and does the right thing:
 
@@ -86,15 +91,20 @@ The tool auto-detects the project's state and does the right thing:
   (with fetch + freshness check), places on it, discovers stack
   details from `pom.xml`, prompts for what it can't auto-derive
   (CI platform, merge method, cost-in-commit), renders all template
-  files into the project, commits them, and invokes onboard for you
-  as the initial developer.
+  files into the project, commits them, and offers to run
+  `./team/join.sh` to provision your workstation and start the team.
 - **Kit already installed** → state-aware re-run: shuts down the
   sandbox, preserves your variables file (adding any new
   placeholders the current kit introduces, cleaning orphans),
-  regenerates every generated file from current templates, re-onboards,
-  restarts the sandbox.
+  regenerates every generated file from current templates, commits
+  the update, and — if your workstation is already provisioned —
+  automatically re-provisions it to sync with the refreshed kit.
 
-To remove the kit from a project: `agent-team uninstall`.
+To remove the kit from a project: `./team/uninstall.sh`. Lifecycle
+commands (`join`, `leave`, `start`, `stop`, `uninstall`) all live in
+`./team/` and are the only supported way to invoke them — running
+them directly keeps lifecycle commands in lockstep with the kit
+version committed to the project.
 
 ### Step 3 — Onboarding other developers
 
@@ -105,9 +115,9 @@ run:
 ./team/join.sh
 ```
 
-This provisions their local sandbox without re-running setup.
-`onboard --remove` undoes just the local state (leaves versioned kit
-files alone).
+This provisions their local sandbox without re-running setup. To
+undo just the local state (leaving versioned kit files alone), run
+`./team/leave.sh`.
 
 **A note on authentication:** Because the sandbox is a separate
 environment, your host Claude Code login doesn't carry over.

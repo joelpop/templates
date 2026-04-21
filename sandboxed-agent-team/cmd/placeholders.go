@@ -20,11 +20,12 @@ const (
 
 // PlaceholderDef describes one known placeholder the kit uses.
 type PlaceholderDef struct {
-	Name    string
-	Source  PlaceholderSource
-	Prompt  string   // used when Source is Prompt (or Auto fallback)
-	Options []string // non-empty → choice prompt
-	Default string   // default on empty input
+	Name               string
+	Source             PlaceholderSource
+	Prompt             string   // used when Source is Prompt (or Auto fallback)
+	Options            []string // non-empty → choice prompt
+	OptionDescriptions []string // optional; parallel to Options, renders " — <desc>" after each
+	Default            string   // default on empty input
 }
 
 // Resolve returns a value for the placeholder by prompting the user.
@@ -34,6 +35,9 @@ func (p PlaceholderDef) Resolve() (string, error) {
 		return "", fmt.Errorf("placeholder %s has no Prompt text", p.Name)
 	}
 	if len(p.Options) > 0 {
+		if p.OptionDescriptions != nil {
+			return PromptChoiceWithDescriptions(p.Prompt, p.Options, p.OptionDescriptions, p.Default)
+		}
 		return PromptChoice(p.Prompt, p.Options, p.Default)
 	}
 	return PromptWithDefault(p.Prompt, p.Default)
@@ -96,8 +100,13 @@ var knownPlaceholders = map[string]PlaceholderDef{
 	"MERGE_METHOD": {
 		Name:    "MERGE_METHOD",
 		Source:  SourcePrompt,
-		Prompt:  "How should completed work reach the development branch?",
+		Prompt:  "How should completed work reach the development branch on origin?",
 		Options: []string{"PR", "Integrator merge", "Human merge"},
+		OptionDescriptions: []string{
+			"Integrator creates a PR on the platform (GitHub/Bitbucket/GitLab) via REST API; merged after reviewer approval. Requires an API token.",
+			"Integrator squash-merges the task branch to the local dev branch and pushes to origin. No PR.",
+			"Team notifies you when a task is ready; you perform the squash-merge and push yourself.",
+		},
 		Default: "Integrator merge",
 	},
 	"COST_IN_COMMIT": {

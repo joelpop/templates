@@ -42,17 +42,31 @@ func PromptWithDefault(question, def string) (string, error) {
 // exact (case-insensitive) match of the option text. Empty input
 // returns def.
 func PromptChoice(question string, options []string, def string) (string, error) {
+	return PromptChoiceWithDescriptions(question, options, nil, def)
+}
+
+// PromptChoiceWithDescriptions is PromptChoice plus a parallel slice
+// of per-option descriptions. If descriptions is nil, behaves exactly
+// like PromptChoice. If non-nil, its length must match options.
+func PromptChoiceWithDescriptions(question string, options, descriptions []string, def string) (string, error) {
 	if len(options) == 0 {
 		return "", fmt.Errorf("PromptChoice called with no options")
+	}
+	if descriptions != nil && len(descriptions) != len(options) {
+		return "", fmt.Errorf("PromptChoice: %d options but %d descriptions",
+			len(options), len(descriptions))
 	}
 
 	fmt.Println(question)
 	for i, o := range options {
-		suffix := ""
-		if o == def {
-			suffix = "  (default)"
+		line := fmt.Sprintf("  %d. %s", i+1, o)
+		if descriptions != nil && descriptions[i] != "" {
+			line += " — " + descriptions[i]
 		}
-		fmt.Printf("  %d. %s%s\n", i+1, o, suffix)
+		if o == def {
+			line += "  (default)"
+		}
+		fmt.Println(line)
 	}
 
 	prompt := "Enter number or name: "

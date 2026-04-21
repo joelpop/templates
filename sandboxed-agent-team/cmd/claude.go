@@ -50,41 +50,7 @@ func AddClaudeImport(projectRoot string) error {
 	return os.WriteFile(path, out, 0o644)
 }
 
-// RemoveClaudeImport excises the bracketed block from CLAUDE.md.
-// Deletes CLAUDE.md entirely if the block was its only content.
-// No-op if the file or the markers don't exist.
-func RemoveClaudeImport(projectRoot string) error {
-	path := filepath.Join(projectRoot, "CLAUDE.md")
-	existing, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("read %s: %w", path, err)
-	}
-
-	beginIdx := bytes.Index(existing, []byte(claudeImportBegin))
-	endIdx := bytes.Index(existing, []byte(claudeImportEnd))
-	if beginIdx < 0 || endIdx < 0 {
-		return nil
-	}
-	endAfter := endIdx + len(claudeImportEnd)
-
-	// Also strip the newline before begin and after end, if present,
-	// so we don't leave a widening blank-line gap on repeated add/remove.
-	if beginIdx > 0 && existing[beginIdx-1] == '\n' {
-		beginIdx--
-	}
-	if endAfter < len(existing) && existing[endAfter] == '\n' {
-		endAfter++
-	}
-
-	out := make([]byte, 0, len(existing))
-	out = append(out, existing[:beginIdx]...)
-	out = append(out, existing[endAfter:]...)
-
-	if len(bytes.TrimSpace(out)) == 0 {
-		return os.Remove(path)
-	}
-	return os.WriteFile(path, out, 0o644)
-}
+// Note: CLAUDE.md import REMOVAL lives in team/uninstall.sh (bash,
+// committed to target projects). It's canonically bash because a
+// developer who no longer has the Go installer still needs to be
+// able to uninstall.

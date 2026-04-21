@@ -85,42 +85,9 @@ func TestAddClaudeImportIdempotent(t *testing.T) {
 	}
 }
 
-func TestRemoveClaudeImportPreservesUserContent(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "CLAUDE.md")
-	if err := os.WriteFile(path, []byte("User's own content\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := AddClaudeImport(dir); err != nil {
-		t.Fatalf("add: %v", err)
-	}
-	if err := RemoveClaudeImport(dir); err != nil {
-		t.Fatalf("remove: %v", err)
-	}
-	content, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read: %v", err)
-	}
-	if strings.Contains(string(content), claudeImportBegin) {
-		t.Errorf("marker should be removed: %q", content)
-	}
-	if !strings.Contains(string(content), "User's own content") {
-		t.Errorf("user content must be preserved: %q", content)
-	}
-}
-
-func TestRemoveClaudeImportDeletesEmptyFile(t *testing.T) {
-	dir := t.TempDir()
-	if err := AddClaudeImport(dir); err != nil {
-		t.Fatal(err)
-	}
-	if err := RemoveClaudeImport(dir); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(filepath.Join(dir, "CLAUDE.md")); !os.IsNotExist(err) {
-		t.Errorf("CLAUDE.md should have been deleted; got err=%v", err)
-	}
-}
+// Note: removal tests for CLAUDE.md import and gitignore block live
+// in team/uninstall.sh (bash), not Go — removal is canonically bash
+// now.
 
 func TestVariablesRoundTrip(t *testing.T) {
 	dir := t.TempDir()

@@ -12,7 +12,7 @@
 #   make check    - vet + test + build (what CI would run)
 #   make clean    - remove build output
 
-BINARY      := sandboxed-agent-team
+BINARY      := agent-team
 RELEASE_DIR := release
 GO          := go -C cmd
 

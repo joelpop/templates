@@ -1,5 +1,5 @@
 {
-  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the kit source and re-run `sandboxed-agent-team setup`.",
+  "_generated": "GENERATED FILE — do not edit directly. Edits here will be lost the next time this file is regenerated. To change this file, edit its template in the kit source and re-run `agent-team install`.",
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },

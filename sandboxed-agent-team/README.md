@@ -77,7 +77,7 @@ pom.xml and will ask you to confirm):**
 From the project root, run:
 
 ```
-sandboxed-agent-team setup
+agent-team install
 ```
 
 The tool auto-detects the project's state and does the right thing:
@@ -94,7 +94,7 @@ The tool auto-detects the project's state and does the right thing:
   regenerates every generated file from current templates, re-onboards,
   restarts the sandbox.
 
-To remove the kit from a project: `sandboxed-agent-team setup --remove`.
+To remove the kit from a project: `agent-team uninstall`.
 
 ### Step 3 — Onboarding other developers
 
@@ -102,7 +102,7 @@ New developers joining a project where the kit is already installed
 run:
 
 ```
-sandboxed-agent-team onboard
+./team/join.sh
 ```
 
 This provisions their local sandbox without re-running setup.
@@ -417,6 +417,6 @@ The kit produces these files in a target project:
 | `.claude/settings.json` | Agent team config and permissions | Auto-loaded by Claude Code at session start |
 | `.mcp.json` | Project-scoped MCP server config | Auto-loaded by Claude Code at session start (canonical location for project-scoped MCP servers; see Claude Code docs) |
 | `.claude/commands/team-start.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `start.sh`); also exposed as `/project:team-start` for manual re-invocation |
-| `ONBOARDING.md` | Developer onboarding (generated) | New developer runs `sandboxed-agent-team onboard` |
+| `ONBOARDING.md` | Developer onboarding (generated) | New developer runs `./team/join.sh` |
 | `TEAM_GUIDE.md` | Daily-use reference for humans (generated) | Human reads for workflows, troubleshooting, recovery |
 

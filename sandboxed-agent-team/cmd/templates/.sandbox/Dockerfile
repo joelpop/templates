@@ -1,7 +1,7 @@
 # GENERATED FILE — do not edit directly.
 # Edits here will be lost the next time this file is regenerated.
 # To change this file, edit its template in the kit source and
-# re-run `sandboxed-agent-team setup`.
+# re-run `agent-team install`.
 
 FROM docker/sandbox-templates:claude-code
 

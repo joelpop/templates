@@ -4,7 +4,7 @@
 > **GENERATED FILE** — do not edit directly. Edits here will be lost
 > the next time this file is regenerated. To change this file, edit
 > its template in the kit template source and
-> re-run `sandboxed-agent-team setup`.
+> re-run `agent-team install`.
 
 ## Introduction
 
@@ -66,7 +66,7 @@ you for the rest:
 From the project root, run the kit's onboard command:
 
 ```
-sandboxed-agent-team onboard
+./team/join.sh
 ```
 
 The tool auto-detects your local state and does the right thing:
@@ -83,7 +83,7 @@ If prompts come up, they're for information the tool can't auto-discover
 the command finishes, the sandbox is running and a Claude Code session
 is attached to it, ready for the agent team.
 
-To uninstall your local state later: `sandboxed-agent-team onboard
+To uninstall your local state later: `./team/join.sh
 --remove`.
 
 ## Daily Use

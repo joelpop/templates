@@ -185,6 +185,12 @@ func runInstallUpdate(projectRoot string) int {
 	return 0
 }
 
+// runUninstall shells out to the target project's own team/uninstall.sh.
+// The script is the single source of truth for the uninstall flow so a
+// developer who no longer has the Go installer on their machine can
+// still remove the kit. agent-team uninstall is just a convenience for
+// people who do have the binary — it invokes the same script they
+// would run directly.
 func runUninstall(args []string) int {
 	for _, arg := range args {
 		switch arg {
@@ -198,61 +204,23 @@ func runUninstall(args []string) int {
 	}
 
 	projectRoot := "."
-
-	if !IsKitInstalled(projectRoot) {
-		fmt.Println("No kit installation detected here. Nothing to remove.")
-		return 0
+	script := filepath.Join(projectRoot, "team", "uninstall.sh")
+	if _, err := os.Stat(script); err != nil {
+		return fail(fmt.Errorf(
+			"uninstall script not found at %s.\n" +
+				"  The kit may not be installed on this branch,\n" +
+				"  or team/uninstall.sh was deleted.",
+			script))
 	}
 
-	fmt.Println("Removing the sandboxed-agent-team kit from this project.")
-	ok, err := PromptYesNo("This tears down the sandbox and deletes kit-generated files. Continue?", false)
-	if err != nil {
-		return fail(err)
+	cmd := exec.Command(script)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = projectRoot
+	if err := cmd.Run(); err != nil {
+		return fail(fmt.Errorf("team/uninstall.sh: %w", err))
 	}
-	if !ok {
-		return fail(fmt.Errorf("aborted by user"))
-	}
-
-	// Stop any running sandbox BEFORE we delete the team/ directory
-	// (which contains stop.sh).
-	stopSandboxIfInstalled(projectRoot)
-
-	removeDeveloperLocalState(projectRoot)
-
-	// Kit files to remove. docs/ is intentionally left untouched.
-	toRemove := []string{
-		"CLAUDE_TEAM.md",
-		"ONBOARDING.md",
-		"TEAM_GUIDE.md",
-		".mcp.json",
-		".claude/team-variables.yaml",
-		".claude/settings.json",
-		".claude/commands/team-start.md",
-		".sandbox",
-		"team",
-	}
-	if err := GitRm(toRemove...); err != nil {
-		return fail(fmt.Errorf("remove kit files: %w", err))
-	}
-
-	if err := RemoveClaudeImport(projectRoot); err != nil {
-		return fail(fmt.Errorf("remove CLAUDE.md import: %w", err))
-	}
-	if err := stagePath(projectRoot, "CLAUDE.md"); err != nil {
-		fmt.Printf("Warning: couldn't stage CLAUDE.md: %s\n", err)
-	}
-	if err := RemoveKitGitignore(projectRoot); err != nil {
-		fmt.Printf("Warning: couldn't excise kit block from .gitignore: %s\n", err)
-	}
-	if err := stagePath(projectRoot, ".gitignore"); err != nil {
-		fmt.Printf("Warning: couldn't stage .gitignore: %s\n", err)
-	}
-
-	if err := GitCommit("Uninstall sandboxed-agent-team kit"); err != nil {
-		return fail(fmt.Errorf("commit removal: %w", err))
-	}
-
-	fmt.Println("Kit removed.")
 	return 0
 }
 
@@ -306,41 +274,6 @@ func stopSandboxIfInstalled(projectRoot string) {
 	cmd.Dir = projectRoot
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Warning: team/stop.sh reported: %s\n", err)
-	}
-}
-
-// removeDeveloperLocalState deletes per-developer files that aren't
-// in git. Best-effort: failures are swallowed. The canonical list
-// lives in team/leave.sh; this duplicates it for uninstall because
-// we're about to delete leave.sh itself.
-func removeDeveloperLocalState(projectRoot string) {
-	paths := []string{
-		".claude/.last-onboarded",
-		".claude/.team-active",
-		".claude/.tasks",
-		".claude/.progress.md",
-		".claude/.worktrees",
-		".sandbox/.ssh",
-		".sandbox/.ssh.source",
-		".sandbox/.platform-api.env",
-		".sandbox/.oauth-token",
-		".sandbox/.last-directive",
-	}
-	for _, p := range paths {
-		_ = os.RemoveAll(filepath.Join(projectRoot, p))
-	}
-}
-
-// stagePath stages a path for commit, choosing `git add -f` if the
-// file exists or `git rm` if it was deleted.
-func stagePath(projectRoot, rel string) error {
-	full := filepath.Join(projectRoot, rel)
-	if _, err := os.Stat(full); err == nil {
-		return GitAddForce(rel)
-	} else if os.IsNotExist(err) {
-		return GitRm(rel)
-	} else {
-		return err
 	}
 }
 

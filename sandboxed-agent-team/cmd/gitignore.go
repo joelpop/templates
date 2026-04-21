@@ -18,16 +18,16 @@ const (
 // kitGitignoreEntries lists developer-local paths the kit creates that
 // must not be committed to the target project's repo.
 var kitGitignoreEntries = []string{
-	".sandbox/ssh/",
-	".sandbox/ssh.source",
-	".sandbox/platform-api.env",
+	".sandbox/.ssh/",
+	".sandbox/.ssh.source",
+	".sandbox/.platform-api.env",
 	".sandbox/.oauth-token",
 	".sandbox/.last-directive",
 	".claude/.last-onboarded",
 	".claude/.team-active",
-	".claude/tasks/",
-	".claude/progress.md",
-	".claude/worktrees/",
+	".claude/.tasks/",
+	".claude/.progress.md",
+	".claude/.worktrees/",
 }
 
 // EnsureKitGitignore appends the kit's developer-local entries to the
@@ -71,38 +71,5 @@ func EnsureKitGitignore(projectRoot string) (bool, error) {
 	return true, os.WriteFile(path, out, 0o644)
 }
 
-// RemoveKitGitignore excises the bracketed kit block from the target
-// project's .gitignore. Deletes .gitignore entirely if the block was
-// its only content. No-op if the file or markers are absent.
-func RemoveKitGitignore(projectRoot string) error {
-	path := filepath.Join(projectRoot, ".gitignore")
-	existing, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-
-	beginIdx := bytes.Index(existing, []byte(gitignoreBegin))
-	endIdx := bytes.Index(existing, []byte(gitignoreEnd))
-	if beginIdx < 0 || endIdx < 0 {
-		return nil
-	}
-	endAfter := endIdx + len(gitignoreEnd)
-	if beginIdx > 0 && existing[beginIdx-1] == '\n' {
-		beginIdx--
-	}
-	if endAfter < len(existing) && existing[endAfter] == '\n' {
-		endAfter++
-	}
-
-	out := make([]byte, 0, len(existing))
-	out = append(out, existing[:beginIdx]...)
-	out = append(out, existing[endAfter:]...)
-
-	if len(bytes.TrimSpace(out)) == 0 {
-		return os.Remove(path)
-	}
-	return os.WriteFile(path, out, 0o644)
-}
+// Note: gitignore block REMOVAL lives in team/uninstall.sh (bash,
+// committed to target projects). See claude.go for the rationale.

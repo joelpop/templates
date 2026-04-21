@@ -207,17 +207,6 @@ func GitCommit(message string) error {
 	return err
 }
 
-// GitRm deletes the given path from the repo (both index and
-// working tree). Skips paths that don't exist.
-func GitRm(paths ...string) error {
-	if len(paths) == 0 {
-		return nil
-	}
-	args := append([]string{"rm", "-rf", "--ignore-unmatch", "--"}, paths...)
-	_, err := git(args...)
-	return err
-}
-
 func indexIsClean() (bool, error) {
 	out, err := git("diff", "--cached", "--name-only")
 	if err != nil {

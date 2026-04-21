@@ -1,5 +1,5 @@
-// Command sandboxed-agent-team bootstraps and manages a disciplined
-// Claude Code agent team kit in a target project.
+// Command agent-team installs and manages a sandboxed Claude Code
+// agent team kit in a target project.
 //
 // See the plan at
 // /Users/joel/.claude/plans/i-think-this-setup-re-setup-pure-blossom.md
@@ -11,26 +11,27 @@ import (
 	"os"
 )
 
-const usage = `sandboxed-agent-team — set up and manage a Claude Code agent team kit
+const usage = `agent-team — install and manage a sandboxed Claude Code agent team kit
 
 Usage:
-  sandboxed-agent-team <command> [flags]
+  agent-team <command> [flags]
 
 Commands:
-  setup     Bootstrap the kit on a fresh project, or update an
-            existing installation. Auto-detects state.
-  onboard   Set up developer-local state on a project that
-            already has the kit installed.
+  install     Install the kit on a project. On a fresh project,
+              bootstraps from scratch. On a project that already
+              has the kit, reconciles variables, regenerates files,
+              and re-commits. Auto-detects state.
+  uninstall   Remove the kit from the project — deletes generated
+              files, excises the CLAUDE.md import block and the
+              kit's .gitignore block, commits the removal. Does
+              NOT touch docs/.
 
 Flags:
-  --remove  Destructive counterpart. With setup, uninstalls the
-            kit from the project. With onboard, removes the current
-            developer's local state only.
-  --help    Show this message (or, after a command, that command's
-            usage).
+  --help      Show this message (or, after a command, that command's
+              usage).
 
-Each command auto-detects project/workspace state and does the
-right thing; re-running is safe and idempotent.
+After installing, developers run ./team/join.sh in the project to
+provision their local sandbox and start the team.
 `
 
 func main() {
@@ -42,10 +43,10 @@ func main() {
 	cmd, args := os.Args[1], os.Args[2:]
 
 	switch cmd {
-	case "setup":
-		os.Exit(runSetup(args))
-	case "onboard":
-		os.Exit(runOnboard(args))
+	case "install":
+		os.Exit(runInstall(args))
+	case "uninstall":
+		os.Exit(runUninstall(args))
 	case "--help", "-h", "help":
 		fmt.Print(usage)
 	default:

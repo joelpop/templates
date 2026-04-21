@@ -13,9 +13,3 @@ func IsKitInstalled(projectRoot string) bool {
 	return err == nil
 }
 
-// IsDeveloperOnboarded reports whether the current developer has
-// local state set up for this project.
-func IsDeveloperOnboarded(projectRoot string) bool {
-	_, err := os.Stat(filepath.Join(projectRoot, ".claude", ".last-onboarded"))
-	return err == nil
-}

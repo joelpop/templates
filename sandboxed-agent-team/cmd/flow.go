@@ -224,16 +224,6 @@ func placeOnBranch(devBranch, defaultNewName string) (string, error) {
 	return "", fmt.Errorf("unexpected choice: %s", choice)
 }
 
-// recordOnboarding writes a timestamp marker indicating that the
-// current developer has onboarded this machine to this project.
-func recordOnboarding(projectRoot string) error {
-	path := filepath.Join(projectRoot, ".claude", ".last-onboarded")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(path, []byte(time.Now().UTC().Format(time.RFC3339)+"\n"), 0o644)
-}
-
 // buildDiscoveredMap collects every auto-discoverable value for the
 // current run: pom.xml fields, git identity, dev branch, build tool,
 // stack summary, and timestamps. Returns a Variables map that

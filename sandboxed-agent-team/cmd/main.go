@@ -14,24 +14,17 @@ import (
 const usage = `agent-team — install and manage a sandboxed Claude Code agent team kit
 
 Usage:
-  agent-team <command> [flags]
+  agent-team <command> [--help]
 
 Commands:
-  install     Install the kit on a project. On a fresh project,
-              bootstraps from scratch. On a project that already
-              has the kit, reconciles variables, regenerates files,
-              and re-commits. Auto-detects state.
-  uninstall   Remove the kit from the project — deletes generated
-              files, excises the CLAUDE.md import block and the
-              kit's .gitignore block, commits the removal. Does
-              NOT touch docs/.
+  install     Installs or updates the kit on a project.
+  uninstall   Removes the kit from a project.
 
-Flags:
-  --help      Show this message (or, after a command, that command's
-              usage).
+For details on any command, run ` + "`agent-team <command> --help`" + `.
 
-After installing, developers run ./team/join.sh in the project to
-provision their local sandbox and start the team.
+After installing (or updating), subsequent developers run
+./team/join.sh in the project to provision (or reprovision) their
+local sandbox and start the team.
 `
 
 func main() {

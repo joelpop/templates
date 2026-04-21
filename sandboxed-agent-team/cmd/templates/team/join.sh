@@ -15,7 +15,7 @@
 #   - start the team (delegating to team/start.sh)
 #   - record .claude/.last-onboarded
 #
-# Idempotent: running again tears down the local sandbox and rebuilds.
+# Idempotent: running again discards the local sandbox and rebuilds.
 
 set -euo pipefail
 

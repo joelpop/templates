@@ -81,15 +81,15 @@ if [ ${#warnings[@]} -gt 0 ]; then
 fi
 
 while : ; do
-    read -r -p "Uninstall the kit AND tear down your workstation's local sandbox state? [yes/NO] " resp
+    read -r -p "Uninstall the kit AND discard your workstation's local sandbox state? [yes/NO] " resp
     case "${resp:-}" in
         yes|Yes|YES) break ;;
         no|No|NO|"") echo "Aborted."; exit 0 ;;
-        *) echo "?invalid response: ${resp}" ;;
+        *) echo "Invalid response: ${resp}" ;;
     esac
 done
 
-# Tear down developer-local state by delegating to team/leave.sh.
+# Discard developer-local state by delegating to team/leave.sh.
 # --yes bypasses leave.sh's own prompt since we already confirmed
 # the combined action above. leave.sh also stops the sandbox before
 # removing state, so we don't need a separate team/stop.sh call.

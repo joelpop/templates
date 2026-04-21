@@ -171,17 +171,23 @@ inject_credentials() {
     echo "=== Injecting credentials into sandbox ==="
 
     # ── Claude Code authentication ────────────────────────────────────────
+    # The token is piped via stdin so it never appears on a command
+    # line visible to `ps` on the host.
     if [ "${AUTH_TYPE}" = "oauth" ]; then
         # Write the OAuth credential JSON to Claude's credentials file.
-        docker sandbox exec "${SANDBOX_NAME}" bash -c \
-            "mkdir -p /home/agent/.claude \
-             && printf '%s' '${AUTH_TOKEN}' > /home/agent/.claude/.credentials.json \
-             && chmod 600 /home/agent/.claude/.credentials.json"
+        printf '%s' "${AUTH_TOKEN}" | docker sandbox exec -i "${SANDBOX_NAME}" bash -c \
+            'mkdir -p /home/agent/.claude \
+             && cat > /home/agent/.claude/.credentials.json \
+             && chmod 600 /home/agent/.claude/.credentials.json'
     else
-        # API key: export in .bashrc so it is available in all shells.
-        docker sandbox exec "${SANDBOX_NAME}" bash -c \
-            "grep -q ANTHROPIC_API_KEY /home/agent/.bashrc 2>/dev/null \
-             || echo 'export ANTHROPIC_API_KEY=\"${AUTH_TOKEN}\"' >> /home/agent/.bashrc"
+        # API key: append an export line to .bashrc, but only if not
+        # already present. The probe runs token-free; the write is gated
+        # behind it and reads the token from stdin.
+        if ! docker sandbox exec "${SANDBOX_NAME}" bash -c \
+            'grep -q ANTHROPIC_API_KEY /home/agent/.bashrc 2>/dev/null'; then
+            printf '%s' "${AUTH_TOKEN}" | docker sandbox exec -i "${SANDBOX_NAME}" bash -c \
+                'read -r token && printf "export ANTHROPIC_API_KEY=%q\n" "$token" >> /home/agent/.bashrc'
+        fi
     fi
 
     # Ensure hasCompletedOnboarding is set (required for OAuth recognition).

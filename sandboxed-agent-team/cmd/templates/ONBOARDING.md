@@ -83,8 +83,8 @@ If prompts come up, they're for information the tool can't auto-discover
 the command finishes, the sandbox is running and a Claude Code session
 is attached to it, ready for the agent team.
 
-To uninstall your local state later: `./team/join.sh
---remove`.
+To discard your local workstation state later (without
+removing the kit from the project): `./team/leave.sh`.
 
 ## Daily Use
 
@@ -103,6 +103,14 @@ For detailed daily workflows — team structure, requirements and
 implementation lifecycles, pausing and resuming, ending a Claude
 Code session, and what to do when something goes wrong — see
 [`TEAM_GUIDE.md`](TEAM_GUIDE.md).
+
+## When the kit is updated
+
+When you pull commits that have modified kit files (generated scripts
+under `team/`, `CLAUDE_TEAM.md`, `.sandbox/Dockerfile`, etc.),
+re-run `./team/join.sh` to rebuild your local sandbox against the
+updated templates. Your workstation state (SSH keys, API tokens)
+is preserved; only the sandbox image is rebuilt.
 
 ## Overview
 

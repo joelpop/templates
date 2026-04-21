@@ -1,6 +1,6 @@
 # Agent Team Guide — <PROJECT_NAME>
 
-> **Generated:** <DATE>
+> **Generated:** <UTC_TIMESTAMP>
 > **GENERATED FILE** — do not edit directly. Edits here will be lost
 > the next time this file is regenerated. To change this file, edit
 > its template in the kit template source and

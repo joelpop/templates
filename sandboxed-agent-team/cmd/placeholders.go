@@ -145,11 +145,6 @@ The task branch is never pushed; no PR is created.`,
 		Source: SourceAuto,
 		Prompt: "One-line stack summary",
 	},
-	"DATE": {
-		Name:   "DATE",
-		Source: SourceAuto,
-		Prompt: "Date (YYYY-MM-DD)",
-	},
 	"UTC_TIMESTAMP": {
 		Name:   "UTC_TIMESTAMP",
 		Source: SourceAuto,

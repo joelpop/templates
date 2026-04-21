@@ -52,7 +52,7 @@ Everything else lives in the project's ./team/ directory
 (placed there by install):
 
   ./team/join.sh       Provision your workstation and start the team.
-  ./team/leave.sh      Tear down your workstation's local sandbox.
+  ./team/leave.sh      Discard your workstation's local sandbox state.
   ./team/start.sh      Start the team after a stop.
   ./team/stop.sh       Stop the team.
   ./team/uninstall.sh  Remove the kit from the project.

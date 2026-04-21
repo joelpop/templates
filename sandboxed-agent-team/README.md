@@ -100,11 +100,15 @@ The tool auto-detects the project's state and does the right thing:
   the update, and — if your workstation is already provisioned —
   automatically re-provisions it to sync with the refreshed kit.
 
-To remove the kit from a project: `./team/uninstall.sh`. Lifecycle
-commands (`join`, `leave`, `start`, `stop`, `uninstall`) all live in
-`./team/` and are the only supported way to invoke them — running
-them directly keeps lifecycle commands in lockstep with the kit
-version committed to the project.
+To remove the kit from a project: `./team/uninstall.sh`. This first
+runs `./team/leave.sh --yes` to discard your workstation's local
+sandbox state, then deletes the kit files, excises the CLAUDE.md
+import block and the kit's .gitignore block, and commits the removal.
+
+Lifecycle commands (`join`, `leave`, `start`, `stop`, `uninstall`)
+all live in `./team/` and are the only supported way to invoke
+them — running them directly keeps lifecycle commands in lockstep
+with the kit version committed to the project.
 
 ### Step 3 — Onboarding other developers
 
@@ -369,47 +373,44 @@ Infrastructure files go **inside** each project alongside the code:
 
 ```
 ~/workspaces/acme-corp/project-alpha/
-├── .sandbox/                        # ← All sandbox infra lives here
-│   ├── Dockerfile                   # Custom Docker Sandbox template
-│   ├── start.sh                     # One-command startup
-│   └── stop.sh                      # Sandbox disposal
-├── CLAUDE.md                        # Project-owned (kit imports CLAUDE_TEAM.md here)
-├── CLAUDE_TEAM.md                   # Kit-owned agent context
+├── .sandbox/                        # Sandbox image + developer-local state
+│   ├── Dockerfile                   # Custom sandbox image template (tracked)
+│   ├── .ssh/                        # (gitignored) SSH material copied into sandbox
+│   ├── .ssh.source                  # (gitignored) absolute path to host SSH key
+│   ├── .platform-api.env            # (gitignored) platform API token (PR merge method)
+│   ├── .oauth-token                 # (gitignored) captured Claude OAuth token
+│   └── .last-directive              # (gitignored) hash of last Lead directive
+├── team/                            # Lifecycle scripts (all tracked)
+│   ├── join.sh                      # Provision workstation + start team
+│   ├── leave.sh                     # Discard developer-local state
+│   ├── start.sh                     # Start the sandbox + team (daily use)
+│   ├── stop.sh                      # Destroy the sandbox
+│   └── uninstall.sh                 # Remove the kit from the project
+├── CLAUDE.md                        # Project-owned; kit adds a bracketed import line
+├── CLAUDE_TEAM.md                   # Kit-owned agent context (imported by CLAUDE.md)
 ├── ONBOARDING.md                    # Developer onboarding (generated)
 ├── TEAM_GUIDE.md                    # Daily-use reference for humans (generated)
+├── .mcp.json                        # Project-scoped MCP server config (canonical location)
 ├── .claude/
-│   ├── .last-onboarded              # Records when this developer last completed onboarding (compared against ONBOARDING.md's Generated: to detect staleness)
-│   ├── settings.json                # Agent Teams + permissions
-│   ├── progress.md                  # Dispatcher: which task is active, which are suspended
-│   ├── tasks/                       # One file per active or suspended task
-│   └── commands/
-│       └── team-start.md            # Reusable slash command
+│   ├── settings.json                # Agent team config + permissions (tracked)
+│   ├── team-variables.yaml          # Persisted kit variables (tracked)
+│   ├── commands/
+│   │   └── team-start.md            # Lead's operating manual (tracked)
+│   ├── .last-onboarded              # (gitignored) marker written by team/join.sh
+│   ├── .team-active                 # (gitignored) marker for statusline indicator
+│   ├── .progress.md                 # (gitignored) dispatcher task log
+│   ├── .tasks/                      # (gitignored) one file per active/suspended task
+│   └── .worktrees/                  # (gitignored) per-teammate git worktrees
 ├── docs/
-│   ├── INDEX.md                     # ← Master doc index (sample, project-owned)
-│   ├── agnostic/                    # Project-agnostic patterns / preferences / standing guidance
-│   │   ├── patterns.md
-│   │   ├── preferences.md
-│   │   └── standards.md
-│   └── reqs/                        # Project-specific requirements
-│       ├── architecture-debt.md     # Structural debt findings
-│       ├── non-functional/          # Quality attributes (ISO 25010)
-│       │   ├── performance.md
-│       │   ├── security/            # Auth, authz, hardening, data protection
-│       │   ├── reliability.md
-│       │   └── ...
-│       ├── functional/
-│       │   ├── cross-cutting/       # Error handling, validation, APIs, etc.
-│       │   ├── data/                # Schema, migrations
-│       │   └── features/            # Feature docs + supplementals
-│       │       ├── feature-a.md
-│       │       ├── feature-a/       # views.md, ux.md, etc.
-│       │       └── ...
-│       ├── external-interfaces/     # UI, software, communication interfaces
-│       ├── environmental/           # Infrastructure, platforms, deployment
-│       └── technical/               # Stack, build, constraints
-├── .gitignore                       # Kit manages a bracketed block of developer-local patterns
+│   └── INDEX.md                     # Sample doc index (project-owned after initial seed)
+├── .gitignore                       # Kit maintains a bracketed block of developer-local patterns
 └── (existing project files)
 ```
+
+The kit seeds only `docs/INDEX.md`. The broader `docs/` structure
+(`agnostic/`, `reqs/`, non-functional/functional subtrees, etc.) is a
+recommended organization for requirements documents, not something the
+kit creates. Add and evolve it to fit the project.
 
 ### Kit Contents
 
@@ -418,8 +419,11 @@ The kit produces these files in a target project:
 | Path | Purpose | Usage |
 |------|---------|-------|
 | `.sandbox/Dockerfile` | Custom sandbox image for this project | Built automatically by `start.sh` |
-| `team/start.sh` | One-command sandbox build + startup | Human runs at host terminal |
-| `team/stop.sh` | Sandbox disposal | Human runs at host terminal |
+| `team/join.sh` | Provisions the developer's workstation (sandbox, SSH keys, API tokens) and starts the team | Human runs at host terminal |
+| `team/leave.sh` | Discards developer-local sandbox state; preserves kit files | Human runs at host terminal |
+| `team/start.sh` | Starts the sandbox and the team (daily use) | Human runs at host terminal |
+| `team/stop.sh` | Destroys the sandbox VM (and optionally the template image) | Human runs at host terminal |
+| `team/uninstall.sh` | Removes the kit from the project (chains through `leave.sh --yes`) | Human runs at host terminal |
 | `docs/INDEX.md` | Sample requirement-document index | Seeded once on initial setup; project-owned thereafter (re-setup and remove leave it alone) |
 | `CLAUDE_TEAM.md` | Project context for agents (kit-owned) | Imported into `CLAUDE.md` via a bracketed `@CLAUDE_TEAM.md` line |
 | `CLAUDE.md` | Project-owned context file | Kit adds/removes only the bracketed import line; everything else is yours |

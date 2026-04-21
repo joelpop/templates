@@ -254,9 +254,7 @@ func buildDiscoveredMap(projectRoot, devBranch string) (Variables, error) {
 		d["DEV_BRANCH_NAME"] = devBranch
 	}
 
-	now := time.Now().UTC()
-	d["UTC_TIMESTAMP"] = now.Format(time.RFC3339)
-	d["DATE"] = now.Format("2006-01-02")
+	d["UTC_TIMESTAMP"] = time.Now().UTC().Format(time.RFC3339)
 
 	return d, nil
 }

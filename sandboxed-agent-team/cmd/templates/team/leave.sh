@@ -5,7 +5,7 @@
 # To change this file, edit its template in the kit source and
 # re-run `agent-team-install`.
 
-# leave.sh — tear down the current developer's local state for this
+# leave.sh — discard the current developer's local state for this
 # project. Does NOT touch versioned kit files; only the developer-local
 # (gitignored) artifacts. Reverses what team/join.sh did.
 #
@@ -34,8 +34,8 @@ while [ "$assume_yes" -eq 0 ]; do
     read -r -p "Remove developer-local state for $(basename "${PROJECT_DIR}")? [yes/NO] " resp
     case "${resp:-}" in
         yes|Yes|YES) assume_yes=1 ;;
-        no|No|NO) echo "Aborted."; exit 0 ;;
-        *) echo "?invalid response: ${resp}" ;;
+        no|No|NO|"") echo "Aborted."; exit 0 ;;
+        *) echo "Invalid response: ${resp}" ;;
     esac
 done
 

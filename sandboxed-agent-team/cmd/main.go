@@ -35,9 +35,11 @@ provision their local sandbox and start the team.
 `
 
 func main() {
+	// No args → show help on stdout and exit 0. Same as `--help`.
+	// Unknown command → error on stderr and exit 2.
 	if len(os.Args) < 2 {
-		fmt.Fprint(os.Stderr, usage)
-		os.Exit(2)
+		fmt.Print(usage)
+		return
 	}
 
 	cmd, args := os.Args[1], os.Args[2:]

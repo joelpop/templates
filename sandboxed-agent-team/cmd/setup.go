@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 const installUsage = `install — install the agent team kit on a project
@@ -59,7 +60,7 @@ func runInstall(args []string) int {
 // runInstallFresh bootstraps the kit on a project that doesn't yet
 // have it. See the plan's "Flow — F1".
 func runInstallFresh(projectRoot string) int {
-	fmt.Println("Installing the sandboxed-agent-team kit on this project.")
+	printInstallIntro(true)
 
 	if err := gitPreflight(projectRoot); err != nil {
 		return fail(err)
@@ -95,6 +96,16 @@ func runInstallFresh(projectRoot string) int {
 	if err := ReconcileVariables(vars, required, discovered, false); err != nil {
 		return fail(err)
 	}
+
+	ok, err := confirmProceedWithInstall(vars, true)
+	if err != nil {
+		return fail(err)
+	}
+	if !ok {
+		fmt.Println("Aborted. Nothing written to disk.")
+		return 0
+	}
+
 	if err := SaveVariables(filepath.Join(projectRoot, DefaultVariablesPath), vars); err != nil {
 		return fail(err)
 	}
@@ -126,7 +137,7 @@ func runInstallFresh(projectRoot string) int {
 // runInstallUpdate re-runs install on a project that already has the
 // kit. See the plan's "Flow — F2".
 func runInstallUpdate(projectRoot string) int {
-	fmt.Println("Updating the sandboxed-agent-team kit on this project.")
+	printInstallIntro(false)
 
 	if err := gitPreflight(projectRoot); err != nil {
 		return fail(err)
@@ -157,6 +168,16 @@ func runInstallUpdate(projectRoot string) int {
 	if err := ReconcileVariables(vars, required, discovered, true); err != nil {
 		return fail(err)
 	}
+
+	ok, err := confirmProceedWithInstall(vars, false)
+	if err != nil {
+		return fail(err)
+	}
+	if !ok {
+		fmt.Println("Aborted. Nothing written to disk.")
+		return 0
+	}
+
 	if err := SaveVariables(filepath.Join(projectRoot, DefaultVariablesPath), vars); err != nil {
 		return fail(err)
 	}
@@ -183,6 +204,81 @@ func runInstallUpdate(projectRoot string) int {
 
 	offerToJoin(projectRoot)
 	return 0
+}
+
+// printInstallIntro prints a short roadmap so the developer knows
+// what to expect before any prompts start.
+func printInstallIntro(fresh bool) {
+	if fresh {
+		fmt.Println("Installing the sandboxed-agent-team kit on this project.")
+	} else {
+		fmt.Println("Updating the sandboxed-agent-team kit on this project.")
+	}
+	fmt.Println()
+	fmt.Println("Roadmap:")
+	fmt.Println("  1. Git preflight + identify the development branch.")
+	fmt.Println("  2. Discover stack details from pom.xml.")
+	fmt.Println("  3. Ask you a few things I can't auto-answer.")
+	fmt.Println("  4. Show every choice for review before writing anything.")
+	fmt.Println("  5. Commit the kit files and offer to run ./team/join.sh.")
+	fmt.Println()
+	fmt.Println("Nothing is written or committed until you approve at step 4.")
+	fmt.Println("Ctrl-C to abort at any time.")
+	fmt.Println()
+}
+
+// confirmProceedWithInstall shows a summary of the resolved variables
+// and asks the user to approve before anything is written to disk.
+func confirmProceedWithInstall(vars Variables, fresh bool) (bool, error) {
+	currentBranch, _ := CurrentBranch()
+
+	rule := strings.Repeat("─", 64)
+	fmt.Println()
+	fmt.Println(rule)
+	fmt.Println("Ready to install. Review your choices:")
+	fmt.Println()
+
+	printKV := func(label, value string) {
+		if value == "" {
+			return
+		}
+		fmt.Printf("  %-22s %s\n", label+":", value)
+	}
+
+	printKV("Project", vars["PROJECT_NAME"])
+	if currentBranch != "" {
+		printKV("Writing to branch", currentBranch)
+	}
+	if d := vars["DEV_BRANCH_NAME"]; d != "" && d != currentBranch {
+		printKV("Dev branch", d)
+	}
+	printKV("Stack", vars["STACK_SUMMARY"])
+
+	identity := ""
+	if n := vars["GIT_USER_NAME"]; n != "" {
+		identity = n
+		if e := vars["GIT_USER_EMAIL"]; e != "" {
+			identity += " <" + e + ">"
+		}
+	}
+	printKV("Git identity", identity)
+
+	printKV("Merge method", vars["MERGE_METHOD"])
+	printKV("Cost in commit", vars["COST_IN_COMMIT"])
+	printKV("CI platform", vars["CI_PLATFORM"])
+
+	fmt.Println()
+	if fresh {
+		fmt.Println("Writes the kit files, adds the @CLAUDE_TEAM.md import to")
+		fmt.Println("CLAUDE.md, adds the kit block to .gitignore, and commits.")
+	} else {
+		fmt.Println("Regenerates the kit files, refreshes the CLAUDE.md import")
+		fmt.Println("and the .gitignore block, and commits.")
+	}
+	fmt.Println(rule)
+	fmt.Println()
+
+	return PromptYesNo("Proceed?", true)
 }
 
 // runUninstall shells out to the target project's own team/uninstall.sh.

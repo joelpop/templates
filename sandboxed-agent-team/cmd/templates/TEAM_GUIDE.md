@@ -39,7 +39,7 @@ their work appears as expandable blocks in the same terminal. Each
 agent does not get its own terminal pane.
 
 1. At your host terminal (in the project directory), start the
-   sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
+   sandbox: `team/start.sh`. This drops you into a Claude Code
    session running inside the sandbox. The session's system prompt
    auto-loads the Lead role, so the team spawns as soon as you send
    your first message — no slash command required. Once setup
@@ -113,19 +113,19 @@ without running the app yourself.
   mid-session recovery uses the slash command. The Lead reads
   `progress.md` to recover state.
 - **Sandbox crashes:** Back at your host terminal, run
-  `.sandbox/start.sh` to reconnect (which reopens Claude Code inside
+  `team/start.sh` to reconnect (which reopens Claude Code inside
   the sandbox). The new session auto-loads the Lead.
 - **Sandbox authentication fails:** At your host terminal, stop the
   sandbox with `docker sandbox stop <name>` (the name is printed by
   `start.sh` at startup), re-run `claude` on the host and `/login` if
-  needed, then restart with `.sandbox/start.sh`. This can happen if
+  needed, then restart with `team/start.sh`. This can happen if
   the OAuth token expired or if you ran `/login` on the host while
   the sandbox was running. On macOS, `start.sh` automatically picks
   up the fresh token from the Keychain.
 - **SSH remote access fails:** If `git push/pull/fetch` fails with
   "Permission denied" or "Host key verification failed", check that
-  `.sandbox/ssh/` contains the correct key, config, and known_hosts.
-  If the key was rotated, copy the new key to `.sandbox/ssh/` (or
+  `.sandbox/.ssh/` contains the correct key, config, and known_hosts.
+  If the key was rotated, copy the new key to `.sandbox/.ssh/` (or
   re-run onboarding) and restart the sandbox.
 - **Dev branch is broken:** The Lead will escalate to you. The
   breakage may be from the team's own merge or from external changes.
@@ -137,7 +137,7 @@ without running the app yourself.
 Exiting Claude Code (`/exit` or Ctrl+D) ends your Claude Code
 session and drops you back to the shell, but the sandbox VM keeps
 running in the background. To resume:
-1. At your host terminal: `.sandbox/start.sh` again — it detects the
+1. At your host terminal: `team/start.sh` again — it detects the
    existing sandbox, connects you to it, and starts a new Claude
    Code session inside it.
 2. The Lead auto-loads and reads `progress.md` to pick up where you
@@ -156,6 +156,6 @@ Resuming](#pausing-and-resuming)).
 
 To end the engagement (i.e., destroy the sandbox), after ending
 your final Claude Code session, at your host terminal run
-`.sandbox/stop.sh` to destroy the sandbox VM. Host files remain.
+`team/stop.sh` to destroy the sandbox VM. Host files remain.
 Delete the project directory manually per your data retention
 policy.

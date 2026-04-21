@@ -338,16 +338,16 @@ and do not carry their own checkboxes.
   reset so Lead can assess impact on active or completed tasks.
 - Renaming or moving a requirement does not reset its status, but the
   Analyst must update all cross-references (INDEX.md, active task files
-  in `.claude/tasks/`).
+  in `.claude/.tasks/`).
 
 ### Task Plan Status
-Each task file in `.claude/tasks/<task-id>.md` tracks progress at the
+Each task file in `.claude/.tasks/<task-id>.md` tracks progress at the
 plan-step level. Steps are role-assigned and use the same checkbox
 notation. Each teammate marks their own steps as `[-]` when starting
 and `[x]` when done.
 
 ### Project Status
-`.claude/progress.md` is a minimal dispatcher — it exists solely so the
+`.claude/.progress.md` is a minimal dispatcher — it exists solely so the
 Lead can recover current state after context compaction. It answers two
 questions: "which task am I working on, and what else is parked?" and
 "which requirement branches are in flight?"
@@ -357,7 +357,7 @@ operations and persists across branch switches and task
 suspension/resumption. It carries only IDs and one-line labels for
 recognition — all detail lives in the task files and requirement docs.
 
-**Single writer:** Only the Integrator writes `.claude/progress.md`.
+**Single writer:** Only the Integrator writes `.claude/.progress.md`.
 No other role edits it directly. When state changes (a new task
 becomes active, a task is suspended or resumed, a requirement branch
 is created or merged, etc.), the Lead directs the Integrator to
@@ -396,7 +396,7 @@ Requirement branch statuses:
   Analyst freely splits, merges, and cross-references requirements
   within a group. Multiple requirement branches can exist simultaneously
   at different stages. Squash-merged back to `<DEV_BRANCH_NAME>` after human
-  approval. Tracked in `.claude/progress.md`.
+  approval. Tracked in `.claude/.progress.md`.
 - Task branches: `task/<task-id>` — branched off `<DEV_BRANCH_NAME>` by the
   Integrator for each implementation task.
 - Agent sub-branches: `task/<task-id>/<role>` — each agent branches off
@@ -476,8 +476,8 @@ explicitly re-reading the following files in order:
 4. `docs/reqs/architecture-debt.md` — known structural debt
 5. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
    all FEATURE-SUPPLEMENTAL docs linked from it
-6. `.claude/tasks/<your-task>.md` — your specific assignment
-7. `.claude/progress.md` — which task is active, which are suspended.
+6. `.claude/.tasks/<your-task>.md` — your specific assignment
+7. `.claude/.progress.md` — which task is active, which are suspended.
    Verify you are working on the correct active task.
 
 **Worktree note:** Items 1–5 are version-controlled and exist in every
@@ -508,6 +508,6 @@ Critical rules that MUST survive compaction (re-read if in doubt):
 8. Requirement docs (`docs/`) are human-owned. Never commit changes to
    `docs/` without human approval relayed through the Lead.
 
-Keep `.claude/progress.md` current: the Integrator updates it when a
+Keep `.claude/.progress.md` current: the Integrator updates it when a
 task becomes active, is suspended, or completes. No other role writes
 to this file — see "Single writer" under Project Status above.

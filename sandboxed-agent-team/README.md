@@ -121,7 +121,7 @@ On other systems, a one-time export of `CLAUDE_CODE_OAUTH_TOKEN` or
 `git@bitbucket.org:…` or a custom Host alias from `~/.ssh/config`),
 the sandbox also needs the developer's SSH key, config, and
 `known_hosts` to reach the remote. The setup process detects this
-automatically and provisions the SSH material into `.sandbox/ssh/`,
+automatically and provisions the SSH material into `.sandbox/.ssh/`,
 which is injected into the sandbox at each startup.
 
 ## Daily Use
@@ -133,7 +133,7 @@ their work appears as expandable blocks in the same terminal. Each
 agent does not get its own terminal pane.
 
 1. At your host terminal (in the project directory), start the
-   sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
+   sandbox: `team/start.sh`. This drops you into a Claude Code
    session running inside the sandbox. The session's system prompt
    auto-loads the Lead role (see [Auto-loading Lead in sandbox
    sessions](#capabilities) under Capabilities), so the team spawns
@@ -176,7 +176,7 @@ agent does not get its own terminal pane.
      re-invoke the Lead (the auto-load fires only at session start,
      so mid-session recovery uses the slash command).
    - Sandbox crashes: back at your host terminal, run
-     `.sandbox/start.sh` to reconnect (which reopens Claude Code
+     `team/start.sh` to reconnect (which reopens Claude Code
      inside the sandbox). The new session auto-loads the Lead, which
      reads `progress.md` to recover state.
    - The Lead may suspend a task to work on a prerequisite it
@@ -184,7 +184,7 @@ agent does not get its own terminal pane.
      after the prerequisite is complete.
 9. **Pausing and resuming:** Exiting Claude Code (`/exit` or Ctrl+D)
     ends your Claude Code session and drops you back to the shell, but the sandbox VM keeps running in the background.
-    To resume: at your host terminal run `.sandbox/start.sh` again
+    To resume: at your host terminal run `team/start.sh` again
     — it detects the existing sandbox, connects you to it, and starts a new Claude Code
     session inside it. The Lead auto-loads and reads `progress.md`
     to pick up where you left off.
@@ -194,7 +194,7 @@ agent does not get its own terminal pane.
     exit Claude Code (`/exit` or Ctrl+D) — the sandbox VM keeps
     running so you can reconnect later.
 11. To end the engagement (i.e., destroy the sandbox), after ending your final Claude Code
-    session, at your host terminal: `.sandbox/stop.sh`
+    session, at your host terminal: `team/stop.sh`
 
 ## Overview
 
@@ -229,7 +229,7 @@ worktree:
   Git remote access are provisioned into the sandbox automatically.
 - **Auto-loading Lead in sandbox sessions** — The sandbox's Claude
   Code session starts with the Lead role pre-configured:
-  `.sandbox/start.sh` passes `--append-system-prompt` to `claude` so
+  `team/start.sh` passes `--append-system-prompt` to `claude` so
   the first turn reads `team-start.md` and spawns the team
   automatically. The human does not need to remember
   `/project:team-start`. Host Claude Code sessions are unaffected
@@ -408,8 +408,8 @@ The kit produces these files in a target project:
 | Path | Purpose | Usage |
 |------|---------|-------|
 | `.sandbox/Dockerfile` | Custom sandbox image for this project | Built automatically by `start.sh` |
-| `.sandbox/start.sh` | One-command sandbox build + startup | Human runs at host terminal |
-| `.sandbox/stop.sh` | Sandbox disposal | Human runs at host terminal |
+| `team/start.sh` | One-command sandbox build + startup | Human runs at host terminal |
+| `team/stop.sh` | Sandbox disposal | Human runs at host terminal |
 | `docs/INDEX.md` | Sample requirement-document index | Seeded once on initial setup; project-owned thereafter (re-setup and remove leave it alone) |
 | `CLAUDE_TEAM.md` | Project context for agents (kit-owned) | Imported into `CLAUDE.md` via a bracketed `@CLAUDE_TEAM.md` line |
 | `CLAUDE.md` | Project-owned context file | Kit adds/removes only the bracketed import line; everything else is yours |

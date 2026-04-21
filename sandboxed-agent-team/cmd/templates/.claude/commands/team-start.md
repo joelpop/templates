@@ -87,7 +87,7 @@ worktree isolation for each teammate.
 
 **When spawning each teammate**, include the absolute path to the main
 project root in the prompt. Teammates in worktrees need this path to
-read gitignored files (`.claude/tasks/`, `.claude/progress.md`) that
+read gitignored files (`.claude/.tasks/`, `.claude/.progress.md`) that
 exist only in the main working directory. Example: "The main project
 root is `/home/agent/project/`. Use this path to read `.claude/` files."
 
@@ -113,7 +113,7 @@ the Lead when done, or escalate if you hit a decision that requires
 human input or a judgment call outside your domain.
 
 Own:
-- `.claude/tasks/` — create, delete, and structurally maintain task
+- `.claude/.tasks/` — create, delete, and structurally maintain task
   files (Out of Scope, Relevant Docs, Architect Guidance, the
   role-assigned Plan Steps list, Requirements-in-Scope cross-refs,
   and Cost values). Per-role status marks within a task file are
@@ -122,16 +122,16 @@ Own:
   per-developer local state (gitignored); each task file lives once
   on the developer's filesystem and is accessed by all teammates in
   that sandbox via the absolute path to the main project root.
-- `.claude/progress.md` — maintain the progress dispatcher (active task,
+- `.claude/.progress.md` — maintain the progress dispatcher (active task,
   suspended tasks, requirement branches).
 - All git operations — branching, merging, fetching, pushing. You are the
   only agent that interacts with the remote (see Branching rules).
 - PR lifecycle — create, read comments/status, merge, and close PRs via
   the platform REST API using the credentials in the environment
-  (sourced from `.sandbox/platform-api.env`).
+  (sourced from `.sandbox/.platform-api.env`).
 - Cost recording — at task kickoff, capture a `ccusage daily` JSON
   snapshot for today's date and write it to
-  `.claude/tasks/<task-id>.cost-baseline.json` (the cost baseline
+  `.claude/.tasks/<task-id>.cost-baseline.json` (the cost baseline
   sidecar). At task conclusion (T.6), run `ccusage daily` again
   spanning kickoff date through today, subtract the baseline from
   the final reading per model, and format the cost report (one
@@ -244,7 +244,7 @@ Rules:
   cases, notify the Lead so they can assess impact on active or
   completed tasks. When you rename or move a requirement, update all
   cross-references: `INDEX.md`, and any active task files in
-  `.claude/tasks/` that reference it. Do not reset status on
+  `.claude/.tasks/` that reference it. Do not reset status on
   rename/move.
 
 ### 3. Architect
@@ -766,8 +766,8 @@ warning.
 4. `docs/reqs/architecture-debt.md` — known structural debt
 5. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
    all FEATURE-SUPPLEMENTAL docs linked from it
-6. `.claude/tasks/<your-task>.md` — your specific assignment
-7. `.claude/progress.md` — which task is active, which are suspended.
+6. `.claude/.tasks/<your-task>.md` — your specific assignment
+7. `.claude/.progress.md` — which task is active, which are suspended.
    Verify you are working on the correct active task.
 
 **Worktree note:** Items 1–5 are version-controlled and exist in every
@@ -879,7 +879,7 @@ distinct from:
 3. Lead tells the Integrator to update the task file's Plan Steps to
    mark the point of suspension (which steps are done, which are in
    progress, which are blocked).
-4. Integrator updates `.claude/progress.md`: moves the task from Active
+4. Integrator updates `.claude/.progress.md`: moves the task from Active
    to Suspended with reason and prerequisite reference.
 5. Do NOT delete any branches. All task and sub-branches are preserved.
 6. Teammates are dismissed from the suspended task.
@@ -890,12 +890,12 @@ The prerequisite follows the normal lifecycle:
   drafts → human approves → merge to dev).
 - Task kickoff, implementation, pre-PR gate, integration merge — all
   standard.
-- The prerequisite task has its own task file in `.claude/tasks/`
+- The prerequisite task has its own task file in `.claude/.tasks/`
   coexisting with the suspended task's file.
 
 **Resumption procedure:**
 1. Prerequisite task completes and merges to `<DEV_BRANCH_NAME>`.
-2. Integrator updates `.claude/progress.md`: moves the resumed task to
+2. Integrator updates `.claude/.progress.md`: moves the resumed task to
    Active, removes it from Suspended.
 3. Integrator checks out the suspended task branch (`task/<task-id>`).
 4. Integrator fetches `<DEV_BRANCH_NAME>` from remote. Before
@@ -904,7 +904,7 @@ The prerequisite follows the normal lifecycle:
      (brings in prerequisite changes). Proceed to step 5.
    - **If degraded:** (a) Integrator escalates per Dev-Branch
      Health in Coordination Rules. (b) Integrator annotates this
-     task's entry in `.claude/progress.md` with an indented
+     task's entry in `.claude/.progress.md` with an indented
      sub-bullet `blocked on <DEV_BRANCH_NAME> health since <ISO
      8601 UTC>` so the hold survives across sessions — without
      this, the next session would see the task marked Active and
@@ -917,7 +917,7 @@ The prerequisite follows the normal lifecycle:
      its changes into this task would propagate the breakage. I'll
      re-check when you ask, or when the Dev-Branch Health issue is
      resolved."* At every subsequent session start (after the
-     Pre-Start Check), the Lead re-reads `.claude/progress.md`,
+     Pre-Start Check), the Lead re-reads `.claude/.progress.md`,
      notices any `blocked on ...` sub-bullets, and re-surfaces the
      hold to the human with a brief recap so it cannot be
      forgotten across sessions.
@@ -938,7 +938,7 @@ The prerequisite follows the normal lifecycle:
 **Nested suspension:**
 If the prerequisite task itself needs to be suspended for its own
 prerequisite, the same procedure applies recursively.
-`.claude/progress.md` maintains a stack of suspended tasks. Resumption
+`.claude/.progress.md` maintains a stack of suspended tasks. Resumption
 unwinds the stack: innermost prerequisite completes first, then its
 dependent task resumes, and so on.
 
@@ -1057,7 +1057,7 @@ shipping behavior the human didn't sanction.
 4. Lead tells the Integrator to create a `requirement/<slug>` branch
    off `<DEV_BRANCH_NAME>` for this topic (or reuse an existing branch if
    the requirement belongs to a group already in progress). Integrator
-   updates `.claude/progress.md` to track the branch. Lead assigns the
+   updates `.claude/.progress.md` to track the branch. Lead assigns the
    Analyst to draft the requirement on that branch.
 5. Analyst drafts the requirement on the `requirement/<slug>` branch:
    a) Documents what the system must do / how it must behave.
@@ -1074,7 +1074,7 @@ shipping behavior the human didn't sanction.
 8. Lead tells the Integrator to initiate the Integration Merge Workflow
    for the requirement branch (see below). The requirement is now on
    `<DEV_BRANCH_NAME>`.
-9. Integrator updates `.claude/progress.md` (branch status → `merged`).
+9. Integrator updates `.claude/.progress.md` (branch status → `merged`).
 10. Lead proceeds to create a task (Task and PR Flow below).
 
 **Switching topics:**
@@ -1083,7 +1083,7 @@ The Lead tells the Analyst to commit current work on the active
 requirement branch, then tells the Integrator to create or switch to
 the other topic's
 branch. The previous branch stays in its current state (tracked in
-`.claude/progress.md`) and can be resumed later.
+`.claude/.progress.md`) and can be resumed later.
 
 **Ad-hoc discoveries during implementation:**
 1. Agent discovers undocumented edge case / implicit requirement.
@@ -1117,7 +1117,7 @@ including mid-implementation. The procedure depends on the change:
 
 ### Task and PR Flow
 
-**Task file template** (`.claude/tasks/<task-id>.md`):
+**Task file template** (`.claude/.tasks/<task-id>.md`):
 ```markdown
 # Task: <TASK-ID> — <title>
 
@@ -1151,12 +1151,12 @@ including mid-implementation. The procedure depends on the change:
 - [ ] Janitor: lint and cleanup
 ```
 
-**Cost baseline sidecar file**: `.claude/tasks/<task-id>.cost-baseline.json`.
+**Cost baseline sidecar file**: `.claude/.tasks/<task-id>.cost-baseline.json`.
 At kickoff, the Integrator writes this file with the `ccusage daily`
 JSON snapshot of the kickoff date. At conclusion (T.6), the Integrator
 reads it, runs `ccusage` again, computes the per-model delta, and
 deletes the sidecar alongside the task file at T.7. The sidecar is
-gitignored (under the `.claude/tasks/` rule) and is not part of the
+gitignored (under the `.claude/.tasks/` rule) and is not part of the
 task file's user-facing structure.
 
 
@@ -1195,7 +1195,7 @@ who delegates to the Integrator.
 1. Lead tells the Integrator to capture a cost baseline: run
    `ccusage daily --since <today-YYYYMMDD> --until <today-YYYYMMDD> --json --breakdown`
    and write the JSON output to
-   `.claude/tasks/<task-id>.cost-baseline.json`. This snapshot
+   `.claude/.tasks/<task-id>.cost-baseline.json`. This snapshot
    represents all in-sandbox Claude Code work on today's date
    **before** this task started. The Integrator reads it back at
    T.6 to subtract pre-task work from the conclusion reading, so
@@ -1215,7 +1215,7 @@ who delegates to the Integrator.
    of scope, relevant docs, and role-assigned plan steps. Lead directs
    the Analyst to mark all in-scope requirements as `[-]` in the
    requirement docs and commit on the task branch (this is the first
-   commit on the branch). Integrator updates `.claude/progress.md` to
+   commit on the branch). Integrator updates `.claude/.progress.md` to
    show the task as active.
 5. Analyst, Coder, Unit Tester, E2E Tester, and Architect each read the
    task file and either acknowledge or raise questions with the Lead
@@ -1447,7 +1447,7 @@ T.6. Integrator builds the per-task cost report by subtracting the
        network failure during build, or the binary has been
        removed), Integrator records the reason and proceeds to
        "Graceful degradation" below.
-     - If `.claude/tasks/<task-id>.cost-baseline.json` is missing
+     - If `.claude/.tasks/<task-id>.cost-baseline.json` is missing
        (kickoff write failed, or the sidecar was deleted
        externally), Integrator records the reason and proceeds to
        "Graceful degradation" below.
@@ -1463,7 +1463,7 @@ T.6. Integrator builds the per-task cost report by subtracting the
      **Normal flow** (both preflight checks pass):
 
      1. Read the baseline JSON from
-        `.claude/tasks/<task-id>.cost-baseline.json` (written at
+        `.claude/.tasks/<task-id>.cost-baseline.json` (written at
         task kickoff; see "Task kickoff" step 1).
      2. Run the final reading spanning kickoff date through today:
         ```
@@ -1511,10 +1511,10 @@ T.6. Integrator builds the per-task cost report by subtracting the
      > slightly. The human's concurrent host Claude Code sessions
      > are naturally excluded — they write to a different
      > filesystem invisible to the sandbox.
-T.7. Integrator removes the task from `.claude/progress.md`. Integrator
-     deletes the task file from `.claude/tasks/` and, if present,
+T.7. Integrator removes the task from `.claude/.progress.md`. Integrator
+     deletes the task file from `.claude/.tasks/` and, if present,
      the cost baseline sidecar file
-     `.claude/tasks/<task-id>.cost-baseline.json`. Integrator
+     `.claude/.tasks/<task-id>.cost-baseline.json`. Integrator
      deletes the task branch and all agent sub-branches.
 
 **P. Post-merge hygiene (both branch types):**
@@ -1771,7 +1771,7 @@ validation gate, ambiguity resolution). If the human is unavailable:
 At the end of a working session (not after each PR — after all planned
 tasks are complete):
 - Lead: confirm all PRs have been merged and no branches remain open.
-- Lead: confirm `.claude/progress.md` reflects the current active and
+- Lead: confirm `.claude/.progress.md` reflects the current active and
   suspended tasks accurately for the next session.
 - Lead: create a summary of all work completed during the session.
 - Lead: flag any unresolved issues, merge conflicts, or deferred items

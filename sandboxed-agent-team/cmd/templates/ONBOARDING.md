@@ -91,7 +91,7 @@ To uninstall your local state later: `sandboxed-agent-team onboard
 Once onboarding is complete:
 
 1. At your host terminal (in the project directory), start the
-   sandbox: `.sandbox/start.sh`. This drops you into a Claude Code
+   sandbox: `team/start.sh`. This drops you into a Claude Code
    session running inside the sandbox. The session's system prompt
    auto-loads the Lead role, so the team spawns as soon as you send
    your first message — no slash command required. Once setup
@@ -134,7 +134,7 @@ case, ask the Lead to regenerate this file).
   In either case: stop the sandbox with `docker sandbox stop <name>`
   (the name is printed by `start.sh` at startup), re-run `claude` on
   the host and `/login` if needed, then restart with
-  `.sandbox/start.sh`. On macOS, `start.sh` automatically picks up the
+  `team/start.sh`. On macOS, `start.sh` automatically picks up the
   fresh token from the Keychain. On other systems, update
   `CLAUDE_CODE_OAUTH_TOKEN` in your shell config first.
 - **macOS Keychain password prompt:** On macOS, `start.sh` reads the
@@ -146,14 +146,14 @@ case, ask the Lead to regenerate this file).
 - **SSH remote access fails inside the sandbox:** Git operations over
   SSH (push, pull, fetch) fail with "Permission denied" or "Host key
   verification failed."
-  - Verify `.sandbox/ssh/` exists and contains the private key, a
+  - Verify `.sandbox/.ssh/` exists and contains the private key, a
     `config` file, and a `known_hosts` file.
   - If the key was rotated since onboarding, either re-run onboarding
-    or manually copy the new key to `.sandbox/ssh/` and restart the
+    or manually copy the new key to `.sandbox/.ssh/` and restart the
     sandbox.
   - If `known_hosts` is missing or stale, regenerate it:
-    `ssh-keyscan <hostname> > .sandbox/ssh/known_hosts 2>/dev/null`
-  - Verify `.sandbox/ssh.source` contains the correct absolute path
+    `ssh-keyscan <hostname> > .sandbox/.ssh/known_hosts 2>/dev/null`
+  - Verify `.sandbox/.ssh.source` contains the correct absolute path
     to the host key — `start.sh` reads this to sync keys on startup.
 - **Sandbox build fails:** Check that Docker Desktop is running.
   Review the build output for version mismatches or network errors.
@@ -164,9 +164,9 @@ case, ask the Lead to regenerate this file).
 ### Offboarding
 
 When you leave the project:
-1. Run `.sandbox/stop.sh` to destroy your sandbox.
+1. Run `team/stop.sh` to destroy your sandbox.
 2. Delete `.sandbox/` and `.claude/settings.json` — these are
    gitignored and not shared.
-3. Optionally delete `.claude/tasks/` and `.claude/progress.md` if
+3. Optionally delete `.claude/.tasks/` and `.claude/.progress.md` if
    no one else needs your local task history.
 

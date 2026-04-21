@@ -58,15 +58,21 @@ func PromptChoiceWithDescriptions(question string, options, descriptions []strin
 	}
 
 	fmt.Println(question)
+	hasDescriptions := descriptions != nil
 	for i, o := range options {
-		line := fmt.Sprintf("  %d. %s", i+1, o)
-		if descriptions != nil && descriptions[i] != "" {
-			line += " — " + descriptions[i]
-		}
+		head := fmt.Sprintf("  %d. %s", i+1, o)
 		if o == def {
-			line += "  (default)"
+			head += "  (default)"
 		}
-		fmt.Println(line)
+		fmt.Println(head)
+		if hasDescriptions && descriptions[i] != "" {
+			for _, ln := range strings.Split(descriptions[i], "\n") {
+				fmt.Printf("     %s\n", ln)
+			}
+		}
+	}
+	if hasDescriptions {
+		fmt.Println()
 	}
 
 	prompt := "Enter number or name: "

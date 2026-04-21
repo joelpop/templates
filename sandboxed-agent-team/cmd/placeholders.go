@@ -103,9 +103,20 @@ var knownPlaceholders = map[string]PlaceholderDef{
 		Prompt:  "How should completed work reach the development branch on origin?",
 		Options: []string{"PR", "Integrator merge", "Human merge"},
 		OptionDescriptions: []string{
-			"Integrator creates a PR on the platform (GitHub/Bitbucket/GitLab) via REST API; merged after reviewer approval. Requires an API token.",
-			"Integrator squash-merges the task branch to the local dev branch and pushes to origin. No PR.",
-			"Team notifies you when a task is ready; you perform the squash-merge and push yourself.",
+			`Integrator pushes the task branch to origin, creates a pull request
+on the platform (GitHub / Bitbucket / GitLab) via its REST API, and
+merges the PR via API after reviewer approval. The platform deletes
+the remote task branch on merge; Integrator deletes the local task
+branch afterward. Requires a platform API token.`,
+			`Integrator squash-merges the (local-only) task branch into the local
+dev branch, then pushes the dev branch to origin. The task branch is
+never pushed; Integrator deletes the local task branch after the
+merge. No PR involved.`,
+			`Integrator pauses after the task's local tests pass and tells you
+the task is ready. You perform the final merge however you prefer
+(local squash + push, a platform PR, etc.), then confirm back to the
+team. Integrator deletes the local task branch after your
+confirmation.`,
 		},
 		Default: "Integrator merge",
 	},

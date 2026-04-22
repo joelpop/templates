@@ -234,11 +234,76 @@ inject_credentials() {
         echo "=== SSH keys injected ==="
     fi
 
-    # ── Platform API credentials (for PR merge method) ────────────────────
+    # ── Platform API credentials (for PR merge method + HTTPS git) ────────
+    # Metadata (PLATFORM_TYPE, API URLs, repo owner/slug, etc.)
+    # comes from .sandbox/.platform-api.env. On macOS the file omits
+    # the token — we read it from the Keychain and pipe it through
+    # stdin so it never touches the host's regular filesystem (same
+    # pattern as the Claude OAuth token above).
     if [ -f "${PROJECT_DIR}/.sandbox/.platform-api.env" ]; then
         docker sandbox exec "${SANDBOX_NAME}" bash -c \
             "cat '${PROJECT_DIR}/.sandbox/.platform-api.env' >> /home/agent/.bashrc"
-        echo "=== Platform API credentials injected ==="
+        echo "=== Platform API metadata injected ==="
+    fi
+    if [ "$(uname -s)" = "Darwin" ]; then
+        if kc_token=$(security find-generic-password -s "agent-team.${SANDBOX_NAME}" -w 2>/dev/null); then
+            printf '%s' "$kc_token" | docker sandbox exec -i "${SANDBOX_NAME}" bash -c \
+                'read -r token && printf "export PLATFORM_API_TOKEN=%q\n" "$token" >> /home/agent/.bashrc'
+            echo "=== Platform API token injected from Keychain ==="
+        fi
+    fi
+
+    # ── Sandbox-side git HTTPS auth ──────────────────────────────────────
+    # Docker Sandbox blocks outbound port 22 (SSH), so agents must use
+    # HTTPS for all git operations even if the project's origin URL
+    # is SSH on the host. We configure git inside the sandbox to:
+    #   1. use a credential helper that reads stored user:token pairs,
+    #      writing the token through stdin so it never appears in `ps`;
+    #   2. transparently rewrite SSH-style origin URLs to HTTPS via
+    #      `url.insteadOf` — only when the host's origin actually uses
+    #      SSH, so HTTPS-origin projects are unaffected.
+    if [ -f "${PROJECT_DIR}/.sandbox/.platform-api.env" ]; then
+        # Pull the pieces we need without sourcing (some values may
+        # contain characters bash would mis-interpret on source).
+        P_HOST=$(grep -E '^PLATFORM_HOST=' "${PROJECT_DIR}/.sandbox/.platform-api.env" | cut -d= -f2-)
+        P_USER=$(grep -E '^PLATFORM_API_USER=' "${PROJECT_DIR}/.sandbox/.platform-api.env" | cut -d= -f2-)
+        P_TOKEN=""
+        if [ "$(uname -s)" = "Darwin" ]; then
+            P_TOKEN=$(security find-generic-password -s "agent-team.${SANDBOX_NAME}" -w 2>/dev/null || true)
+        fi
+        if [ -z "$P_TOKEN" ]; then
+            P_TOKEN=$(grep -E '^PLATFORM_API_TOKEN=' "${PROJECT_DIR}/.sandbox/.platform-api.env" | cut -d= -f2- || true)
+        fi
+
+        if [ -n "$P_HOST" ] && [ -n "$P_USER" ] && [ -n "$P_TOKEN" ]; then
+            # Write the credentials file via stdin so the token never
+            # appears on a command line visible to `ps`.
+            printf 'https://%s:%s@%s\n' "$P_USER" "$P_TOKEN" "$P_HOST" \
+                | docker sandbox exec -i "${SANDBOX_NAME}" bash -c \
+                  'umask 077 && cat > /home/agent/.git-credentials && \
+                   git config --global credential.helper store'
+
+            # If the host's origin uses an SSH-style URL, teach the
+            # sandbox's git to rewrite that prefix to HTTPS on the fly.
+            # Both SSH forms (`git@host:` and `ssh://host/`) get covered.
+            sandbox_origin="$(git -C "${PROJECT_DIR}" remote get-url origin 2>/dev/null || true)"
+            case "$sandbox_origin" in
+                git@*)
+                    ssh_host="${sandbox_origin#*@}"
+                    ssh_host="${ssh_host%%:*}"
+                    docker sandbox exec "${SANDBOX_NAME}" \
+                        git config --global "url.https://${P_HOST}/.insteadOf" "git@${ssh_host}:"
+                    ;;
+                ssh://*)
+                    ssh_host="${sandbox_origin#ssh://}"
+                    ssh_host="${ssh_host#*@}"
+                    ssh_host="${ssh_host%%/*}"
+                    docker sandbox exec "${SANDBOX_NAME}" \
+                        git config --global "url.https://${P_HOST}/.insteadOf" "ssh://git@${ssh_host}/"
+                    ;;
+            esac
+            echo "=== Sandbox-side git HTTPS auth configured ==="
+        fi
     fi
 
     # ── Host terminal type ────────────────────────────────────────────────

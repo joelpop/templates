@@ -20,8 +20,8 @@
 # Fails fast if no sandbox exists (points you at create.sh) or if
 # the Lead directive has changed since the sandbox was created
 # (points you at destroy + create). The heavy lifting is in
-# create.sh's --skip-create branch, which this script forwards to
-# with the chosen session mode.
+# create.sh, which treats the presence of --resume or --fresh as
+# a signal to take its attach branch.
 
 set -euo pipefail
 
@@ -61,4 +61,4 @@ if [ -z "$mode" ]; then
     done
 fi
 
-exec "$(dirname "$0")/create.sh" --skip-create --"$mode"
+exec "$(dirname "$0")/create.sh" --"$mode"

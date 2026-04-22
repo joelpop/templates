@@ -96,6 +96,17 @@ func detectJUnitVersion(deps []pomDependency) string {
 			return "6"
 		case d.GroupID == "junit" && d.ArtifactID == "junit":
 			return "4"
+		// Vaadin testing dependencies embed the JUnit major version
+		// in the artifact name (e.g., vaadin-testbench-junit5,
+		// browserless-test-junit6). Useful for Spring Boot projects
+		// that pull JUnit transitively via a starter and declare
+		// only the Vaadin test library directly.
+		case strings.Contains(d.ArtifactID, "vaadin-testbench-junit5"),
+			strings.Contains(d.ArtifactID, "browserless-test-junit5"):
+			return "5"
+		case strings.Contains(d.ArtifactID, "vaadin-testbench-junit6"),
+			strings.Contains(d.ArtifactID, "browserless-test-junit6"):
+			return "6"
 		}
 	}
 	return ""

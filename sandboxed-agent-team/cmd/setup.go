@@ -43,7 +43,7 @@ func runInstallFresh(projectRoot string) int {
 		return fail(err)
 	}
 
-	seedPromptDefaultFromDiscovered("DEV_BRANCH_NAME", discovered)
+	seedPromptDefaultsFromDiscovered(discovered, interviewPromptDefaults...)
 
 	if err := ReconcileVariables(vars, required, discovered, false); err != nil {
 		return fail(err)
@@ -138,7 +138,7 @@ func runInstallUpdate(projectRoot string) int {
 		return fail(err)
 	}
 
-	seedPromptDefaultFromDiscovered("DEV_BRANCH_NAME", discovered)
+	seedPromptDefaultsFromDiscovered(discovered, interviewPromptDefaults...)
 
 	if err := ReconcileVariables(vars, required, discovered, true); err != nil {
 		return fail(err)
@@ -314,8 +314,8 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 	printKV("Git identity", identity)
 
 	printKV("Merge method", vars["MERGE_METHOD"])
-	printKV("Show cost in commit", vars["COST_IN_COMMIT"])
 	printKV("CI platform", vars["CI_PLATFORM"])
+	printKV("Show cost in commit", vars["COST_IN_COMMIT"])
 	if fresh {
 		if runJoinAfterInstall {
 			printKV("Run join after install", "yes")
@@ -394,21 +394,39 @@ func fail(err error) int {
 	return 1
 }
 
-// seedPromptDefaultFromDiscovered mutates the named placeholder's
-// static Default to match the auto-discovered value, so the
-// resulting user prompt offers the discovered value as its default.
-// Used for placeholders we want to confirm interactively (not
-// silently auto-fill) but still pre-populate with a best-guess.
-// No-op if the discovered map doesn't have the key.
-func seedPromptDefaultFromDiscovered(name string, discovered Variables) {
-	v, has := discovered[name]
-	if !has || v == "" {
-		return
+// seedPromptDefaultsFromDiscovered mutates the named placeholders'
+// static Defaults to match the auto-discovered values, so the
+// resulting user prompts offer the discovered values as their
+// defaults. Used for placeholders we want to confirm interactively
+// (not silently auto-fill) but still pre-populate with a best-guess.
+// No-op for any name the discovered map doesn't have.
+func seedPromptDefaultsFromDiscovered(discovered Variables, names ...string) {
+	for _, name := range names {
+		v, has := discovered[name]
+		if !has || v == "" {
+			continue
+		}
+		def, ok := knownPlaceholders[name]
+		if !ok {
+			continue
+		}
+		def.Default = v
+		knownPlaceholders[name] = def
 	}
-	def, ok := knownPlaceholders[name]
-	if !ok {
-		return
-	}
-	def.Default = v
-	knownPlaceholders[name] = def
+}
+
+// interviewPromptDefaults lists every placeholder whose interview
+// prompt should take its default from the discovered map (rather
+// than the static Default in knownPlaceholders). These are the
+// user-facing values the review summary confirms: the user sees
+// each one as a prompt with the auto-guessed value pre-filled,
+// and can Enter through to accept or type an override.
+var interviewPromptDefaults = []string{
+	"DEV_BRANCH_NAME",
+	"JAVA_VERSION",
+	"VAADIN_VERSION",
+	"SPRING_BOOT_VERSION",
+	"JUNIT_VERSION",
+	"DATABASE",
+	"BUILD_TOOL",
 }

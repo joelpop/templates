@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -56,29 +57,29 @@ var knownPlaceholders = map[string]PlaceholderDef{
 	},
 	"JAVA_VERSION": {
 		Name:   "JAVA_VERSION",
-		Source: SourceAuto,
+		Source: SourcePrompt,
 		Prompt: "Java version (e.g., 21)",
 	},
 	"VAADIN_VERSION": {
 		Name:   "VAADIN_VERSION",
-		Source: SourceAuto,
+		Source: SourcePrompt,
 		Prompt: "Vaadin version",
 	},
 	"SPRING_BOOT_VERSION": {
 		Name:    "SPRING_BOOT_VERSION",
-		Source:  SourceAuto,
+		Source:  SourcePrompt,
 		Prompt:  "Spring Boot version (leave blank if not used)",
 		Default: "",
 	},
 	"JUNIT_VERSION": {
 		Name:    "JUNIT_VERSION",
-		Source:  SourceAuto,
+		Source:  SourcePrompt,
 		Prompt:  "JUnit version",
 		Default: "5",
 	},
 	"DATABASE": {
 		Name:    "DATABASE",
-		Source:  SourceAuto,
+		Source:  SourcePrompt,
 		Prompt:  "Database (e.g., PostgreSQL, H2, leave blank if none)",
 		Default: "",
 	},
@@ -136,7 +137,7 @@ The task branch is never pushed; no PR is created.`,
 	},
 	"BUILD_TOOL": {
 		Name:    "BUILD_TOOL",
-		Source:  SourceAuto,
+		Source:  SourcePrompt,
 		Prompt:  "Build tool",
 		Default: "Maven",
 	},
@@ -150,6 +151,55 @@ The task branch is never pushed; no PR is created.`,
 		Source: SourceAuto,
 		Prompt: "Current UTC timestamp (ISO 8601)",
 	},
+}
+
+// placeholderOrder defines the canonical user-facing order for
+// placeholders — used both for the interview (prompt order) and for
+// the review summary. Any placeholder not listed here sorts after
+// the listed ones, alphabetically. Keep this in sync with the
+// printInstallIntro roadmap and the confirmProceedWithInstall
+// review layout.
+var placeholderOrder = []string{
+	"DEV_BRANCH_NAME",
+	"JAVA_VERSION",
+	"VAADIN_VERSION",
+	"SPRING_BOOT_VERSION",
+	"JUNIT_VERSION",
+	"DATABASE",
+	"BUILD_TOOL",
+	"MERGE_METHOD",
+	"CI_PLATFORM",
+	"COST_IN_COMMIT",
+	// Auto-discovered fall-backs — rarely prompt:
+	"PROJECT_NAME",
+	"STACK_SUMMARY",
+	"GIT_USER_NAME",
+	"GIT_USER_EMAIL",
+	"UTC_TIMESTAMP",
+}
+
+// SortByUserOrder sorts the given placeholder names in place by
+// placeholderOrder. Names not in placeholderOrder go to the end,
+// sorted alphabetically.
+func SortByUserOrder(names []string) {
+	rank := map[string]int{}
+	for i, n := range placeholderOrder {
+		rank[n] = i
+	}
+	sort.SliceStable(names, func(i, j int) bool {
+		ri, iIn := rank[names[i]]
+		rj, jIn := rank[names[j]]
+		switch {
+		case iIn && jIn:
+			return ri < rj
+		case iIn:
+			return true
+		case jIn:
+			return false
+		default:
+			return names[i] < names[j]
+		}
+	})
 }
 
 // CheckUnknownPlaceholders returns an error if any placeholder name in

@@ -138,12 +138,19 @@ func ReconcileVariables(vars Variables, required []string, discovered Variables,
 		}
 	}
 
+	// Iterate in the user-facing canonical order so the prompts
+	// appear in the order the roadmap advertises. `required` comes
+	// in alphabetical (from ScanPlaceholders); we re-sort here to
+	// match the review-summary layout.
+	ordered := append([]string(nil), required...)
+	SortByUserOrder(ordered)
+
 	// Fill in every required placeholder. For SourceAuto placeholders,
 	// an up-to-date `discovered` value wins over any persisted value
 	// (so pom.xml bumps, timestamps, etc. refresh on every run). For
 	// SourcePrompt placeholders, a persisted value wins (user edits
 	// to the variables file survive re-runs).
-	for _, name := range required {
+	for _, name := range ordered {
 		def, ok := knownPlaceholders[name]
 		if !ok {
 			return fmt.Errorf("no source for placeholder %q — add it to knownPlaceholders", name)

@@ -74,9 +74,10 @@ The tool auto-detects your local state and does the right thing:
 - **Fresh onboarding** → builds the sandbox container from the
   project's Dockerfile, provisions SSH material if the project uses
   an SSH Git remote, and starts the sandbox.
-- **Re-onboarding** (you've onboarded this workspace before) → tears
-  down the existing sandbox and rebuilds from scratch. Idempotent
-  and non-destructive: nothing versioned is touched.
+- **Re-onboarding** (you've onboarded this workspace before) →
+  discards the existing sandbox and rebuilds from scratch. Your
+  workstation's SSH material and platform API token are preserved;
+  the project's versioned files are untouched.
 
 If prompts come up, they're for information the tool can't auto-discover
 (e.g., which SSH key to use when multiple keys are configured). When

@@ -98,14 +98,15 @@ func runInstallFresh(projectRoot string) int {
 		return fail(fmt.Errorf("commit kit files: %w", err))
 	}
 
-	finishFreshInstall(projectRoot, runJoin)
-	return 0
+	return finishFreshInstall(projectRoot, runJoin)
 }
 
 // finishFreshInstall closes out the fresh-install flow. If the user
 // opted in during the review, run team/join.sh automatically.
-// Otherwise print a pointer so they can run it when ready.
-func finishFreshInstall(projectRoot string, runJoin bool) {
+// Otherwise print a pointer so they can run it when ready. Returns
+// 0 on success, 1 if team/join.sh fails — the kit install itself
+// already landed, but "install + join" as a whole did not succeed.
+func finishFreshInstall(projectRoot string, runJoin bool) int {
 	fmt.Println()
 	fmt.Println("Kit installed and committed on this branch.")
 	fmt.Println()
@@ -113,14 +114,18 @@ func finishFreshInstall(projectRoot string, runJoin bool) {
 		fmt.Println("Running ./team/join.sh to set up your local sandbox...")
 		fmt.Println()
 		if err := runJoinScript(projectRoot); err != nil {
-			fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
+			fmt.Fprintf(os.Stderr, "\nError: team/join.sh exited with %s\n", err)
+			fmt.Fprintln(os.Stderr, "The kit is installed and committed, but your local sandbox is not set up.")
+			fmt.Fprintln(os.Stderr, "Fix the underlying issue and re-run ./team/join.sh.")
+			return 1
 		}
-		return
+		return 0
 	}
 	fmt.Println("When you're ready to set up your workstation, run:")
 	fmt.Println()
 	fmt.Println("    ./team/join.sh")
 	fmt.Println()
+	return 0
 }
 
 // runInstallUpdate re-runs install on a project that already has the
@@ -191,16 +196,17 @@ func runInstallUpdate(projectRoot string) int {
 		return fail(fmt.Errorf("commit kit files: %w", err))
 	}
 
-	finishUpdate(projectRoot)
-	return 0
+	return finishUpdate(projectRoot)
 }
 
 // finishUpdate closes out the install-update flow. If the developer
 // has already joined this workstation (marker present), re-run
 // team/join.sh automatically so the local sandbox picks up any kit
 // changes. Otherwise, leave a pointer so they can join on their own
-// schedule.
-func finishUpdate(projectRoot string) {
+// schedule. Returns 0 on success, 1 if the auto-rerun of
+// team/join.sh fails — the kit update itself already landed but
+// the local sandbox is out of sync with it.
+func finishUpdate(projectRoot string) int {
 	fmt.Println()
 	if isWorkstationJoined(projectRoot) {
 		fmt.Println("Your workstation is already provisioned — re-running")
@@ -208,9 +214,12 @@ func finishUpdate(projectRoot string) {
 		fmt.Println("updated kit.")
 		fmt.Println()
 		if err := runJoinScript(projectRoot); err != nil {
-			fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
+			fmt.Fprintf(os.Stderr, "\nError: team/join.sh exited with %s\n", err)
+			fmt.Fprintln(os.Stderr, "The kit update is committed, but your local sandbox was not resynced.")
+			fmt.Fprintln(os.Stderr, "Fix the underlying issue and re-run ./team/join.sh.")
+			return 1
 		}
-		return
+		return 0
 	}
 	fmt.Println("Kit updated and committed on this branch.")
 	fmt.Println()
@@ -218,6 +227,7 @@ func finishUpdate(projectRoot string) {
 	fmt.Println()
 	fmt.Println("    ./team/join.sh")
 	fmt.Println()
+	return 0
 }
 
 // printInstallIntro prints a short roadmap so the developer knows

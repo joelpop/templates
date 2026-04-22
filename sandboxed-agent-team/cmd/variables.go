@@ -112,10 +112,27 @@ func ReconcileVariables(vars Variables, required []string, discovered Variables,
 		req[r] = struct{}{}
 	}
 
-	// Remove orphans first (re-setup only).
+	// Remove orphans first (re-setup only). Announce them to the user
+	// before the review step so a hand-edited value isn't silently
+	// dropped; they can abort with Ctrl-C if needed.
 	if removeOrphans {
+		var orphans []string
 		for k := range vars {
 			if _, keep := req[k]; !keep {
+				orphans = append(orphans, k)
+			}
+		}
+		if len(orphans) > 0 {
+			sort.Strings(orphans)
+			fmt.Println()
+			fmt.Println("The current templates no longer reference these variables:")
+			for _, k := range orphans {
+				fmt.Printf("  %s = %q\n", k, vars[k])
+			}
+			fmt.Println("They will be removed from .claude/team-variables.yaml.")
+			fmt.Println("Abort with Ctrl-C now if any value needs preserving.")
+			fmt.Println()
+			for _, k := range orphans {
 				delete(vars, k)
 			}
 		}

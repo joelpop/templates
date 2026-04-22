@@ -46,9 +46,11 @@ get_var() {
 
 MERGE_METHOD="$(get_var MERGE_METHOD)"
 
-# ── Stop existing sandbox if running ────────────────────────────────────────
+# ── Discard any existing sandbox so we rebuild from the current setup ──────
+# stop.sh --yes is a no-op if no sandbox exists, and keeps the
+# template image in place so the rebuild below reuses Docker's cache.
 if [ -x "${PROJECT_DIR}/team/stop.sh" ]; then
-    "${PROJECT_DIR}/team/stop.sh" || true
+    "${PROJECT_DIR}/team/stop.sh" --yes
 fi
 
 # ── SSH provisioning (if origin remote uses SSH) ────────────────────────────

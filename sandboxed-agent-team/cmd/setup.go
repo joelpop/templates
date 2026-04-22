@@ -59,7 +59,13 @@ func runInstallFresh(projectRoot string) int {
 		return fail(err)
 	}
 
-	ok, err := confirmProceedWithInstall(vars, true)
+	runJoin, err := PromptYesNo(
+		"Run ./team/join.sh automatically after install to set up your local sandbox?", true)
+	if err != nil {
+		return fail(err)
+	}
+
+	ok, err := confirmProceedWithInstall(vars, true, runJoin)
 	if err != nil {
 		return fail(err)
 	}
@@ -92,8 +98,29 @@ func runInstallFresh(projectRoot string) int {
 		return fail(fmt.Errorf("commit kit files: %w", err))
 	}
 
-	offerToJoin(projectRoot)
+	finishFreshInstall(projectRoot, runJoin)
 	return 0
+}
+
+// finishFreshInstall closes out the fresh-install flow. If the user
+// opted in during the review, run team/join.sh automatically.
+// Otherwise print a pointer so they can run it when ready.
+func finishFreshInstall(projectRoot string, runJoin bool) {
+	fmt.Println()
+	fmt.Println("Kit installed and committed on this branch.")
+	fmt.Println()
+	if runJoin {
+		fmt.Println("Running ./team/join.sh to set up your local sandbox...")
+		fmt.Println()
+		if err := runJoinScript(projectRoot); err != nil {
+			fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
+		}
+		return
+	}
+	fmt.Println("When you're ready to set up your workstation, run:")
+	fmt.Println()
+	fmt.Println("    ./team/join.sh")
+	fmt.Println()
 }
 
 // runInstallUpdate re-runs install on a project that already has the
@@ -131,7 +158,7 @@ func runInstallUpdate(projectRoot string) int {
 		return fail(err)
 	}
 
-	ok, err := confirmProceedWithInstall(vars, false)
+	ok, err := confirmProceedWithInstall(vars, false, false)
 	if err != nil {
 		return fail(err)
 	}
@@ -215,9 +242,10 @@ func printInstallIntro(fresh bool) {
 	fmt.Println("     * Merge method")
 	fmt.Println("     * CI platform")
 	fmt.Println("     * Preference to include a cost report in commit messages")
+	fmt.Println("     * Preference to set up your local sandbox after install")
 	fmt.Println("  2. Show all your choices for confirmation.")
 	fmt.Println("  3. Write and commit the kit files.")
-	fmt.Println("  4. Offer to set up your local sandbox.")
+	fmt.Println("  4. Set up your local sandbox (if you opted in).")
 	fmt.Println()
 	fmt.Println("Nothing is written or committed until you approve at step 2.")
 	fmt.Println("Ctrl-C to abort at any time.")
@@ -226,7 +254,10 @@ func printInstallIntro(fresh bool) {
 
 // confirmProceedWithInstall shows a summary of the resolved variables
 // and asks the user to approve before anything is written to disk.
-func confirmProceedWithInstall(vars Variables, fresh bool) (bool, error) {
+// runJoinAfterInstall is surfaced in the summary only on fresh
+// installs (the only flow that asks the question); update-flow
+// callers should pass false — it is ignored when fresh is false.
+func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall bool) (bool, error) {
 	currentBranch, _ := CurrentBranch()
 
 	rule := strings.Repeat("─", 64)
@@ -263,6 +294,13 @@ func confirmProceedWithInstall(vars Variables, fresh bool) (bool, error) {
 	printKV("Merge method", vars["MERGE_METHOD"])
 	printKV("Cost in commit", vars["COST_IN_COMMIT"])
 	printKV("CI platform", vars["CI_PLATFORM"])
+	if fresh {
+		if runJoinAfterInstall {
+			printKV("Run join after install", "yes")
+		} else {
+			printKV("Run join after install", "no")
+		}
+	}
 
 	fmt.Println()
 	if fresh {
@@ -276,31 +314,6 @@ func confirmProceedWithInstall(vars Variables, fresh bool) (bool, error) {
 	fmt.Println()
 
 	return PromptYesNo("Proceed?", true)
-}
-
-// offerToJoin is the last step of install. It asks whether the
-// developer wants to run team/join.sh now, and if yes, shells out.
-// If no (or on any failure), prints instructions to run it later.
-// Install itself carries no joining logic — it just invokes the
-// same script the developer would run.
-func offerToJoin(projectRoot string) {
-	fmt.Println()
-	fmt.Println("Kit installed and committed on this branch.")
-	fmt.Println()
-
-	ok, err := PromptYesNo("Run ./team/join.sh now to provision your workstation and start the team?", true)
-	if err != nil || !ok {
-		fmt.Println()
-		fmt.Println("When you're ready, run:")
-		fmt.Println()
-		fmt.Println("    ./team/join.sh")
-		fmt.Println()
-		return
-	}
-
-	if err := runJoinScript(projectRoot); err != nil {
-		fmt.Fprintf(os.Stderr, "team/join.sh exited with error: %s\n", err)
-	}
 }
 
 // runJoinScript execs team/join.sh with stdio inherited. A missing

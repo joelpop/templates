@@ -92,7 +92,7 @@ done
 # Discard developer-local state by delegating to team/leave.sh.
 # --yes bypasses leave.sh's own prompt since we already confirmed
 # the combined action above. leave.sh also stops the sandbox before
-# removing state, so we don't need a separate team/stop.sh call.
+# removing state, so we don't need a separate team/destroy.sh call.
 "${PROJECT_DIR}/team/leave.sh" --yes
 
 # Delete tracked kit files. --ignore-unmatch makes this idempotent.

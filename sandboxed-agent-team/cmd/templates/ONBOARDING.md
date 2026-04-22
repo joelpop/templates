@@ -49,10 +49,10 @@ you for the rest:
   (https://www.docker.com/products/docker-desktop/)
 - Git identity configured (`git config user.name` and
   `git config user.email`)
-- A Claude Code OAuth token or Anthropic API key. On macOS,
-  `start.sh` auto-extracts an OAuth token from the Keychain; on other
-  systems, export `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` in
-  your shell config
+- A Claude Code OAuth token or Anthropic API key. On macOS, the
+  kit auto-extracts an OAuth token from the Keychain on every
+  create/attach; on other systems, export `CLAUDE_CODE_OAUTH_TOKEN`
+  or `ANTHROPIC_API_KEY` in your shell config
 - If the project uses an SSH Git remote: the SSH key referenced in
   `~/.ssh/config` for that remote
 - If the project uses the **PR** merge method (see [Project
@@ -90,13 +90,15 @@ removing the kit from the project): `./team/leave.sh`.
 
 Once onboarding is complete:
 
-1. At your host terminal (in the project directory), start the
-   sandbox: `team/start.sh`. This drops you into a Claude Code
-   session running inside the sandbox. The session's system prompt
-   auto-loads the Lead role, so the team spawns as soon as you send
-   your first message — no slash command required. Once setup
-   completes, the statusline shows "Agent Team Mode" as a visible
-   confirmation that you're talking to the team.
+1. At your host terminal (in the project directory), reattach to
+   your sandbox: `./team/attach.sh`. This drops you into a Claude
+   Code session running inside the sandbox. The session's system
+   prompt auto-loads the Lead role, so the team spawns as soon as
+   you send your first message — no slash command required. Once
+   setup completes, the statusline shows "Agent Team Mode" as a
+   visible confirmation that you're talking to the team.
+   (If `attach.sh` reports no sandbox exists, run
+   `./team/create.sh` to rebuild one.)
 2. Describe your work to the Lead.
 
 For detailed daily workflows — team structure, requirements and
@@ -134,23 +136,23 @@ case, ask the Lead to regenerate this file).
 - **Docker not installed:** Install Docker Desktop from
   https://www.docker.com/products/docker-desktop/
 - **Sandbox authentication fails:** The sandbox's OAuth token is
-  captured at startup. It can become invalid if:
+  captured fresh on every attach. It can become invalid if:
   - The access token expired (~24h) and the refresh token also expired
     (weeks/months) — rare, but happens after long breaks.
   - You ran `/login` on the host while the sandbox was running — the
     new login may invalidate the token the sandbox is using.
-  In either case: stop the sandbox with `docker sandbox stop <name>`
-  (the name is printed by `start.sh` at startup), re-run `claude` on
-  the host and `/login` if needed, then restart with
-  `team/start.sh`. On macOS, `start.sh` automatically picks up the
-  fresh token from the Keychain. On other systems, update
-  `CLAUDE_CODE_OAUTH_TOKEN` in your shell config first.
-- **macOS Keychain password prompt:** On macOS, `start.sh` reads the
-  OAuth token from the Keychain. If the Keychain is locked (e.g.,
-  after a reboot or corporate IT policy), macOS may prompt for your
-  login password. This is expected — enter it to continue. If the
-  Keychain is managed by IT and you cannot unlock it, fall back to
-  exporting `CLAUDE_CODE_OAUTH_TOKEN` manually in your shell config.
+  In either case: refresh the token by running `claude` on the host
+  and `/login` if needed, then re-run `./team/attach.sh`. On macOS
+  the fresh token is read automatically from the Keychain; on other
+  systems update `CLAUDE_CODE_OAUTH_TOKEN` in your shell config
+  first.
+- **macOS Keychain password prompt:** On macOS the kit reads the
+  OAuth token from the Keychain on every attach. If the Keychain is
+  locked (e.g., after a reboot or corporate IT policy), macOS may
+  prompt for your login password. This is expected — enter it to
+  continue. If the Keychain is managed by IT and you cannot unlock
+  it, fall back to exporting `CLAUDE_CODE_OAUTH_TOKEN` manually in
+  your shell config.
 - **SSH remote access fails inside the sandbox:** Git operations over
   SSH (push, pull, fetch) fail with "Permission denied" or "Host key
   verification failed."
@@ -162,7 +164,8 @@ case, ask the Lead to regenerate this file).
   - If `known_hosts` is missing or stale, regenerate it:
     `ssh-keyscan <hostname> > .sandbox/.ssh/known_hosts 2>/dev/null`
   - Verify `.sandbox/.ssh.source` contains the correct absolute path
-    to the host key — `start.sh` reads this to sync keys on startup.
+    to the host key — the kit reads this to sync keys on every
+    create and attach.
 - **Sandbox build fails:** Check that Docker Desktop is running.
   Review the build output for version mismatches or network errors.
 - **`/project:team-start` not found:** Ensure
@@ -171,10 +174,9 @@ case, ask the Lead to regenerate this file).
 
 ### Offboarding
 
-When you leave the project:
-1. Run `team/stop.sh` to destroy your sandbox.
-2. Delete `.sandbox/` and `.claude/settings.json` — these are
-   gitignored and not shared.
-3. Optionally delete `.claude/.tasks/` and `.claude/.progress.md` if
-   no one else needs your local task history.
+When you leave the project on this workstation, run
+`./team/leave.sh`. It destroys the sandbox VM and discards all
+developer-local state (SSH material, platform API token,
+in-progress task files, git worktrees). Kit files and the project's
+committed code are untouched.
 

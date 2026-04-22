@@ -51,10 +51,11 @@ so you can run it when you're ready.
 Everything else lives in the project's ./team/ directory
 (placed there by install):
 
-  ./team/join.sh       Provision your workstation and start the team.
+  ./team/join.sh       Provision your workstation and launch the team.
   ./team/leave.sh      Discard your workstation's local sandbox state.
-  ./team/start.sh      Start the team after a stop.
-  ./team/stop.sh       Stop the team.
+  ./team/create.sh     Build the sandbox image and launch a fresh sandbox.
+  ./team/attach.sh     Reattach to an already-running sandbox.
+  ./team/destroy.sh    Destroy the sandbox VM.
   ./team/uninstall.sh  Remove the kit from the project.
 
 Running these scripts directly (rather than going through the

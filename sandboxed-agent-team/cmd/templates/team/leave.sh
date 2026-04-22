@@ -74,10 +74,10 @@ done
 
 echo "=== Removing developer-local state for ${PROJECT_NAME} ==="
 
-# Stop the sandbox. --yes keeps stop.sh from re-prompting; it's a
-# no-op if no sandbox exists.
-if [ -x "${PROJECT_DIR}/team/stop.sh" ]; then
-    "${PROJECT_DIR}/team/stop.sh" --yes || true
+# Destroy the sandbox. --yes keeps destroy.sh from re-prompting;
+# it's a no-op if no sandbox exists.
+if [ -x "${PROJECT_DIR}/team/destroy.sh" ]; then
+    "${PROJECT_DIR}/team/destroy.sh" --yes || true
 fi
 
 # Per-developer state under .sandbox/ (all dot-prefixed per kit convention).

@@ -40,7 +40,7 @@ machine, and project-config values Claude Code will ask about.
 
 - Docker Desktop installed and running
   (https://www.docker.com/products/docker-desktop/). The sandbox
-  feature is required; `start.sh` verifies it at launch.
+  feature is required; `create.sh` and `attach.sh` verify it at launch.
 - Claude Code installed on the host and authenticated (run `claude`
   and `/login` if you haven't — you need this to execute this
   checklist in the first place).
@@ -124,12 +124,13 @@ undo just the local state (leaving versioned kit files alone), run
 `./team/leave.sh`.
 
 **A note on authentication:** Because the sandbox is a separate
-environment, your host Claude Code login doesn't carry over.
-`start.sh` autodetects your credentials and injects them into the
-sandbox at each startup. On macOS, it extracts the OAuth token from
-the macOS Keychain automatically — no manual token management needed.
-On other systems, a one-time export of `CLAUDE_CODE_OAUTH_TOKEN` or
-`ANTHROPIC_API_KEY` is required in your shell config.
+environment, your host Claude Code login doesn't carry over. The
+kit autodetects your credentials and injects them into the sandbox
+on every create and attach. On macOS, it extracts the OAuth token
+from the macOS Keychain automatically — no manual token management
+needed. On other systems, a one-time export of
+`CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` is required in
+your shell config.
 
 **A note on SSH remotes:** If the project's Git remote uses SSH (e.g.,
 `git@bitbucket.org:…` or a custom Host alias from `~/.ssh/config`),
@@ -146,14 +147,17 @@ Once agent team setup is complete:
 their work appears as expandable blocks in the same terminal. Each
 agent does not get its own terminal pane.
 
-1. At your host terminal (in the project directory), start the
-   sandbox: `team/start.sh`. This drops you into a Claude Code
-   session running inside the sandbox. The session's system prompt
-   auto-loads the Lead role (see [Auto-loading Lead in sandbox
-   sessions](#capabilities) under Capabilities), so the team spawns
-   as soon as you send your first message — no slash command
-   required. Once setup completes, the statusline shows "Agent Team
-   Mode" as a visible confirmation that you're talking to the team.
+1. At your host terminal (in the project directory), reattach to
+   the sandbox: `./team/attach.sh`. This drops you into a Claude
+   Code session running inside the sandbox. The session's system
+   prompt auto-loads the Lead role (see [Auto-loading Lead in
+   sandbox sessions](#capabilities) under Capabilities), so the
+   team spawns as soon as you send your first message — no slash
+   command required. Once setup completes, the statusline shows
+   "Agent Team Mode" as a visible confirmation that you're talking
+   to the team. (If `attach.sh` tells you no sandbox exists — for
+   example, because you ran `destroy.sh` last time — run
+   `./team/create.sh` to build a fresh one.)
 2. The sandboxed Claude Code pre-authorizes common agent commands
    (`mvn`, `git`, `ls`, `chmod`, etc.) via `.claude/settings.json`'s
    allow/deny rules, so teammates can spawn agents, run builds,
@@ -190,25 +194,27 @@ agent does not get its own terminal pane.
      re-invoke the Lead (the auto-load fires only at session start,
      so mid-session recovery uses the slash command).
    - Sandbox crashes: back at your host terminal, run
-     `team/start.sh` to reconnect (which reopens Claude Code
-     inside the sandbox). The new session auto-loads the Lead, which
-     reads `progress.md` to recover state.
+     `./team/attach.sh` to reconnect (which reopens Claude Code
+     inside the sandbox). The new session auto-loads the Lead,
+     which reads `progress.md` to recover state. If the sandbox
+     itself is gone, run `./team/create.sh` to rebuild it.
    - The Lead may suspend a task to work on a prerequisite it
      discovered — this is normal. It will resume the original task
      after the prerequisite is complete.
 9. **Pausing and resuming:** Exiting Claude Code (`/exit` or Ctrl+D)
-    ends your Claude Code session and drops you back to the shell, but the sandbox VM keeps running in the background.
-    To resume: at your host terminal run `team/start.sh` again
-    — it detects the existing sandbox, connects you to it, and starts a new Claude Code
-    session inside it. The Lead auto-loads and reads `progress.md`
-    to pick up where you left off.
+    ends your Claude Code session and drops you back to the shell,
+    but the sandbox VM keeps running in the background.
+    To resume: at your host terminal run `./team/attach.sh`
+    — it reattaches to the running sandbox and starts a new Claude
+    Code session inside it. The Lead auto-loads and reads
+    `progress.md` to pick up where you left off.
 10. To end a Claude Code session cleanly, tell the Lead you're
     wrapping up the session. The Lead confirms all work is merged and flags
     anything unresolved for your next Claude Code session. Then
     exit Claude Code (`/exit` or Ctrl+D) — the sandbox VM keeps
     running so you can reconnect later.
 11. To end the engagement (i.e., destroy the sandbox), after ending your final Claude Code
-    session, at your host terminal: `team/stop.sh`
+    session, at your host terminal: `./team/destroy.sh`
 
 ## Overview
 
@@ -243,13 +249,13 @@ worktree:
   Git remote access are provisioned into the sandbox automatically.
 - **Auto-loading Lead in sandbox sessions** — The sandbox's Claude
   Code session starts with the Lead role pre-configured:
-  `team/start.sh` passes `--append-system-prompt` to `claude` so
+  `team/create.sh` passes `--append-system-prompt` to `claude` so
   the first turn reads `team-start.md` and spawns the team
   automatically. The human does not need to remember
   `/project:team-start`. Host Claude Code sessions are unaffected
-  (they don't go through `start.sh`). The `/project:team-start`
-  slash command remains available as a manual re-invocation fallback
-  if the Lead needs to be reset mid-session.
+  (they don't go through `create.sh`/`attach.sh`). The
+  `/project:team-start` slash command remains available as a manual
+  re-invocation fallback if the Lead needs to be reset mid-session.
 - **"Agent Team Mode" statusline indicator** — The sandbox's
   statusline displays "Agent Team Mode" once the Lead has completed
   the Pre-Start Check and spawned the team, giving a visible cue at
@@ -381,10 +387,12 @@ Infrastructure files go **inside** each project alongside the code:
 │   ├── .oauth-token                 # (gitignored) captured Claude OAuth token
 │   └── .last-directive              # (gitignored) hash of last Lead directive
 ├── team/                            # Lifecycle scripts (all tracked)
-│   ├── join.sh                      # Provision workstation + start team
+│   ├── README.md                    # One-page reference for these scripts
+│   ├── join.sh                      # Provision workstation + launch team
 │   ├── leave.sh                     # Discard developer-local state
-│   ├── start.sh                     # Start the sandbox + team (daily use)
-│   ├── stop.sh                      # Destroy the sandbox
+│   ├── create.sh                    # Build sandbox image + launch fresh sandbox
+│   ├── attach.sh                    # Reattach to a running sandbox (daily use)
+│   ├── destroy.sh                   # Destroy the sandbox VM
 │   └── uninstall.sh                 # Remove the kit from the project
 ├── CLAUDE.md                        # Project-owned; kit adds a bracketed import line
 ├── CLAUDE_TEAM.md                   # Kit-owned agent context (imported by CLAUDE.md)
@@ -418,11 +426,13 @@ The kit produces these files in a target project:
 
 | Path | Purpose | Usage |
 |------|---------|-------|
-| `.sandbox/Dockerfile` | Custom sandbox image for this project | Built automatically by `start.sh` |
-| `team/join.sh` | Provisions the developer's workstation (sandbox, SSH keys, API tokens) and starts the team | Human runs at host terminal |
+| `.sandbox/Dockerfile` | Custom sandbox image for this project | Built automatically by `create.sh` |
+| `team/README.md` | One-page reference for the scripts in this directory | Developer reads when onboarding |
+| `team/join.sh` | Provisions the developer's workstation (sandbox, SSH keys, API tokens) and launches the team | Human runs at host terminal (first time on this workstation) |
 | `team/leave.sh` | Discards developer-local sandbox state; preserves kit files | Human runs at host terminal |
-| `team/start.sh` | Starts the sandbox and the team (daily use) | Human runs at host terminal |
-| `team/stop.sh` | Destroys the sandbox VM (and optionally the template image) | Human runs at host terminal |
+| `team/create.sh` | Builds the sandbox image and launches a fresh sandbox | Human runs at host terminal (or invoked by `join.sh`) |
+| `team/attach.sh` | Reattaches to an already-running sandbox | Human runs at host terminal (daily use) |
+| `team/destroy.sh` | Destroys the sandbox VM (and optionally the template image) | Human runs at host terminal |
 | `team/uninstall.sh` | Removes the kit from the project (chains through `leave.sh --yes`) | Human runs at host terminal |
 | `docs/INDEX.md` | Sample requirement-document index | Seeded once on initial setup; project-owned thereafter (re-setup and remove leave it alone) |
 | `CLAUDE_TEAM.md` | Project context for agents (kit-owned) | Imported into `CLAUDE.md` via a bracketed `@CLAUDE_TEAM.md` line |
@@ -430,7 +440,7 @@ The kit produces these files in a target project:
 | `.claude/team-variables.yaml` | Per-project persisted variables | Human-readable, hand-editable, survives kit upgrades |
 | `.claude/settings.json` | Agent team config and permissions | Auto-loaded by Claude Code at session start |
 | `.mcp.json` | Project-scoped MCP server config | Auto-loaded by Claude Code at session start (canonical location for project-scoped MCP servers; see Claude Code docs) |
-| `.claude/commands/team-start.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `start.sh`); also exposed as `/project:team-start` for manual re-invocation |
+| `.claude/commands/team-start.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `create.sh`); also exposed as `/project:team-start` for manual re-invocation |
 | `ONBOARDING.md` | Developer onboarding (generated) | New developer runs `./team/join.sh` |
 | `TEAM_GUIDE.md` | Daily-use reference for humans (generated) | Human reads for workflows, troubleshooting, recovery |
 

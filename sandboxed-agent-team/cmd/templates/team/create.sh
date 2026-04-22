@@ -5,7 +5,29 @@
 # To change this file, edit its template in the kit source and
 # re-run `agent-team-install`.
 
+# create.sh — build the sandbox template image, create the sandbox
+# VM, and attach a Claude Code session to it.
+#
+# When called with --skip-create (used internally by team/attach.sh),
+# this script instead verifies that a sandbox already exists with
+# the current Lead directive and reattaches to it. --skip-create is
+# not intended for direct use — run ./team/attach.sh.
+
 set -euo pipefail
+
+# Parse flags. --skip-create is internal; users should run
+# team/attach.sh rather than passing this flag directly.
+skip_create=0
+for arg in "$@"; do
+    case "$arg" in
+        --skip-create) skip_create=1 ;;
+        *)
+            echo "create.sh: unknown argument: $arg" >&2
+            echo "Usage: $0" >&2
+            exit 2
+            ;;
+    esac
+done
 
 # ── Prerequisite check ──────────────────────────────────────────────────────
 if ! docker sandbox --help &>/dev/null; then
@@ -143,27 +165,6 @@ if [ -f "$SSH_SOURCE_FILE" ]; then
     fi
 fi
 
-# ── Build custom template ────────────────────────────────────────────────────
-DOCKERFILE="${PROJECT_DIR}/.sandbox/Dockerfile"
-if [ -f "$DOCKERFILE" ]; then
-    echo "Building sandbox template (first build downloads ~1 GB of"
-    echo "  dependencies and typically takes 2-5 minutes on a fast connection,"
-    echo "  longer on slower networks). Subsequent builds use the Docker cache"
-    echo "  and are much faster."
-    echo ""
-    echo "  Progress updates below. If the display stops changing for more"
-    echo "  than 5 minutes, the build may be hung — cancel (Ctrl+C) and"
-    echo "  check the Dockerfile for commands that may hang."
-    echo ""
-    echo "  Note: Playwright may print a 'BEWARE: your OS is not officially"
-    echo "  supported' warning on some platforms. This is cosmetic — it uses"
-    echo "  a working fallback automatically."
-    docker build -t "${TEMPLATE_IMAGE}" -f "$DOCKERFILE" "$PROJECT_DIR"
-else
-    echo "No .sandbox/Dockerfile found. Using default template."
-    TEMPLATE_IMAGE=""
-fi
-
 # ── Inject credentials into sandbox ──────────────────────────────────────────
 # docker sandbox run does not support passing env vars (-e), and the sandbox
 # auto-updates the claude binary (overwriting any Dockerfile-based wrapper).
@@ -227,7 +228,7 @@ inject_credentials() {
     echo "=== Credentials injected ==="
 }
 
-# ── Start, reconnect, or recreate ──────────────────────────────────────────
+# ── Directive-hash tracking ─────────────────────────────────────────────────
 # Docker bakes the sandbox's entrypoint (the claude invocation and its
 # flags) at creation time. `docker sandbox run <name>` re-attaches to
 # that baked-in entrypoint; extra args here would be ignored. So if
@@ -235,76 +236,102 @@ inject_credentials() {
 # regenerated from the setup kit), an existing sandbox would keep
 # running with the stale directive.
 #
-# To fix that automatically, we store LEAD_DIRECTIVE alongside the
-# sandbox (in .sandbox/.last-directive, gitignored via the .sandbox/
-# rule). On each run we compare the current directive to the stored
-# one. If they differ, we destroy the sandbox so the new-sandbox
-# branch below recreates it with the updated entrypoint. The
-# recreation is fast because Docker caches the template image.
-EXISTING=$(docker sandbox ls 2>/dev/null | grep -w "${SANDBOX_NAME}" || true)
+# We store the SHA-256 of LEAD_DIRECTIVE alongside the sandbox (in
+# .sandbox/.last-directive, gitignored). On reattach (--skip-create),
+# we compare the stored hash to the current one; on mismatch we fail
+# fast and tell the user to destroy + create to refresh.
 DIRECTIVE_FILE="${PROJECT_DIR}/.sandbox/.last-directive"
-# Hash-based comparison (robust to trailing whitespace, IDE-auto-edits,
-# line-ending differences, etc.). The file holds just the hash, not
-# the directive text.
 DIRECTIVE_HASH=$(printf '%s' "${LEAD_DIRECTIVE}" | shasum -a 256 | awk '{print $1}')
 STORED_HASH=$(cat "$DIRECTIVE_FILE" 2>/dev/null || true)
+EXISTING=$(docker sandbox ls 2>/dev/null | grep -w "${SANDBOX_NAME}" || true)
 
-if [ -n "$EXISTING" ] && [ "${DIRECTIVE_HASH}" != "${STORED_HASH}" ]; then
-    if [ -z "${STORED_HASH}" ]; then
-        echo "=== Sandbox predates directive tracking — recreating with current LEAD_DIRECTIVE ==="
-    else
-        echo "=== LEAD_DIRECTIVE has changed since last run — recreating sandbox ==="
+if [ "$skip_create" -eq 1 ]; then
+    # ── Reattach path (invoked from team/attach.sh) ─────────────────────────
+    if [ -z "$EXISTING" ]; then
+        echo "Error: no sandbox '${SANDBOX_NAME}' exists for this project." >&2
+        echo "Run ./team/create.sh to create one." >&2
+        exit 1
     fi
-    docker sandbox rm "${SANDBOX_NAME}"
-    EXISTING=""
-fi
-
-if [ -n "$EXISTING" ]; then
+    if [ "${DIRECTIVE_HASH}" != "${STORED_HASH}" ]; then
+        echo "Error: the Lead directive has changed since this sandbox was created." >&2
+        echo "Run ./team/destroy.sh && ./team/create.sh to refresh." >&2
+        exit 1
+    fi
     echo "=== Reconnecting to existing sandbox ==="
     inject_credentials
-    # Re-attaches to the baked-in entrypoint set at creation.
+    # Reattaches to the baked-in entrypoint set at creation time.
     docker sandbox run "${SANDBOX_NAME}"
-else
-    # New sandbox: docker sandbox run blocks (it is interactive), so we
-    # inject credentials from a background job that polls until the sandbox
-    # appears, then runs inject_credentials.
-    (
-        for i in $(seq 1 30); do
-            sleep 2
-            if docker sandbox ls 2>/dev/null | grep -qw "${SANDBOX_NAME}"; then
-                inject_credentials
-                break
-            fi
-        done
-    ) &
-    INJECT_PID=$!
-
-    # Record the directive hash before starting so future runs can
-    # detect changes even if this run is interrupted.
-    echo "${DIRECTIVE_HASH}" > "$DIRECTIVE_FILE"
-
-    # `docker sandbox run` grammar:
-    #   docker sandbox run [flags] AGENT [WORKSPACE] [-- AGENT_ARGS...]
-    # Agent args (flags meant for claude) MUST come after the `--`
-    # separator. Without it, they'd be parsed as additional workspace
-    # paths and silently turned into bogus directories.
-    if [ -n "$TEMPLATE_IMAGE" ]; then
-        docker sandbox run \
-            --name "${SANDBOX_NAME}" \
-            --template "${TEMPLATE_IMAGE}" \
-            claude \
-            "${PROJECT_DIR}" \
-            -- \
-            --append-system-prompt "${LEAD_DIRECTIVE}"
-    else
-        docker sandbox run \
-            --name "${SANDBOX_NAME}" \
-            claude \
-            "${PROJECT_DIR}" \
-            -- \
-            --append-system-prompt "${LEAD_DIRECTIVE}"
-    fi
-
-    # Clean up background job if still running.
-    kill $INJECT_PID 2>/dev/null || true
+    exit 0
 fi
+
+# ── Create path ─────────────────────────────────────────────────────────────
+if [ -n "$EXISTING" ]; then
+    echo "Error: sandbox '${SANDBOX_NAME}' already exists for this project." >&2
+    echo "Run ./team/attach.sh to reattach, or" >&2
+    echo "./team/destroy.sh && ./team/create.sh to rebuild from scratch." >&2
+    exit 1
+fi
+
+# Build the custom template image if a Dockerfile is present.
+DOCKERFILE="${PROJECT_DIR}/.sandbox/Dockerfile"
+if [ -f "$DOCKERFILE" ]; then
+    echo "Building sandbox template (first build downloads ~1 GB of"
+    echo "  dependencies and typically takes 2-5 minutes on a fast connection,"
+    echo "  longer on slower networks). Subsequent builds use the Docker cache"
+    echo "  and are much faster."
+    echo ""
+    echo "  Progress updates below. If the display stops changing for more"
+    echo "  than 5 minutes, the build may be hung — cancel (Ctrl+C) and"
+    echo "  check the Dockerfile for commands that may hang."
+    echo ""
+    echo "  Note: Playwright may print a 'BEWARE: your OS is not officially"
+    echo "  supported' warning on some platforms. This is cosmetic — it uses"
+    echo "  a working fallback automatically."
+    docker build -t "${TEMPLATE_IMAGE}" -f "$DOCKERFILE" "$PROJECT_DIR"
+else
+    echo "No .sandbox/Dockerfile found. Using default template."
+    TEMPLATE_IMAGE=""
+fi
+
+# docker sandbox run is blocking (interactive). Spawn a background
+# poller that waits for the sandbox to appear, then injects
+# credentials.
+(
+    for i in $(seq 1 30); do
+        sleep 2
+        if docker sandbox ls 2>/dev/null | grep -qw "${SANDBOX_NAME}"; then
+            inject_credentials
+            break
+        fi
+    done
+) &
+INJECT_PID=$!
+
+# Record the directive hash before starting so future attach.sh runs
+# can verify even if this run is interrupted mid-create.
+echo "${DIRECTIVE_HASH}" > "$DIRECTIVE_FILE"
+
+# `docker sandbox run` grammar:
+#   docker sandbox run [flags] AGENT [WORKSPACE] [-- AGENT_ARGS...]
+# Agent args (flags meant for claude) MUST come after the `--`
+# separator. Without it, they'd be parsed as additional workspace
+# paths and silently turned into bogus directories.
+if [ -n "$TEMPLATE_IMAGE" ]; then
+    docker sandbox run \
+        --name "${SANDBOX_NAME}" \
+        --template "${TEMPLATE_IMAGE}" \
+        claude \
+        "${PROJECT_DIR}" \
+        -- \
+        --append-system-prompt "${LEAD_DIRECTIVE}"
+else
+    docker sandbox run \
+        --name "${SANDBOX_NAME}" \
+        claude \
+        "${PROJECT_DIR}" \
+        -- \
+        --append-system-prompt "${LEAD_DIRECTIVE}"
+fi
+
+# Clean up background job if still running.
+kill $INJECT_PID 2>/dev/null || true

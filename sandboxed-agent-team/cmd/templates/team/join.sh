@@ -12,7 +12,7 @@
 #   - stop any existing sandbox
 #   - provision SSH material (if origin is an SSH remote)
 #   - prompt for a platform API token (if MERGE_METHOD is PR)
-#   - start the team (delegating to team/start.sh)
+#   - create the sandbox and launch the team (delegating to team/create.sh)
 #   - record .claude/.last-onboarded
 #
 # Idempotent: running again discards the local sandbox and rebuilds.
@@ -47,10 +47,10 @@ get_var() {
 MERGE_METHOD="$(get_var MERGE_METHOD)"
 
 # ── Discard any existing sandbox so we rebuild from the current setup ──────
-# stop.sh --yes is a no-op if no sandbox exists, and keeps the
+# destroy.sh --yes is a no-op if no sandbox exists, and keeps the
 # template image in place so the rebuild below reuses Docker's cache.
-if [ -x "${PROJECT_DIR}/team/stop.sh" ]; then
-    "${PROJECT_DIR}/team/stop.sh" --yes
+if [ -x "${PROJECT_DIR}/team/destroy.sh" ]; then
+    "${PROJECT_DIR}/team/destroy.sh" --yes
 fi
 
 # ── SSH provisioning (if origin remote uses SSH) ────────────────────────────
@@ -208,8 +208,8 @@ EOF_ENV
     fi
 fi
 
-# ── Start the team ──────────────────────────────────────────────────────────
-"${PROJECT_DIR}/team/start.sh"
+# ── Create the sandbox and launch the team ────────────────────────────────
+"${PROJECT_DIR}/team/create.sh"
 
 # ── Record onboarding timestamp ─────────────────────────────────────────────
 mkdir -p "${PROJECT_DIR}/.claude"

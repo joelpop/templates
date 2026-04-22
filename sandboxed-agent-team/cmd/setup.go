@@ -133,7 +133,7 @@ func runInstallUpdate(projectRoot string) int {
 	}
 
 	// Stop any running sandbox before overwriting scripts.
-	stopSandboxIfInstalled(projectRoot)
+	destroySandboxIfInstalled(projectRoot)
 
 	vars, err := LoadVariables(filepath.Join(projectRoot, DefaultVariablesPath))
 	if err != nil {
@@ -342,21 +342,24 @@ func isWorkstationJoined(projectRoot string) bool {
 	return err == nil
 }
 
-// stopSandboxIfInstalled invokes team/stop.sh if it exists. Used
-// before install-update and uninstall to clean up a running sandbox.
-// Non-fatal on error.
-func stopSandboxIfInstalled(projectRoot string) {
-	stop := filepath.Join(projectRoot, "team", "stop.sh")
-	if _, err := os.Stat(stop); err != nil {
+// destroySandboxIfInstalled invokes team/destroy.sh --yes if it
+// exists. Used before install-update so the regenerated scripts
+// aren't trying to manage a sandbox created by an older version of
+// the kit. Non-fatal on error; --yes bypasses the interactive
+// confirmation (the user already approved the install in the
+// review summary).
+func destroySandboxIfInstalled(projectRoot string) {
+	destroy := filepath.Join(projectRoot, "team", "destroy.sh")
+	if _, err := os.Stat(destroy); err != nil {
 		return
 	}
-	cmd := exec.Command(stop)
+	cmd := exec.Command(destroy, "--yes")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = projectRoot
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("Warning: team/stop.sh reported: %s\n", err)
+		fmt.Printf("Warning: team/destroy.sh reported: %s\n", err)
 	}
 }
 

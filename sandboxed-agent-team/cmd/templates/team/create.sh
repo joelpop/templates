@@ -8,26 +8,49 @@
 # create.sh — build the sandbox template image, create the sandbox
 # VM, and attach a Claude Code session to it.
 #
-# When called with --skip-create (used internally by team/attach.sh),
+# When called with --resume or --fresh (forwarded by team/attach.sh),
 # this script instead verifies that a sandbox already exists with
-# the current Lead directive and reattaches to it. --skip-create is
-# not intended for direct use — run ./team/attach.sh.
+# the current Lead directive and reattaches to it, either resuming
+# the previous Claude Code session (--resume) or starting a new one
+# (--fresh). Run ./team/attach.sh rather than passing these flags
+# to create.sh directly.
 
 set -euo pipefail
 
-# Parse flags. --skip-create is internal; users should run
-# team/attach.sh rather than passing this flag directly.
-skip_create=0
+# Parse flags. --resume and --fresh are forwarded by
+# team/attach.sh; either one puts this script into "attach mode"
+# (reattach to an existing sandbox instead of creating a new one).
+#
+#   no flags  : create mode. Fails fast if the sandbox already
+#               exists.
+#   --resume  : attach mode. Resumes the previous Claude Code
+#               session via `claude --continue`.
+#   --fresh   : attach mode. Starts a brand-new Claude Code
+#               session in the existing sandbox.
+#
+# --resume and --fresh are mutually exclusive.
+resume_session=0
+fresh_session=0
 for arg in "$@"; do
     case "$arg" in
-        --skip-create) skip_create=1 ;;
+        --resume) resume_session=1 ;;
+        --fresh)  fresh_session=1 ;;
         *)
             echo "create.sh: unknown argument: $arg" >&2
-            echo "Usage: $0" >&2
+            echo "Usage: $0 [--resume | --fresh]" >&2
             exit 2
             ;;
     esac
 done
+if [ "$resume_session" -eq 1 ] && [ "$fresh_session" -eq 1 ]; then
+    echo "create.sh: --resume and --fresh are mutually exclusive." >&2
+    exit 2
+fi
+# attach mode iff either flag is present
+attach_mode=0
+if [ "$resume_session" -eq 1 ] || [ "$fresh_session" -eq 1 ]; then
+    attach_mode=1
+fi
 
 # ── Prerequisite check ──────────────────────────────────────────────────────
 if ! docker sandbox --help &>/dev/null; then
@@ -229,24 +252,20 @@ inject_credentials() {
 }
 
 # ── Directive-hash tracking ─────────────────────────────────────────────────
-# Docker bakes the sandbox's entrypoint (the claude invocation and its
-# flags) at creation time. `docker sandbox run <name>` re-attaches to
-# that baked-in entrypoint; extra args here would be ignored. So if
-# LEAD_DIRECTIVE ever changes (e.g., because this script was
-# regenerated from the setup kit), an existing sandbox would keep
-# running with the stale directive.
-#
-# We store the SHA-256 of LEAD_DIRECTIVE alongside the sandbox (in
-# .sandbox/.last-directive, gitignored). On reattach (--skip-create),
-# we compare the stored hash to the current one; on mismatch we fail
-# fast and tell the user to destroy + create to refresh.
+# Docker bakes the sandbox's entrypoint at creation time. If
+# LEAD_DIRECTIVE changes (e.g., because this script was regenerated
+# from the setup kit), the sandbox keeps running with the stale
+# directive. We store the SHA-256 of LEAD_DIRECTIVE alongside the
+# sandbox (in .sandbox/.last-directive, gitignored). On attach,
+# we compare the stored hash to the current one; on mismatch we
+# fail fast and tell the user to destroy + create to refresh.
 DIRECTIVE_FILE="${PROJECT_DIR}/.sandbox/.last-directive"
 DIRECTIVE_HASH=$(printf '%s' "${LEAD_DIRECTIVE}" | shasum -a 256 | awk '{print $1}')
 STORED_HASH=$(cat "$DIRECTIVE_FILE" 2>/dev/null || true)
 EXISTING=$(docker sandbox ls 2>/dev/null | grep -w "${SANDBOX_NAME}" || true)
 
-if [ "$skip_create" -eq 1 ]; then
-    # ── Reattach path (invoked from team/attach.sh) ─────────────────────────
+if [ "$attach_mode" -eq 1 ]; then
+    # ── Attach path (invoked from team/attach.sh --resume|--fresh) ───────────
     if [ -z "$EXISTING" ]; then
         echo "Error: no sandbox '${SANDBOX_NAME}' exists for this project." >&2
         echo "Run ./team/create.sh to create one." >&2
@@ -259,9 +278,23 @@ if [ "$skip_create" -eq 1 ]; then
     fi
     echo "=== Reconnecting to existing sandbox ==="
     inject_credentials
-    # Reattaches to the baked-in entrypoint set at creation time.
-    docker sandbox run "${SANDBOX_NAME}"
-    exit 0
+
+    # Launch Claude Code fresh inside the running sandbox via
+    # `docker sandbox exec`. Using exec (instead of
+    # `docker sandbox run <name>`) lets us pass flags like
+    # --continue, which replays the previous session's context.
+    # The LEAD_DIRECTIVE is re-appended either way, as a
+    # belt-and-suspenders — harmless on --continue (same directive
+    # baked in at creation) and correct on --fresh.
+    if [ "$resume_session" -eq 1 ]; then
+        exec docker sandbox exec -it "${SANDBOX_NAME}" \
+            bash -c 'cd "$1" && exec claude --continue --append-system-prompt "$2"' \
+            _ "${PROJECT_DIR}" "${LEAD_DIRECTIVE}"
+    else
+        exec docker sandbox exec -it "${SANDBOX_NAME}" \
+            bash -c 'cd "$1" && exec claude --append-system-prompt "$2"' \
+            _ "${PROJECT_DIR}" "${LEAD_DIRECTIVE}"
+    fi
 fi
 
 # ── Create path ─────────────────────────────────────────────────────────────

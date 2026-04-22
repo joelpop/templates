@@ -208,8 +208,8 @@ agent does not get its own terminal pane.
    - The Lead may suspend a task to work on a prerequisite it
      discovered — this is normal. It will resume the original task
      after the prerequisite is complete.
-9. **Pausing and resuming:** Exiting Claude Code (`/exit` or Ctrl+D)
-    ends your Claude Code session and drops you back to the shell,
+9. **Pausing and resuming:** Exiting Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice)
+    ends your Claude Code session and drops you back to the host shell,
     but the sandbox VM keeps running in the background.
     To resume: at your host terminal run `./team/attach.sh`
     — it reattaches to the running sandbox and starts a new Claude
@@ -218,7 +218,7 @@ agent does not get its own terminal pane.
 10. To end a Claude Code session cleanly, tell the Lead you're
     wrapping up the session. The Lead confirms all work is merged and flags
     anything unresolved for your next Claude Code session. Then
-    exit Claude Code (`/exit` or Ctrl+D) — the sandbox VM keeps
+    exit Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice) — the sandbox VM keeps
     running so you can reconnect later.
 11. To end the engagement (i.e., destroy the sandbox), after ending your final Claude Code
     session, at your host terminal: `./team/destroy.sh`
@@ -399,6 +399,7 @@ Infrastructure files go **inside** each project alongside the code:
 │   ├── leave.sh                     # Discard developer-local state
 │   ├── create.sh                    # Build sandbox image + launch fresh sandbox
 │   ├── attach.sh                    # Reattach to a running sandbox (daily use)
+│   ├── shell.sh                     # Drop into a bash shell inside the sandbox
 │   ├── destroy.sh                   # Destroy the sandbox VM
 │   └── uninstall.sh                 # Remove the kit from the project
 ├── CLAUDE.md                        # Project-owned; kit adds a bracketed import line
@@ -439,6 +440,7 @@ The kit produces these files in a target project:
 | `team/leave.sh` | Discards developer-local sandbox state; preserves kit files | Human runs at host terminal |
 | `team/create.sh` | Builds the sandbox image and launches a fresh sandbox | Human runs at host terminal (or invoked by `join.sh`) |
 | `team/attach.sh` | Reattaches to an already-running sandbox | Human runs at host terminal (daily use) |
+| `team/shell.sh` | Drops into a bash shell inside the running sandbox | Human runs at host terminal (for inspection or ad-hoc commands) |
 | `team/destroy.sh` | Destroys the sandbox VM (and optionally the template image) | Human runs at host terminal |
 | `team/uninstall.sh` | Removes the kit from the project (chains through `leave.sh --yes`) | Human runs at host terminal |
 | `docs/INDEX.md` | Sample requirement-document index | Seeded once on initial setup; project-owned thereafter (re-setup and remove leave it alone) |
@@ -450,4 +452,3 @@ The kit produces these files in a target project:
 | `.claude/commands/team-start.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `create.sh`); also exposed as `/project:team-start` for manual re-invocation |
 | `ONBOARDING.md` | Developer onboarding (generated) | New developer runs `./team/join.sh` |
 | `TEAM_GUIDE.md` | Daily-use reference for humans (generated) | Human reads for workflows, troubleshooting, recovery |
-

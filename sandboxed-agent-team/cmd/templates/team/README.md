@@ -11,6 +11,7 @@ running inside it.
 | `leave.sh`     | Discard your workstation's local sandbox state.            |
 | `create.sh`    | Build the sandbox image and launch a fresh sandbox.        |
 | `attach.sh`    | Reattach to an already-running sandbox.                    |
+| `shell.sh`     | Drop into a bash shell inside the running sandbox.         |
 | `destroy.sh`   | Destroy the sandbox VM.                                    |
 | `uninstall.sh` | Remove the kit from the project.                           |
 
@@ -32,14 +33,32 @@ image and launch the team.
 ./team/attach.sh
 ```
 
-Reattaches to the running sandbox and resumes your Claude Code
-session. Fails fast if the sandbox was destroyed or if the Lead
-directive has changed — in which case run `./team/destroy.sh`
-followed by `./team/create.sh` to rebuild.
+Reattaches to the running sandbox and prompts you to pick
+`resume` (continue the previous Claude Code session, preserving
+context) or `fresh` (start a new session). Flags `--resume` and
+`--fresh` skip the prompt.
+
+Fails fast if the sandbox was destroyed or if the Lead directive
+has changed — in which case run `./team/destroy.sh` followed by
+`./team/create.sh` to rebuild.
+
+**Inspecting the sandbox:**
+
+```
+./team/shell.sh
+```
+
+Drops you into a bash shell inside the running sandbox (as the
+`agent` user, with the workspace as your cwd). Useful for
+checking injected credentials, SSH config, or running ad-hoc
+project commands outside a Claude Code session.
+
+Exit with `exit` or Ctrl-D. The sandbox VM itself keeps running; you've
+only exited the shell session, not stopped the sandbox.
 
 **Ending a session:**
 
-Exit Claude Code with `/exit` or Ctrl+D. The sandbox VM keeps
+Exit Claude Code with `/exit`, `exit`, or Ctrl-D quickly twice. The sandbox VM keeps
 running in the background. Reconnect with `./team/attach.sh`.
 When you're done with the project for the day (or longer), run
 `./team/destroy.sh` to free the sandbox resources.

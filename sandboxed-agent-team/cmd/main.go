@@ -56,6 +56,7 @@ Everything else lives in the project's ./team/ directory
   ./team/leave.sh      Discard your workstation's local sandbox state.
   ./team/create.sh     Build the sandbox image and launch a fresh sandbox.
   ./team/attach.sh     Reattach to an already-running sandbox.
+  ./team/shell.sh      Drop into a bash shell inside the running sandbox.
   ./team/destroy.sh    Destroy the sandbox VM.
   ./team/uninstall.sh  Remove the kit from the project.
 

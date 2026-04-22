@@ -136,8 +136,8 @@ without running the app yourself.
 
 ## Pausing and Resuming
 
-Exiting Claude Code (`/exit` or Ctrl+D) ends your Claude Code
-session and drops you back to the shell, but the sandbox VM keeps
+Exiting Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice) ends your Claude Code
+session and drops you back to the host shell, but the sandbox VM keeps
 running in the background. To resume:
 1. At your host terminal: `./team/attach.sh` — it reattaches to
    the running sandbox and starts a new Claude Code session inside
@@ -150,7 +150,7 @@ running in the background. To resume:
 To end a Claude Code session cleanly, tell the Lead you're wrapping
 up the session. The Lead confirms all work is merged and flags
 anything unresolved for your next Claude Code session. Then exit
-Claude Code (`/exit` or Ctrl+D) — the sandbox VM keeps running so
+Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice) — the sandbox VM keeps running so
 you can reconnect later (see [Pausing and
 Resuming](#pausing-and-resuming)).
 

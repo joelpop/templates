@@ -208,12 +208,18 @@ EOF_ENV
     fi
 fi
 
-# ── Create the sandbox and launch the team ────────────────────────────────
-"${PROJECT_DIR}/team/create.sh"
-
 # ── Record onboarding timestamp ─────────────────────────────────────────────
+# Must happen BEFORE create.sh because create.sh blocks on
+# `docker sandbox run`, and the sandboxed Claude Code's Pre-Start
+# Check reads this marker on first turn. If we wrote it after
+# create.sh returned, the marker wouldn't exist yet when the
+# Pre-Start Check ran, and the team would (incorrectly) tell the
+# user to re-run onboarding.
 mkdir -p "${PROJECT_DIR}/.claude"
 date -u +%Y-%m-%dT%H:%M:%SZ > "${PROJECT_DIR}/.claude/.last-onboarded"
+
+# ── Create the sandbox and launch the team ────────────────────────────────
+"${PROJECT_DIR}/team/create.sh"
 
 echo ""
 echo "=== Join complete ==="

@@ -281,19 +281,26 @@ else
     # detect changes even if this run is interrupted.
     echo "${DIRECTIVE_HASH}" > "$DIRECTIVE_FILE"
 
+    # `docker sandbox run` grammar:
+    #   docker sandbox run [flags] AGENT [WORKSPACE] [-- AGENT_ARGS...]
+    # Agent args (flags meant for claude) MUST come after the `--`
+    # separator. Without it, they'd be parsed as additional workspace
+    # paths and silently turned into bogus directories.
     if [ -n "$TEMPLATE_IMAGE" ]; then
         docker sandbox run \
             --name "${SANDBOX_NAME}" \
             --template "${TEMPLATE_IMAGE}" \
             claude \
-            --append-system-prompt "${LEAD_DIRECTIVE}" \
-            "${PROJECT_DIR}"
+            "${PROJECT_DIR}" \
+            -- \
+            --append-system-prompt "${LEAD_DIRECTIVE}"
     else
         docker sandbox run \
             --name "${SANDBOX_NAME}" \
             claude \
-            --append-system-prompt "${LEAD_DIRECTIVE}" \
-            "${PROJECT_DIR}"
+            "${PROJECT_DIR}" \
+            -- \
+            --append-system-prompt "${LEAD_DIRECTIVE}"
     fi
 
     # Clean up background job if still running.

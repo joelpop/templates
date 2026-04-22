@@ -61,8 +61,10 @@ Does not remove the kit's versioned files.
 ```
 
 Runs `leave.sh` first to discard local state, then deletes the
-kit's versioned files, excises the CLAUDE.md import block and
-the kit's `.gitignore` block, and commits the removal.
+kit's versioned files from the working tree and excises the
+CLAUDE.md import block and the kit's `.gitignore` block. No git
+operations — review with `git status` and commit the removal
+when ready.
 
 ## See also
 

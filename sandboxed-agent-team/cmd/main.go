@@ -27,20 +27,21 @@ you'll see a roadmap of what's about to happen and a review of
 your choices; Ctrl-C aborts at any time.
 
 Install Flow:
-On a fresh project, agent-team-install identifies the development
-branch, prompts for any inputs it can't derive automatically,
-writes the kit files, and commits them. It then offers (Y/n)
-to have you join the team by provisioning your workstation for
-you (set up your Docker sandbox, SSH keys, platform API token)
-and starts the team.
+On a fresh project, agent-team-install prompts for any inputs it
+can't derive automatically and writes the kit files to the
+current directory. It then offers (Y/n) to have you join the
+team by provisioning your workstation (set up your Docker
+sandbox, SSH keys, platform API token) and starting the team.
+No git operations — you stage, commit, and push on your own
+schedule.
 
 Update Flow:
-On a project that already has the kit, agent-team-install reconciles
-the variables file against the current templates — prompting
-for new placeholders and dropping ones no longer used — then
-regenerates the files the tool owns and commits the update.
-Sample files the kit produced (e.g., docs/INDEX.md) are left
-as-is.
+On a project that already has the kit, agent-team-install
+reconciles the variables file against the current templates —
+prompting for new placeholders and dropping ones no longer used
+— then regenerates the files the tool owns. Sample files the
+kit produced (e.g., docs/INDEX.md) are left as-is. No git
+operations — you stage, commit, and push on your own schedule.
 
 If your workstation is already provisioned (./team/join.sh was
 previously run), agent-team-install automatically re-runs

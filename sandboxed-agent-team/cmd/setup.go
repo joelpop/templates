@@ -20,24 +20,12 @@ func runInstall() int {
 }
 
 // runInstallFresh bootstraps the kit on a project that doesn't yet
-// have it. See the plan's "Flow — F1".
+// have it. The installer writes files only — no git operations.
+// The user commits, merges, and pushes on their own schedule.
 func runInstallFresh(projectRoot string) int {
 	printInstallIntro(true)
 
-	if err := gitPreflight(projectRoot); err != nil {
-		return fail(err)
-	}
-
-	devBranch, err := identifyDevBranch()
-	if err != nil {
-		return fail(err)
-	}
-
-	if _, err := placeOnBranch(devBranch, "chore/initial-setup"); err != nil {
-		return fail(err)
-	}
-
-	discovered, err := buildDiscoveredMap(projectRoot, devBranch)
+	discovered, err := buildDiscoveredMap(projectRoot)
 	if err != nil {
 		return fail(err)
 	}
@@ -90,32 +78,24 @@ func runInstallFresh(projectRoot string) int {
 		return fail(fmt.Errorf("update .gitignore: %w", err))
 	}
 
-	toStage := append([]string{DefaultVariablesPath, "CLAUDE.md", ".gitignore"}, written...)
-	if err := GitAddForce(toStage...); err != nil {
-		return fail(fmt.Errorf("stage kit files: %w", err))
-	}
-	if err := GitCommit("Install sandboxed-agent-team kit"); err != nil {
-		return fail(fmt.Errorf("commit kit files: %w", err))
-	}
-
-	return finishFreshInstall(projectRoot, runJoin)
+	return finishFreshInstall(projectRoot, runJoin, written)
 }
 
 // finishFreshInstall closes out the fresh-install flow. If the user
 // opted in during the review, run team/join.sh automatically.
 // Otherwise print a pointer so they can run it when ready. Returns
-// 0 on success, 1 if team/join.sh fails — the kit install itself
-// already landed, but "install + join" as a whole did not succeed.
-func finishFreshInstall(projectRoot string, runJoin bool) int {
+// 0 on success, 1 if team/join.sh fails — the kit files are on
+// disk either way, but "install + join" as a whole did not succeed.
+func finishFreshInstall(projectRoot string, runJoin bool, written []string) int {
 	fmt.Println()
-	fmt.Println("Kit installed and committed on this branch.")
+	printPostInstallMessage(projectRoot, written)
 	fmt.Println()
 	if runJoin {
 		fmt.Println("Running ./team/join.sh to set up your local sandbox...")
 		fmt.Println()
 		if err := runJoinScript(projectRoot); err != nil {
 			fmt.Fprintf(os.Stderr, "\nError: team/join.sh exited with %s\n", err)
-			fmt.Fprintln(os.Stderr, "The kit is installed and committed, but your local sandbox is not set up.")
+			fmt.Fprintln(os.Stderr, "The kit files are written, but your local sandbox is not set up.")
 			fmt.Fprintln(os.Stderr, "Fix the underlying issue and re-run ./team/join.sh.")
 			return 1
 		}
@@ -129,13 +109,11 @@ func finishFreshInstall(projectRoot string, runJoin bool) int {
 }
 
 // runInstallUpdate re-runs install on a project that already has the
-// kit. See the plan's "Flow — F2".
+// kit. Like runInstallFresh, the installer writes files only — no
+// git operations. The user commits, merges, and pushes on their own
+// schedule.
 func runInstallUpdate(projectRoot string) int {
 	printInstallIntro(false)
-
-	if err := gitPreflight(projectRoot); err != nil {
-		return fail(err)
-	}
 
 	// Stop any running sandbox before overwriting scripts.
 	destroySandboxIfInstalled(projectRoot)
@@ -153,8 +131,7 @@ func runInstallUpdate(projectRoot string) int {
 		return fail(err)
 	}
 
-	devBranch := vars["DEV_BRANCH_NAME"]
-	discovered, err := buildDiscoveredMap(projectRoot, devBranch)
+	discovered, err := buildDiscoveredMap(projectRoot)
 	if err != nil {
 		return fail(err)
 	}
@@ -188,15 +165,7 @@ func runInstallUpdate(projectRoot string) int {
 		return fail(fmt.Errorf("update .gitignore: %w", err))
 	}
 
-	toStage := append([]string{DefaultVariablesPath, "CLAUDE.md", ".gitignore"}, written...)
-	if err := GitAddForce(toStage...); err != nil {
-		return fail(fmt.Errorf("stage kit files: %w", err))
-	}
-	if err := GitCommit("Update sandboxed-agent-team kit"); err != nil {
-		return fail(fmt.Errorf("commit kit files: %w", err))
-	}
-
-	return finishUpdate(projectRoot)
+	return finishUpdate(projectRoot, written)
 }
 
 // finishUpdate closes out the install-update flow. If the developer
@@ -204,9 +173,11 @@ func runInstallUpdate(projectRoot string) int {
 // team/join.sh automatically so the local sandbox picks up any kit
 // changes. Otherwise, leave a pointer so they can join on their own
 // schedule. Returns 0 on success, 1 if the auto-rerun of
-// team/join.sh fails — the kit update itself already landed but
-// the local sandbox is out of sync with it.
-func finishUpdate(projectRoot string) int {
+// team/join.sh fails — the kit files are written either way, but
+// the local sandbox is out of sync.
+func finishUpdate(projectRoot string, written []string) int {
+	fmt.Println()
+	printPostInstallMessage(projectRoot, written)
 	fmt.Println()
 	if isWorkstationJoined(projectRoot) {
 		fmt.Println("Your workstation is already provisioned — re-running")
@@ -215,19 +186,51 @@ func finishUpdate(projectRoot string) int {
 		fmt.Println()
 		if err := runJoinScript(projectRoot); err != nil {
 			fmt.Fprintf(os.Stderr, "\nError: team/join.sh exited with %s\n", err)
-			fmt.Fprintln(os.Stderr, "The kit update is committed, but your local sandbox was not resynced.")
+			fmt.Fprintln(os.Stderr, "The kit files are written, but your local sandbox was not resynced.")
 			fmt.Fprintln(os.Stderr, "Fix the underlying issue and re-run ./team/join.sh.")
 			return 1
 		}
 		return 0
 	}
-	fmt.Println("Kit updated and committed on this branch.")
-	fmt.Println()
 	fmt.Println("When you're ready to provision your workstation, run:")
 	fmt.Println()
 	fmt.Println("    ./team/join.sh")
 	fmt.Println()
 	return 0
+}
+
+// printPostInstallMessage tells the user what files were touched
+// and — if they're in a git repo — reminds them to review + commit.
+// Outside a git repo the message is shorter and git-free.
+func printPostInstallMessage(projectRoot string, written []string) {
+	if IsGitRepo() {
+		fmt.Println("Kit files written. No git operations were performed.")
+		fmt.Println()
+		fmt.Println("Review with:")
+		fmt.Println("    git status")
+		fmt.Println("    git diff")
+		fmt.Println()
+		fmt.Println("Stage, commit, and push on your own schedule — the install")
+		fmt.Println("touched these paths:")
+	} else {
+		fmt.Printf("Kit files written to %s. These paths were touched:\n", projectRoot)
+	}
+	for _, p := range postInstallPathList(written) {
+		fmt.Printf("  %s\n", p)
+	}
+}
+
+// postInstallPathList returns a de-duplicated, sorted list of paths
+// the installer touched, suitable for user-facing output.
+// Includes the two auxiliary files that WriteAllTemplates doesn't
+// return (CLAUDE.md import block, .gitignore kit block).
+func postInstallPathList(written []string) []string {
+	paths := append([]string{
+		DefaultVariablesPath,
+		"CLAUDE.md         (import block added)",
+		".gitignore        (kit block added)",
+	}, written...)
+	return paths
 }
 
 // printInstallIntro prints a short roadmap so the developer knows
@@ -241,7 +244,7 @@ func printInstallIntro(fresh bool) {
 	fmt.Println()
 	fmt.Println("Steps:")
 	fmt.Println("  1. Detect and collect project information:")
-	fmt.Println("     * Development branch name")
+	fmt.Println("     * Team's development branch name")
 	fmt.Println("     * Stack details:")
 	fmt.Println("       - Java version")
 	fmt.Println("       - Vaadin version")
@@ -254,11 +257,16 @@ func printInstallIntro(fresh bool) {
 	fmt.Println("     * Preference to include a cost report in commit messages")
 	fmt.Println("     * Preference to set up your local sandbox after install")
 	fmt.Println("  2. Show all your choices for confirmation.")
-	fmt.Println("  3. Write and commit the kit files.")
+	fmt.Println("  3. Write the kit files to the target directory.")
 	fmt.Println("  4. Set up your local sandbox (if you opted in).")
 	fmt.Println()
-	fmt.Println("Nothing is written or committed until you approve at step 2.")
+	fmt.Println("Nothing is written until you approve at step 2.")
 	fmt.Println("Ctrl-C to abort at any time.")
+	fmt.Println()
+	fmt.Println("After step 3 the new files appear in the target directory. No")
+	fmt.Println("git operations happen — if the directory is a git repo, use")
+	fmt.Println("`git status` to see what changed and stage/commit/push when")
+	fmt.Println("you're ready.")
 	fmt.Println()
 }
 
@@ -315,10 +323,12 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 	fmt.Println()
 	if fresh {
 		fmt.Println("Writes the kit files, adds the @CLAUDE_TEAM.md import to")
-		fmt.Println("CLAUDE.md, adds the kit block to .gitignore, and commits.")
+		fmt.Println("CLAUDE.md, and adds the kit block to .gitignore.")
+		fmt.Println("No git operations — you stage and commit when ready.")
 	} else {
-		fmt.Println("Regenerates the kit files, refreshes the CLAUDE.md import")
-		fmt.Println("and the .gitignore block, and commits.")
+		fmt.Println("Regenerates the kit files and refreshes the CLAUDE.md")
+		fmt.Println("import and the .gitignore block.")
+		fmt.Println("No git operations — you stage and commit when ready.")
 	}
 	fmt.Println(rule)
 	fmt.Println()

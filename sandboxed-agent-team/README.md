@@ -87,23 +87,30 @@ kit source directory and can live anywhere.
 
 The tool auto-detects the project's state and does the right thing:
 
-- **No kit installed** → full setup: identifies the development branch
-  (with fetch + freshness check), places on it, discovers stack
-  details from `pom.xml`, prompts for what it can't auto-derive
-  (CI platform, merge method, cost-in-commit), renders all template
-  files into the project, commits them, and offers to run
-  `./team/join.sh` to provision your workstation and start the team.
+- **No kit installed** → full setup: discovers stack details from
+  `pom.xml`, prompts for what it can't auto-derive (team's
+  development branch, CI platform, merge method, cost-in-commit),
+  writes the kit files into the target directory, and offers to
+  run `./team/join.sh` to provision your workstation and start the
+  team.
 - **Kit already installed** → state-aware re-run: shuts down the
   sandbox, preserves your variables file (adding any new
   placeholders the current kit introduces, cleaning orphans),
-  regenerates every generated file from current templates, commits
-  the update, and — if your workstation is already provisioned —
-  automatically re-provisions it to sync with the refreshed kit.
+  regenerates every generated file from current templates, and —
+  if your workstation is already provisioned — automatically
+  re-provisions it to sync with the refreshed kit.
+
+**No git operations.** The installer writes files; it does not
+switch branches, stage, commit, merge, or push. Run `git status`
+after an install to review the changes and commit on your own
+schedule.
 
 To remove the kit from a project: `./team/uninstall.sh`. This first
 runs `./team/leave.sh --yes` to discard your workstation's local
-sandbox state, then deletes the kit files, excises the CLAUDE.md
-import block and the kit's .gitignore block, and commits the removal.
+sandbox state, then deletes the kit files and excises the
+CLAUDE.md import block and the kit's .gitignore block from the
+working tree. Like install, it performs no git operations —
+review with `git status` and commit the removal when ready.
 
 Lifecycle commands (`join`, `leave`, `start`, `stop`, `uninstall`)
 all live in `./team/` and are the only supported way to invoke

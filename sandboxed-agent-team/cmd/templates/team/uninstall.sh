@@ -8,9 +8,11 @@
 # uninstall.sh — remove the agent team kit from this project.
 #
 # Delegates teardown of developer-local state to team/leave.sh,
-# then deletes the kit's versioned files, excises the
-# @CLAUDE_TEAM.md import block from CLAUDE.md and the kit's
-# block from .gitignore, and commits the removal.
+# then deletes the kit's versioned files from the working tree,
+# and excises the @CLAUDE_TEAM.md import block from CLAUDE.md and
+# the kit's block from .gitignore. No git operations: the user
+# reviews with `git status`, then stages, commits, and pushes on
+# their own schedule.
 #
 # Does NOT touch docs/ — that belongs to the project.
 #
@@ -95,19 +97,18 @@ done
 # removing state, so we don't need a separate team/destroy.sh call.
 "${PROJECT_DIR}/team/leave.sh" --yes
 
-# Delete tracked kit files. --ignore-unmatch makes this idempotent.
-# Intentionally omitted from the delete list:
+# Delete kit files from the working tree. rm -rf is idempotent
+# (missing paths don't fail). Intentionally omitted:
 #   - .mcp.json and .claude/settings.json (preserved; see top-of-file note)
 #   - docs/ and its contents (project-owned; never ours to touch)
-git rm -rf --ignore-unmatch -- \
-    CLAUDE_TEAM.md \
-    ONBOARDING.md \
-    TEAM_GUIDE.md \
-    .claude/team-variables.yaml \
-    .claude/commands/team-start.md \
-    .sandbox \
-    team \
-    > /dev/null
+rm -rf -- \
+    "${PROJECT_DIR}/CLAUDE_TEAM.md" \
+    "${PROJECT_DIR}/ONBOARDING.md" \
+    "${PROJECT_DIR}/TEAM_GUIDE.md" \
+    "${PROJECT_DIR}/.claude/team-variables.yaml" \
+    "${PROJECT_DIR}/.claude/commands/team-start.md" \
+    "${PROJECT_DIR}/.sandbox" \
+    "${PROJECT_DIR}/team"
 
 # Excise the @CLAUDE_TEAM.md import block from CLAUDE.md.
 # Markers: <!-- sandboxed-agent-team: begin --> / end -->
@@ -116,10 +117,9 @@ if [ -f "${PROJECT_DIR}/CLAUDE.md" ]; then
     sed -i.bak -E '/<!-- *sandboxed-agent-team: *begin *-->/,/<!-- *sandboxed-agent-team: *end *-->/d' \
         "${PROJECT_DIR}/CLAUDE.md"
     rm -f "${PROJECT_DIR}/CLAUDE.md.bak"
+    # Remove now-empty CLAUDE.md entirely (whitespace-only counts).
     if ! grep -q '[^[:space:]]' "${PROJECT_DIR}/CLAUDE.md"; then
-        git rm -f --ignore-unmatch -- CLAUDE.md > /dev/null
-    else
-        git add -f -- CLAUDE.md
+        rm -f "${PROJECT_DIR}/CLAUDE.md"
     fi
 fi
 
@@ -128,16 +128,21 @@ if [ -f "${PROJECT_DIR}/.gitignore" ]; then
     sed -i.bak -E '/^# *BEGIN *sandboxed-agent-team/,/^# *END *sandboxed-agent-team/d' \
         "${PROJECT_DIR}/.gitignore"
     rm -f "${PROJECT_DIR}/.gitignore.bak"
+    # Remove now-empty .gitignore entirely (whitespace-only counts).
     if ! grep -q '[^[:space:]]' "${PROJECT_DIR}/.gitignore"; then
-        git rm -f --ignore-unmatch -- .gitignore > /dev/null
-    else
-        git add -f -- .gitignore
+        rm -f "${PROJECT_DIR}/.gitignore"
     fi
 fi
 
-if git diff --cached --quiet; then
-    echo "Nothing to commit — kit may already have been uninstalled."
+echo ""
+if git -C "${PROJECT_DIR}" rev-parse --git-dir >/dev/null 2>&1; then
+    echo "Kit files removed. No git operations were performed."
+    echo ""
+    echo "Review with:"
+    echo "    git status"
+    echo "    git diff"
+    echo ""
+    echo "Stage, commit, and push on your own schedule."
 else
-    git commit -m "Uninstall sandboxed-agent-team kit" > /dev/null
-    echo "Kit removed and removal committed."
+    echo "Kit files removed."
 fi

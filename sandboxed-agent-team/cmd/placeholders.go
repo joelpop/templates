@@ -94,7 +94,7 @@ var knownPlaceholders = map[string]PlaceholderDef{
 	},
 	"DEV_BRANCH_NAME": {
 		Name:   "DEV_BRANCH_NAME",
-		Source: SourceAuto,
+		Source: SourcePrompt,
 		Prompt: "Team's development branch name",
 	},
 	"MERGE_METHOD": {

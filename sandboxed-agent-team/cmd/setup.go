@@ -43,6 +43,8 @@ func runInstallFresh(projectRoot string) int {
 		return fail(err)
 	}
 
+	seedPromptDefaultFromDiscovered("DEV_BRANCH_NAME", discovered)
+
 	if err := ReconcileVariables(vars, required, discovered, false); err != nil {
 		return fail(err)
 	}
@@ -135,6 +137,8 @@ func runInstallUpdate(projectRoot string) int {
 	if err != nil {
 		return fail(err)
 	}
+
+	seedPromptDefaultFromDiscovered("DEV_BRANCH_NAME", discovered)
 
 	if err := ReconcileVariables(vars, required, discovered, true); err != nil {
 		return fail(err)
@@ -293,10 +297,10 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 
 	printKV("Project", vars["PROJECT_NAME"])
 	if currentBranch != "" {
-		printKV("Writing to branch", currentBranch)
+		printKV("Current branch", currentBranch)
 	}
 	if d := vars["DEV_BRANCH_NAME"]; d != "" && d != currentBranch {
-		printKV("Dev branch", d)
+		printKV("Team dev branch", d)
 	}
 	printKV("Stack", vars["STACK_SUMMARY"])
 
@@ -310,7 +314,7 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 	printKV("Git identity", identity)
 
 	printKV("Merge method", vars["MERGE_METHOD"])
-	printKV("Cost in commit", vars["COST_IN_COMMIT"])
+	printKV("Show cost in commit", vars["COST_IN_COMMIT"])
 	printKV("CI platform", vars["CI_PLATFORM"])
 	if fresh {
 		if runJoinAfterInstall {
@@ -388,4 +392,23 @@ func destroySandboxIfInstalled(projectRoot string) {
 func fail(err error) int {
 	fmt.Fprintf(os.Stderr, "error: %s\n", err)
 	return 1
+}
+
+// seedPromptDefaultFromDiscovered mutates the named placeholder's
+// static Default to match the auto-discovered value, so the
+// resulting user prompt offers the discovered value as its default.
+// Used for placeholders we want to confirm interactively (not
+// silently auto-fill) but still pre-populate with a best-guess.
+// No-op if the discovered map doesn't have the key.
+func seedPromptDefaultFromDiscovered(name string, discovered Variables) {
+	v, has := discovered[name]
+	if !has || v == "" {
+		return
+	}
+	def, ok := knownPlaceholders[name]
+	if !ok {
+		return
+	}
+	def.Default = v
+	knownPlaceholders[name] = def
 }

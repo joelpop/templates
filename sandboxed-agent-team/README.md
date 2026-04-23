@@ -181,7 +181,7 @@ What the kit does, once per project, on your first `./team/join.sh`:
    - **macOS** → Keychain, service name `agent-team.<sandbox-name>`,
      one entry per project (multi-project isolation). The token
      never touches the host's regular filesystem.
-   - **Linux / Windows** → `.sandbox/.platform-api.env` (mode 600,
+   - **Linux / Windows** → `.sandbox/.repo-platform-api.env` (mode 600,
      gitignored). A banner during `join.sh` flags this storage
      model as less hardened than Keychain; credential-manager
      integration (libsecret, Credential Manager) is a planned
@@ -454,7 +454,7 @@ Infrastructure files go **inside** each project alongside the code:
 ~/workspaces/acme-corp/project-alpha/
 ├── .sandbox/                        # Sandbox image + developer-local state
 │   ├── Dockerfile                   # Custom sandbox image template (tracked)
-│   ├── .platform-api.env            # (gitignored) repo-platform API token + metadata (Linux/Windows only; macOS uses the Keychain)
+│   ├── .repo-platform-api.env       # (gitignored) repo-platform API token + metadata (Linux/Windows only; macOS uses the Keychain)
 │   ├── .oauth-token                 # (gitignored) captured Claude OAuth token
 │   └── .last-directive              # (gitignored) hash of last Lead directive
 ├── team/                            # Lifecycle scripts (all tracked)

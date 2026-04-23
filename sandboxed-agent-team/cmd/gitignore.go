@@ -18,7 +18,7 @@ const (
 // kitGitignoreEntries lists developer-local paths the kit creates that
 // must not be committed to the target project's repo.
 var kitGitignoreEntries = []string{
-	".sandbox/.platform-api.env",
+	".sandbox/.repo-platform-api.env",
 	".sandbox/.oauth-token",
 	".sandbox/.last-directive",
 	".claude/.last-onboarded",

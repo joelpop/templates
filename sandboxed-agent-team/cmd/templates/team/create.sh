@@ -164,20 +164,20 @@ inject_credentials() {
          && mv /tmp/.claude.json /home/agent/.claude.json"
 
     # ── Platform API credentials (for PR merge method + HTTPS git) ────────
-    # Metadata (PLATFORM_TYPE, API URLs, repo owner/slug, etc.)
-    # comes from .sandbox/.platform-api.env. On macOS the file omits
+    # Metadata (REPO_PLATFORM_TYPE, API URLs, repo owner/slug, etc.)
+    # comes from .sandbox/.repo-platform-api.env. On macOS the file omits
     # the token — we read it from the Keychain and pipe it through
     # stdin so it never touches the host's regular filesystem (same
     # pattern as the Claude OAuth token above).
-    if [ -f "${PROJECT_DIR}/.sandbox/.platform-api.env" ]; then
+    if [ -f "${PROJECT_DIR}/.sandbox/.repo-platform-api.env" ]; then
         docker sandbox exec "${SANDBOX_NAME}" bash -c \
-            "cat '${PROJECT_DIR}/.sandbox/.platform-api.env' >> /home/agent/.bashrc"
+            "cat '${PROJECT_DIR}/.sandbox/.repo-platform-api.env' >> /home/agent/.bashrc"
         echo "=== Platform API metadata injected ==="
     fi
     if [ "$(uname -s)" = "Darwin" ]; then
         if kc_token=$(security find-generic-password -s "agent-team.${SANDBOX_NAME}" -w 2>/dev/null); then
             printf '%s' "$kc_token" | docker sandbox exec -i "${SANDBOX_NAME}" bash -c \
-                'read -r token && printf "export PLATFORM_API_TOKEN=%q\n" "$token" >> /home/agent/.bashrc'
+                'read -r token && printf "export REPO_PLATFORM_API_TOKEN=%q\n" "$token" >> /home/agent/.bashrc'
             echo "=== Repo-platform API token injected from Keychain ==="
         fi
     fi
@@ -191,17 +191,17 @@ inject_credentials() {
     #   2. transparently rewrite SSH-style origin URLs to HTTPS via
     #      `url.insteadOf` — only when the host's origin actually uses
     #      SSH, so HTTPS-origin projects are unaffected.
-    if [ -f "${PROJECT_DIR}/.sandbox/.platform-api.env" ]; then
+    if [ -f "${PROJECT_DIR}/.sandbox/.repo-platform-api.env" ]; then
         # Pull the pieces we need without sourcing (some values may
         # contain characters bash would mis-interpret on source).
-        P_HOST=$(grep -E '^PLATFORM_HOST=' "${PROJECT_DIR}/.sandbox/.platform-api.env" | cut -d= -f2-)
-        P_USER=$(grep -E '^PLATFORM_API_USER=' "${PROJECT_DIR}/.sandbox/.platform-api.env" | cut -d= -f2-)
+        P_HOST=$(grep -E '^REPO_PLATFORM_HOST=' "${PROJECT_DIR}/.sandbox/.repo-platform-api.env" | cut -d= -f2-)
+        P_USER=$(grep -E '^REPO_PLATFORM_API_USER=' "${PROJECT_DIR}/.sandbox/.repo-platform-api.env" | cut -d= -f2-)
         P_TOKEN=""
         if [ "$(uname -s)" = "Darwin" ]; then
             P_TOKEN=$(security find-generic-password -s "agent-team.${SANDBOX_NAME}" -w 2>/dev/null || true)
         fi
         if [ -z "$P_TOKEN" ]; then
-            P_TOKEN=$(grep -E '^PLATFORM_API_TOKEN=' "${PROJECT_DIR}/.sandbox/.platform-api.env" | cut -d= -f2- || true)
+            P_TOKEN=$(grep -E '^REPO_PLATFORM_API_TOKEN=' "${PROJECT_DIR}/.sandbox/.repo-platform-api.env" | cut -d= -f2- || true)
         fi
 
         if [ -n "$P_HOST" ] && [ -n "$P_USER" ] && [ -n "$P_TOKEN" ]; then

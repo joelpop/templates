@@ -104,12 +104,12 @@ fi
 #
 # Storage model:
 #   macOS         token → Keychain only (encrypted, app-authorized).
-#                 .sandbox/.platform-api.env holds only metadata —
-#                 no PLATFORM_API_TOKEN line. create.sh reads the
+#                 .sandbox/.repo-platform-api.env holds only metadata —
+#                 no REPO_PLATFORM_API_TOKEN line. create.sh reads the
 #                 Keychain and pipes the token into the sandbox via
 #                 stdin, so the token never touches the host's
 #                 regular filesystem.
-#   Linux/Win     token → .sandbox/.platform-api.env (mode 600,
+#   Linux/Win     token → .sandbox/.repo-platform-api.env (mode 600,
 #                 gitignored). Credential-manager integration
 #                 (libsecret on Linux, Credential Manager on
 #                 Windows) is a planned follow-up; the file is
@@ -118,9 +118,9 @@ fi
 #
 # Precedence for finding an already-saved token:
 #   1. macOS Keychain (when on macOS; survives leave.sh)
-#   2. .platform-api.env's PLATFORM_API_TOKEN line
+#   2. .repo-platform-api.env's REPO_PLATFORM_API_TOKEN line
 #   3. Prompt the user with platform-specific instructions
-ENV_FILE="${PROJECT_DIR}/.sandbox/.platform-api.env"
+ENV_FILE="${PROJECT_DIR}/.sandbox/.repo-platform-api.env"
 ON_MACOS=0
 if [ "$(uname -s)" = "Darwin" ]; then
     ON_MACOS=1
@@ -133,25 +133,25 @@ detect_platform_from_host() {
     local host="$1"
     case "$host" in
         *github.com)
-            PLATFORM_TYPE="GITHUB"
-            PLATFORM_HOST="github.com"
+            REPO_PLATFORM_TYPE="GITHUB"
+            REPO_PLATFORM_HOST="github.com"
             API_URL="https://api.github.com"
             return 0 ;;
         *bitbucket.org)
-            PLATFORM_TYPE="BITBUCKET"
-            PLATFORM_HOST="bitbucket.org"
+            REPO_PLATFORM_TYPE="BITBUCKET"
+            REPO_PLATFORM_HOST="bitbucket.org"
             API_URL="https://api.bitbucket.org"
             return 0 ;;
         *gitlab.com)
-            PLATFORM_TYPE="GITLAB"
-            PLATFORM_HOST="gitlab.com"
+            REPO_PLATFORM_TYPE="GITLAB"
+            REPO_PLATFORM_HOST="gitlab.com"
             API_URL="https://gitlab.com/api/v4"
             return 0 ;;
     esac
     return 1
 }
 
-PLATFORM_TYPE=""; PLATFORM_HOST=""; API_URL=""
+REPO_PLATFORM_TYPE=""; REPO_PLATFORM_HOST=""; API_URL=""
 case "${REMOTE_URL}" in
     https://*|http://*)
         host_part="${REMOTE_URL#*://}"
@@ -160,15 +160,15 @@ case "${REMOTE_URL}" in
 esac
 # For SSH remotes, prefer REAL_HOSTNAME (resolved from ~/.ssh/config
 # in the SSH block above); fall back to the raw SSH_HOST.
-if [ -z "${PLATFORM_TYPE}" ] && [ -n "${REAL_HOSTNAME:-}" ]; then
+if [ -z "${REPO_PLATFORM_TYPE}" ] && [ -n "${REAL_HOSTNAME:-}" ]; then
     detect_platform_from_host "$REAL_HOSTNAME" || true
 fi
-if [ -z "${PLATFORM_TYPE}" ] && [ -n "${SSH_HOST:-}" ]; then
+if [ -z "${REPO_PLATFORM_TYPE}" ] && [ -n "${SSH_HOST:-}" ]; then
     detect_platform_from_host "$SSH_HOST" || true
 fi
 
 # Prompt if auto-detection failed.
-if [ -z "${PLATFORM_TYPE}" ]; then
+if [ -z "${REPO_PLATFORM_TYPE}" ]; then
     echo ""
     echo "Could not auto-detect the platform hosting origin."
     echo "Pick one:"
@@ -182,13 +182,13 @@ if [ -z "${PLATFORM_TYPE}" ]; then
             1) detect_platform_from_host bitbucket.org; break ;;
             2) detect_platform_from_host github.com;    break ;;
             3) detect_platform_from_host gitlab.com;    break ;;
-            4) PLATFORM_TYPE="SKIP"; break ;;
+            4) REPO_PLATFORM_TYPE="SKIP"; break ;;
             *) echo "Please enter 1, 2, 3, or 4." ;;
         esac
     done
 fi
 
-# Extract owner/repo from REMOTE_URL for .platform-api.env.
+# Extract owner/repo from REMOTE_URL for .repo-platform-api.env.
 PATH_PART="${REMOTE_URL}"
 PATH_PART="${PATH_PART#git@*:}"
 PATH_PART="${PATH_PART#ssh://*/}"
@@ -198,7 +198,7 @@ PATH_PART="${PATH_PART%.git}"
 OWNER="${PATH_PART%%/*}"
 REPO_NAME="${PATH_PART##*/}"
 
-if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
+if [ "${REPO_PLATFORM_TYPE}" != "SKIP" ] && [ -n "${REPO_PLATFORM_TYPE}" ]; then
     TOKEN=""
     API_USER=""
 
@@ -213,13 +213,13 @@ if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
         fi
     fi
 
-    # Precedence 2: .platform-api.env file. Primary source on
+    # Precedence 2: .repo-platform-api.env file. Primary source on
     # non-macOS; fallback on macOS in case a Keychain write
     # previously failed.
     if [ -z "${TOKEN}" ] && [ -f "${ENV_FILE}" ]; then
-        TOKEN="$(grep -E '^PLATFORM_API_TOKEN=' "$ENV_FILE" | cut -d= -f2- || true)"
-        API_USER="$(grep -E '^PLATFORM_API_USER=' "$ENV_FILE" | cut -d= -f2- || true)"
-        [ -n "${TOKEN}" ] && echo "=== Reusing repo-platform API token from .sandbox/.platform-api.env ==="
+        TOKEN="$(grep -E '^REPO_PLATFORM_API_TOKEN=' "$ENV_FILE" | cut -d= -f2- || true)"
+        API_USER="$(grep -E '^REPO_PLATFORM_API_USER=' "$ENV_FILE" | cut -d= -f2- || true)"
+        [ -n "${TOKEN}" ] && echo "=== Reusing repo-platform API token from .sandbox/.repo-platform-api.env ==="
     fi
 
     # Precedence 3: prompt the user.
@@ -237,7 +237,7 @@ if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
 │  encrypted at rest and app-authorized. However on your OS, credential       │
 │  management integration isn't wired up yet, so the token will be saved to:  │
 │                                                                             │
-│      .sandbox/.platform-api.env   (mode 600, gitignored)                    │
+│      .sandbox/.repo-platform-api.env   (mode 600, gitignored)               │
 │                                                                             │
 │  That's adequate for a personal dev workstation, but not as hardened as a   │
 │  proper credential store. If your compliance posture needs stronger, OS-    │
@@ -248,9 +248,9 @@ if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
 BANNER
         fi
 
-        echo "=== Repo-platform API token (${PLATFORM_TYPE}) ==="
+        echo "=== Repo-platform API token (${REPO_PLATFORM_TYPE}) ==="
         echo ""
-        case "${PLATFORM_TYPE}" in
+        case "${REPO_PLATFORM_TYPE}" in
             BITBUCKET)
                 echo "Create an app password at:"
                 echo "  https://bitbucket.org/account/settings/app-passwords/"
@@ -289,13 +289,13 @@ BANNER
                     -U >/dev/null 2>&1; then
                 echo "Token saved to Keychain (service: ${KEYCHAIN_SERVICE})."
             else
-                echo "Warning: Keychain save failed; falling back to .platform-api.env." >&2
+                echo "Warning: Keychain save failed; falling back to .repo-platform-api.env." >&2
                 ON_MACOS=0
             fi
         fi
     fi
 
-    # Write .platform-api.env. Metadata always; token only on
+    # Write .repo-platform-api.env. Metadata always; token only on
     # non-macOS (or if a macOS Keychain save failed, which flipped
     # ON_MACOS to 0 above).
     if [ -n "${TOKEN}" ]; then
@@ -303,17 +303,17 @@ BANNER
         umask 077
         {
             echo "# Developer-local. Gitignored. Do NOT commit."
-            echo "PLATFORM_TYPE=${PLATFORM_TYPE}"
-            echo "PLATFORM_HOST=${PLATFORM_HOST}"
-            echo "PLATFORM_API_URL=${API_URL}"
-            echo "PLATFORM_API_USER=${API_USER}"
+            echo "REPO_PLATFORM_TYPE=${REPO_PLATFORM_TYPE}"
+            echo "REPO_PLATFORM_HOST=${REPO_PLATFORM_HOST}"
+            echo "REPO_PLATFORM_API_URL=${API_URL}"
+            echo "REPO_PLATFORM_API_USER=${API_USER}"
             if [ "${ON_MACOS}" != "1" ]; then
-                echo "PLATFORM_API_TOKEN=${TOKEN}"
+                echo "REPO_PLATFORM_API_TOKEN=${TOKEN}"
             fi
-            echo "PLATFORM_REPO_OWNER=${OWNER}"
-            echo "PLATFORM_REPO_NAME=${REPO_NAME}"
-            echo "PLATFORM_REPO_WORKSPACE=${OWNER}"
-            echo "PLATFORM_REPO_SLUG=${REPO_NAME}"
+            echo "REPO_OWNER=${OWNER}"
+            echo "REPO_NAME=${REPO_NAME}"
+            echo "REPO_WORKSPACE=${OWNER}"
+            echo "REPO_SLUG=${REPO_NAME}"
         } > "${ENV_FILE}"
     else
         echo "Skipping token setup (public-repo mode). Private-repo pushes from the sandbox will fail." >&2

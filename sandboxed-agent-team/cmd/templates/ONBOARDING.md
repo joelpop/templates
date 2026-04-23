@@ -71,7 +71,7 @@ you for the rest:
     `agent-team.<sandbox-name>`, one entry per project). Survives
     sandbox rebuilds and `./team/destroy.sh`. Wiped only by
     `./team/leave.sh` or `./team/uninstall.sh`.
-  - **Linux / Windows** — stored in `.sandbox/.platform-api.env`
+  - **Linux / Windows** — stored in `.sandbox/.repo-platform-api.env`
     (mode 600, gitignored). Onboarding will print a banner
     explaining this tradeoff and a pointer to the future
     credential-manager integration.

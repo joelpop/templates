@@ -139,7 +139,7 @@ Own:
   only agent that interacts with the remote (see Branching rules).
 - PR lifecycle — create, read comments/status, merge, and close PRs via
   the platform REST API using the credentials in the environment
-  (sourced from `.sandbox/.platform-api.env`).
+  (sourced from `.sandbox/.repo-platform-api.env`).
 - Cost recording — at task kickoff, capture a `ccusage daily` JSON
   snapshot for today's date and write it to
   `.claude/.tasks/<task-id>.cost-baseline.json` (the cost baseline

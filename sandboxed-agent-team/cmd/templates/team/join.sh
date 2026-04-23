@@ -250,30 +250,56 @@ BANNER
 
         echo "=== Repo-platform API token (${REPO_PLATFORM_TYPE}) ==="
         echo ""
+        echo "Agents inside the sandbox push commits to your repo and"
+        echo "drive PRs. The sandbox blocks outbound SSH, so this goes"
+        echo "over HTTPS and needs a token scoped to this repo."
+        echo ""
         case "${REPO_PLATFORM_TYPE}" in
             BITBUCKET)
-                echo "Create an app password at:"
+                echo "Create a Bitbucket app password at:"
                 echo "  https://bitbucket.org/account/settings/app-passwords/"
-                echo "Scopes: Repositories (Read + Write), Pull requests (Read + Write)."
+                echo ""
+                echo "  Label:  agent-team:${SANDBOX_NAME}"
+                echo "          (recognizable in the Bitbucket UI — revoke"
+                echo "           it specifically when you leave this project)"
+                echo "  Scopes: Repositories      Read, Write"
+                echo "          Pull requests     Read, Write"
+                echo ""
+                echo "Bitbucket shows the token once — copy it before"
+                echo "closing the tab."
                 echo ""
                 read -r -p "Bitbucket username: " API_USER ;;
             GITHUB)
-                echo "Create a fine-grained PAT at:"
+                echo "Create a GitHub fine-grained PAT at:"
                 echo "  https://github.com/settings/tokens?type=beta"
-                echo "Scope to this repo only; permissions: Contents R+W, Pull requests R+W."
+                echo ""
+                echo "  Name:         agent-team:${SANDBOX_NAME}"
+                echo "  Repository:   only this repo"
+                echo "  Permissions:  Contents       Read and write"
+                echo "                Pull requests  Read and write"
+                echo ""
+                echo "GitHub shows the token once — copy it before leaving"
+                echo "the page."
                 echo ""
                 read -r -p "GitHub username: " API_USER ;;
             GITLAB)
-                echo "Create a personal access token at:"
+                echo "Create a GitLab personal access token at:"
                 echo "  https://gitlab.com/-/user_settings/personal_access_tokens"
-                echo "Scope: api."
-                # GitLab HTTPS basic-auth uses the literal string 'oauth2' as
-                # the username alongside a PAT as the password.
+                echo ""
+                echo "  Name:    agent-team:${SANDBOX_NAME}"
+                echo "  Scopes:  api"
+                echo ""
+                echo "GitLab shows the token once — copy it before leaving"
+                echo "the page."
+                echo ""
+                # GitLab HTTPS basic-auth uses the literal string 'oauth2'
+                # as the username alongside a PAT as the password.
                 API_USER="oauth2" ;;
         esac
+        echo "Leave the token blank to skip — agents can still read"
+        echo "public repos but won't be able to push or drive PRs on"
+        echo "private ones."
         echo ""
-        echo "(Paste the token below. Leave blank to skip — your agents will"
-        echo " be able to read public repos but not push to private ones.)"
         read -r -s -p "Token: " TOKEN
         echo ""
 
@@ -285,9 +311,10 @@ BANNER
             if security add-generic-password \
                     -s "${KEYCHAIN_SERVICE}" \
                     -a "${API_USER:-platform-user}" \
+                    -l "agent-team:${SANDBOX_NAME}" \
                     -w "${TOKEN}" \
                     -U >/dev/null 2>&1; then
-                echo "Token saved to Keychain (service: ${KEYCHAIN_SERVICE})."
+                echo "Token saved to the Keychain (label: agent-team:${SANDBOX_NAME})."
             else
                 echo "Warning: Keychain save failed; falling back to .repo-platform-api.env." >&2
                 ON_MACOS=0

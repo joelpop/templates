@@ -55,11 +55,28 @@ you for the rest:
   or `ANTHROPIC_API_KEY` in your shell config
 - If the project uses an SSH Git remote: the SSH key referenced in
   `~/.ssh/config` for that remote
-- If the project uses the **PR** merge method (see [Project
-  Details](#project-details) below): a platform API token (Bitbucket
-  app password, GitHub fine-grained PAT, or GitLab personal access
-  token). Claude Code walks you through creating one if you don't
-  have it ready.
+- A **repo-platform API token** — Bitbucket app password, GitHub
+  fine-grained PAT, or GitLab PAT. Required for any private repo
+  so the sandbox can reach it over HTTPS. The sandbox can't use
+  SSH (Docker Sandbox blocks outbound port 22), so agents reach
+  the repo over HTTPS and need a token to authenticate pushes and
+  PR API calls. Bitbucket: app password with Repositories R+W and
+  Pull requests R+W. GitHub: fine-grained PAT with Contents R+W
+  and Pull requests R+W. GitLab: PAT with `api` scope. The
+  onboarding prompt walks you through creating one with a direct
+  link. If this is a public repo and you don't need the sandbox
+  to push, you can leave the prompt blank.
+
+  Token storage:
+
+  - **macOS** — stored in the Keychain (service name
+    `agent-team.<sandbox-name>`, one entry per project). Survives
+    sandbox rebuilds and `./team/destroy.sh`. Wiped only by
+    `./team/leave.sh` or `./team/uninstall.sh`.
+  - **Linux / Windows** — stored in `.sandbox/.platform-api.env`
+    (mode 600, gitignored). Onboarding will print a banner
+    explaining this tradeoff and a pointer to the future
+    credential-manager integration.
 
 ### Step 2 — Run onboard
 
@@ -76,7 +93,7 @@ The tool auto-detects your local state and does the right thing:
   an SSH Git remote, and starts the sandbox.
 - **Re-onboarding** (you've onboarded this workspace before) →
   discards the existing sandbox and rebuilds from scratch. Your
-  workstation's SSH material and platform API token are preserved;
+  workstation's SSH material and repo-platform API token are preserved;
   the project's versioned files are untouched.
 
 If prompts come up, they're for information the tool can't auto-discover
@@ -91,21 +108,46 @@ removing the kit from the project): `./team/leave.sh`.
 
 Once onboarding is complete:
 
-1. At your host terminal (in the project directory), reattach to
-   your sandbox: `./team/attach.sh`. This drops you into a Claude
-   Code session running inside the sandbox. The session's system
-   prompt auto-loads the Lead role, so the team spawns as soon as
-   you send your first message — no slash command required. Once
-   setup completes, the statusline shows "Agent Team Mode" as a
-   visible confirmation that you're talking to the team.
-   (If `attach.sh` reports no sandbox exists, run
-   `./team/create.sh` to rebuild one.)
-2. Describe your work to the Lead.
+1. **Start a work session.** At your host terminal (in the project
+   directory): `./team/attach.sh`. You'll be prompted to choose
+   `resume` (continue the previous Claude Code session, preserving
+   context) or `fresh` (start a new session). Flags `--resume` and
+   `--fresh` skip the prompt. You're dropped into Claude Code
+   running inside the sandbox; the system prompt auto-loads the
+   Lead role, so the team spawns on your first message — no slash
+   command required. The statusline shows "Agent Team Mode" as
+   visible confirmation.
+
+   (If `attach.sh` reports no sandbox exists, run `./team/create.sh`
+   to rebuild one.)
+
+2. **Describe your work to the Lead.** The Lead coordinates the team
+   and drives the workflow; you don't talk to individual teammates.
+
+3. **End the session.** When you're wrapping up, exit Claude Code
+   with `/exit`, `exit`, or Ctrl-D *quickly twice* (Claude Code
+   confirms on the first press). That ends your Claude Code
+   session but **the sandbox VM keeps running** — no rebuild
+   needed to come back.
+
+4. **Reconnect next day.** Same as step 1: `./team/attach.sh` →
+   choose `resume` to continue where you left off.
+
+5. **Inspect the sandbox without starting Claude Code.** Run
+   `./team/shell.sh` to drop into a bash shell inside the sandbox
+   (as the `agent` user, workspace as cwd). Exit with `exit` or
+   Ctrl-D (single — regular shell, not Claude Code). The sandbox
+   keeps running.
+
+6. **Free sandbox resources.** `./team/destroy.sh` destroys the
+   sandbox VM. Run when you're done with the project for the day
+   (or longer). Your workstation-local state (SSH material, API
+   token, task files) is preserved — a later `./team/create.sh`
+   rebuilds the sandbox from the same state.
 
 For detailed daily workflows — team structure, requirements and
-implementation lifecycles, pausing and resuming, ending a Claude
-Code session, and what to do when something goes wrong — see
-[`TEAM_GUIDE.md`](TEAM_GUIDE.md).
+implementation lifecycles, task suspensions, troubleshooting, and
+offboarding — see [`TEAM_GUIDE.md`](TEAM_GUIDE.md).
 
 ## When the kit is updated
 
@@ -177,7 +219,7 @@ case, ask the Lead to regenerate this file).
 
 When you leave the project on this workstation, run
 `./team/leave.sh`. It destroys the sandbox VM and discards all
-developer-local state (SSH material, platform API token,
+developer-local state (SSH material, repo-platform API token,
 in-progress task files, git worktrees). Kit files and the project's
 committed code are untouched.
 

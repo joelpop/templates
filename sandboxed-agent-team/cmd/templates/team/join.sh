@@ -257,7 +257,7 @@ if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
             # The account (-a) field in the Keychain entry is the API user.
             API_USER=$(security find-generic-password -s "${KEYCHAIN_SERVICE}" 2>&1 \
                 | awk -F'"' '/"acct"<blob>=/ { print $2; exit }')
-            echo "=== Platform API token restored from macOS Keychain ==="
+            echo "=== Repo-platform API token restored from macOS Keychain ==="
         fi
     fi
 
@@ -267,7 +267,7 @@ if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
     if [ -z "${TOKEN}" ] && [ -f "${ENV_FILE}" ]; then
         TOKEN="$(grep -E '^PLATFORM_API_TOKEN=' "$ENV_FILE" | cut -d= -f2- || true)"
         API_USER="$(grep -E '^PLATFORM_API_USER=' "$ENV_FILE" | cut -d= -f2- || true)"
-        [ -n "${TOKEN}" ] && echo "=== Reusing platform API token from .sandbox/.platform-api.env ==="
+        [ -n "${TOKEN}" ] && echo "=== Reusing repo-platform API token from .sandbox/.platform-api.env ==="
     fi
 
     # Precedence 3: prompt the user.
@@ -281,7 +281,7 @@ if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  Note on repo token storage                                                 │
 │  ─────────────────────────────────────────────────────────────────────────  │
-│  On macOS, this kit stores your platform API token in the Keychain —        │
+│  On macOS, this kit stores your repo-platform API token in the Keychain —   │
 │  encrypted at rest and app-authorized. However on your OS, credential       │
 │  management integration isn't wired up yet, so the token will be saved to:  │
 │                                                                             │
@@ -296,7 +296,7 @@ if [ "${PLATFORM_TYPE}" != "SKIP" ] && [ -n "${PLATFORM_TYPE}" ]; then
 BANNER
         fi
 
-        echo "=== Platform API token (${PLATFORM_TYPE}) ==="
+        echo "=== Repo-platform API token (${PLATFORM_TYPE}) ==="
         echo ""
         case "${PLATFORM_TYPE}" in
             BITBUCKET)

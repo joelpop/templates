@@ -14,6 +14,20 @@ machine and separated from other projects; **Git worktrees** give
 each teammate its own working copy of the repository so agents
 never overwrite each other's in-progress work.
 
+**Key terms you'll see throughout:**
+
+- **Sandbox** — the Docker-based isolated environment where the
+  agents run.
+- **Lead directive** — the instructions the sandboxed Claude Code
+  auto-loads on session start so the Lead role takes over and the
+  team spawns from your first message, with no slash command
+  required.
+- **Repo-platform API token** — a single credential from whichever
+  service hosts your repository (your *repo platform*: Bitbucket,
+  GitHub, or GitLab). Bitbucket calls it an app password; GitHub
+  and GitLab call it a personal access token (PAT). Required for
+  HTTPS git access from the sandbox; also used for PR API calls.
+
 **In this README:**
 - [Quick Start](#quick-start) — get up and running without reading the rest
 - [Daily Use](#daily-use) — running the team after setup
@@ -55,22 +69,33 @@ machine, and project-config values Claude Code will ask about.
 - If the project's Git remote uses SSH: your SSH key available at
   the path referenced in `~/.ssh/config` for that remote.
 
-**Project config (Claude Code auto-discovers most of these from
-pom.xml and will ask you to confirm):**
+**Project config (the installer auto-discovers from `pom.xml` and
+git config where it can; you'll be prompted with the discovered
+value as the default and can press Enter to accept or type an
+override):**
 
-- Java version
-- Vaadin version
-- Database (if any)
-- CI platform
-- Development branch name
-- Merge method — how completed work reaches the development branch
-  (PR, Integrator merge, Human merge, or your own method)
-- If using the **PR** merge method: a platform API token so the Lead
-  can create, read, and merge PRs. Bitbucket: app password
-  (Settings → App passwords, with Repositories:Read and Pull
-  requests:Read+Write). GitHub: fine-grained PAT. GitLab: personal
-  access token. The setup walks you through creating one if you
-  don't have it ready.
+- **Team's development branch name** — auto-detected when a
+  conventional name (`develop`, `dev`, `feature/develop`) is
+  present, or inferred from your remote's default branch.
+  Otherwise prompted.
+- **Stack details from `pom.xml`**: Java version, Vaadin version,
+  Spring Boot version, JUnit version, database, build tool. Each
+  prompted with the detected value as default.
+- **Merge method** — how completed work reaches the development
+  branch (PR, Integrator merge, Human merge).
+- **CI platform** — GitHub Actions, GitLab CI, Bitbucket Pipelines,
+  Jenkins, or none.
+- **Whether to include a cost report in squash-merge commit messages.**
+- **Preference to set up your local sandbox** (run `./team/join.sh`)
+  after the install completes.
+- **A repo-platform API token** (Bitbucket app password, GitHub
+  fine-grained PAT, or GitLab PAT) — required unless the repo is
+  public. See *"A note on the sandbox's git access"* below for the
+  rationale and storage details. Bitbucket: Repositories R+W and
+  Pull requests R+W. GitHub fine-grained PAT: Contents R+W and Pull
+  requests R+W. GitLab: `api` scope. The setup walks you through
+  creating one with direct links; leave blank at the prompt for a
+  public repo.
 
 ### Step 2 — Run setup
 
@@ -139,12 +164,58 @@ needed. On other systems, a one-time export of
 `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` is required in
 your shell config.
 
-**A note on SSH remotes:** If the project's Git remote uses SSH (e.g.,
-`git@bitbucket.org:…` or a custom Host alias from `~/.ssh/config`),
-the sandbox also needs the developer's SSH key, config, and
-`known_hosts` to reach the remote. The setup process detects this
-automatically and provisions the SSH material into `.sandbox/.ssh/`,
-which is injected into the sandbox at each startup.
+**A note on the sandbox's git access:** Docker Sandbox blocks
+outbound port 22 (SSH) for isolation. Regardless of how your host
+reaches the repo, agents *inside* the sandbox use **HTTPS** for
+git operations. The kit handles this transparently — your host's
+git config and origin URL are never modified.
+
+What the kit does, once per project, on your first `./team/join.sh`:
+
+1. Detects the platform hosting `origin` (Bitbucket / GitHub / GitLab).
+   SSH aliases (e.g., `git@bitbucket-syntech:…`) are resolved through
+   `~/.ssh/config`'s `HostName` directive.
+2. Prompts you to create and paste a repo-platform API token
+   (Bitbucket app password, GitHub fine-grained PAT, or GitLab
+   PAT). Instructions for the detected platform and a direct link
+   to its token-creation page are shown.
+3. Stores the token:
+   - **macOS** → Keychain, service name `agent-team.<sandbox-name>`,
+     one entry per project (multi-project isolation). The token
+     never touches the host's regular filesystem.
+   - **Linux / Windows** → `.sandbox/.platform-api.env` (mode 600,
+     gitignored). A banner during `join.sh` flags this storage
+     model as less hardened than Keychain; credential-manager
+     integration (libsecret, Credential Manager) is a planned
+     follow-up.
+4. On every `create.sh` / `attach.sh`, reads the token back and
+   pipes it via stdin into the sandbox — the token is never put
+   on a command line visible to `ps`. Inside the sandbox, the kit
+   writes `~/.git-credentials` and sets
+   `git config --global credential.helper store`.
+5. If your host's `origin` URL is SSH-shaped (`git@host:…` or
+   `ssh://git@host/…`), the sandbox's git also gets a
+   `url.https://<host>/.insteadOf git@<alias>:` rewrite rule — so
+   SSH URLs in your committed `.git/config` transparently resolve
+   to HTTPS when agents run git inside the sandbox.
+
+**Token persistence:** survives `./team/destroy.sh` (which only
+destroys the sandbox VM), survives `agent-team-install` updates,
+and survives re-runs of `./team/join.sh`. Wiped by
+`./team/leave.sh` (workstation-local state removal) and
+`./team/uninstall.sh` (chains leave). On macOS, the Keychain entry
+persists even across `leave.sh`; on Linux/Windows the file is
+wiped and the next `join.sh` re-prompts.
+
+**Public-repo opt-out:** at the token prompt, press Enter without
+pasting anything. Agents will be able to read public repos but
+not push.
+
+**SSH material for side uses:** if your host origin is SSH, the
+kit still provisions SSH keys into `.sandbox/.ssh/` — not for
+origin access (that goes over HTTPS, above) but in case project
+tooling makes SSH calls to other hosts (e.g., `ssh-add`, sub-repo
+fetches).
 
 ## Daily Use
 
@@ -390,7 +461,7 @@ Infrastructure files go **inside** each project alongside the code:
 │   ├── Dockerfile                   # Custom sandbox image template (tracked)
 │   ├── .ssh/                        # (gitignored) SSH material copied into sandbox
 │   ├── .ssh.source                  # (gitignored) absolute path to host SSH key
-│   ├── .platform-api.env            # (gitignored) platform API token (PR merge method)
+│   ├── .platform-api.env            # (gitignored) repo-platform API token + metadata (Linux/Windows only; macOS uses the Keychain)
 │   ├── .oauth-token                 # (gitignored) captured Claude OAuth token
 │   └── .last-directive              # (gitignored) hash of last Lead directive
 ├── team/                            # Lifecycle scripts (all tracked)

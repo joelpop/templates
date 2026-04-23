@@ -249,7 +249,7 @@ inject_credentials() {
         if kc_token=$(security find-generic-password -s "agent-team.${SANDBOX_NAME}" -w 2>/dev/null); then
             printf '%s' "$kc_token" | docker sandbox exec -i "${SANDBOX_NAME}" bash -c \
                 'read -r token && printf "export PLATFORM_API_TOKEN=%q\n" "$token" >> /home/agent/.bashrc'
-            echo "=== Platform API token injected from Keychain ==="
+            echo "=== Repo-platform API token injected from Keychain ==="
         fi
     fi
 

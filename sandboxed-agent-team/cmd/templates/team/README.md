@@ -23,9 +23,9 @@ running inside it.
 ./team/join.sh
 ```
 
-Provisions SSH material, a platform API token (if the PR merge
-method is configured), and runs `create.sh` to build the sandbox
-image and launch the team.
+Provisions SSH material, a repo-platform API token (for HTTPS
+git access from the sandbox), and runs `create.sh` to build the
+sandbox image and launch the team.
 
 **Daily: reconnect to your sandbox:**
 

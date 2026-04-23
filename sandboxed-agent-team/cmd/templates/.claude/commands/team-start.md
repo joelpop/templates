@@ -85,6 +85,17 @@ design decisions, requirements coverage — benefits most from stronger
 reasoning). Use a cost-effective model for all other teammates. Use
 worktree isolation for each teammate.
 
+**Teammates are stateless between `Agent` calls.** The spawn round
+below is an *acknowledgment phase*: each teammate receives its role
+prompt, replies "ready", and its process ends. There is no persistent
+"teammate process" running in the background afterward. Every future
+assignment — every delegation, every follow-up question, every task
+handoff — requires a **new** `Agent` tool invocation. The roster you
+build at spawn time is a roster of *roles and worktrees*, not of live
+processes. Do not assume a teammate is "still working" in the
+background; if you haven't invoked `Agent` for them in this turn,
+nothing is happening for them.
+
 **When spawning each teammate**, include the absolute path to the main
 project root in the prompt. Teammates in worktrees need this path to
 read gitignored files (`.claude/.tasks/`, `.claude/.progress.md`) that
@@ -1690,6 +1701,27 @@ creates checkpoints — follow that rhythm.
   delegate to the Integrator** — it is the Lead's general-purpose
   operational arm and handles task files, git, PRs, progress
   tracking, and any other odd jobs.
+- **Lead: narrated delegation is forbidden.** If you tell the human
+  you are delegating to a teammate (e.g., "I'm having the Architect
+  review…", "the Analyst is investigating…", "I've sent X to do
+  Y"), an `Agent` tool invocation for that teammate MUST appear in
+  the same turn. No exceptions. Describing a delegation without
+  actually invoking `Agent` is equivalent to doing the work
+  yourself — the teammate is not running in the background, nothing
+  is happening, and the human is being misled. Before ending any
+  turn that includes language like "I've sent…", "is
+  reviewing…", "will report back", verify that the matching
+  `Agent` call is present in the same response. If it isn't, either
+  add the call or rewrite the response to reflect what actually
+  happened.
+- **Lead: do not claim teammates are "still working" across turns.**
+  Because teammates are stateless between `Agent` calls, there is
+  no ongoing work after an `Agent` invocation returns. If the human
+  asks "any update?" and you have not spawned the relevant teammate
+  in *this* turn, do not say "still investigating" or "waiting for
+  them to report" — that is a hallucination. Either spawn them now
+  (fresh `Agent` call) or tell the human honestly that nothing is
+  currently in flight.
 - Lead: when spawning teammates, include the absolute path to the main
   project root so they can read gitignored `.claude/` files from their
   worktrees.

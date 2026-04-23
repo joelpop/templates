@@ -31,7 +31,7 @@ On a fresh project, agent-team-install prompts for any inputs it
 can't derive automatically and writes the kit files to the
 current directory. It then offers (Y/n) to have you join the
 team by provisioning your workstation (set up your Docker
-sandbox, SSH keys, repo-platform API token) and starting the team.
+sandbox and repo-platform API token) and starting the team.
 No git operations — you stage, commit, and push on your own
 schedule.
 

@@ -16,14 +16,14 @@ recreate the same local environment.
 
 Onboarding creates three things: a **Docker sandbox** (an isolated
 environment where the agents run, built from a project-specific
-Dockerfile), **authentication and SSH material** (provisioned into
-the sandbox at each startup so agents can reach Claude and the Git
-remote), and **agent team permissions** (`.claude/settings.json`
-tailored for this project). These artifacts are developer-local and
+Dockerfile), **authentication material** (Claude Code credentials
+and a repo-platform API token, provisioned into the sandbox at each
+startup so agents can reach Claude and the Git remote over HTTPS),
+and **agent team permissions** (`.claude/settings.json` tailored
+for this project). These artifacts are developer-local and
 gitignored — each developer generates their own from this file — so
-credentials, SSH keys, and host-specific paths never get committed.
-The end state is a running sandbox with the agent team ready for
-work.
+credentials and host-specific paths never get committed. The end
+state is a running sandbox with the agent team ready for work.
 
 This document has two parts. Everything above the divider is
 human-facing front matter — read this to understand what onboarding
@@ -53,8 +53,6 @@ you for the rest:
   kit auto-extracts an OAuth token from the Keychain on every
   create/attach; on other systems, export `CLAUDE_CODE_OAUTH_TOKEN`
   or `ANTHROPIC_API_KEY` in your shell config
-- If the project uses an SSH Git remote: the SSH key referenced in
-  `~/.ssh/config` for that remote
 - A **repo-platform API token** — Bitbucket app password, GitHub
   fine-grained PAT, or GitLab PAT. Required for any private repo
   so the sandbox can reach it over HTTPS. The sandbox can't use
@@ -89,17 +87,17 @@ From the project root, run the kit's onboard command:
 The tool auto-detects your local state and does the right thing:
 
 - **Fresh onboarding** → builds the sandbox container from the
-  project's Dockerfile, provisions SSH material if the project uses
-  an SSH Git remote, and starts the sandbox.
+  project's Dockerfile, prompts for your repo-platform API token
+  (if needed), and starts the sandbox.
 - **Re-onboarding** (you've onboarded this workspace before) →
   discards the existing sandbox and rebuilds from scratch. Your
-  workstation's SSH material and repo-platform API token are preserved;
-  the project's versioned files are untouched.
+  workstation's repo-platform API token is preserved; the project's
+  versioned files are untouched.
 
-If prompts come up, they're for information the tool can't auto-discover
-(e.g., which SSH key to use when multiple keys are configured). When
-the command finishes, the sandbox is running and a Claude Code session
-is attached to it, ready for the agent team.
+If prompts come up, they're for information the tool can't
+auto-discover. When the command finishes, the sandbox is running
+and a Claude Code session is attached to it, ready for the agent
+team.
 
 To discard your local workstation state later (without
 removing the kit from the project): `./team/leave.sh`.
@@ -141,7 +139,7 @@ Once onboarding is complete:
 
 6. **Free sandbox resources.** `./team/destroy.sh` destroys the
    sandbox VM. Run when you're done with the project for the day
-   (or longer). Your workstation-local state (SSH material, API
+   (or longer). Your workstation-local state (repo-platform API
    token, task files) is preserved — a later `./team/create.sh`
    rebuilds the sandbox from the same state.
 
@@ -154,7 +152,7 @@ offboarding — see [`TEAM_GUIDE.md`](TEAM_GUIDE.md).
 When you pull commits that have modified kit files (generated scripts
 under `team/`, `CLAUDE_TEAM.md`, `.sandbox/Dockerfile`, etc.),
 re-run `./team/join.sh` to rebuild your local sandbox against the
-updated templates. Your workstation state (SSH keys, API tokens)
+updated templates. Your workstation state (repo-platform API token)
 is preserved; only the sandbox image is rebuilt.
 
 ## Overview
@@ -196,19 +194,19 @@ case, ask the Lead to regenerate this file).
   continue. If the Keychain is managed by IT and you cannot unlock
   it, fall back to exporting `CLAUDE_CODE_OAUTH_TOKEN` manually in
   your shell config.
-- **SSH remote access fails inside the sandbox:** Git operations over
-  SSH (push, pull, fetch) fail with "Permission denied" or "Host key
-  verification failed."
-  - Verify `.sandbox/.ssh/` exists and contains the private key, a
-    `config` file, and a `known_hosts` file.
-  - If the key was rotated since onboarding, either re-run onboarding
-    or manually copy the new key to `.sandbox/.ssh/` and restart the
-    sandbox.
-  - If `known_hosts` is missing or stale, regenerate it:
-    `ssh-keyscan <hostname> > .sandbox/.ssh/known_hosts 2>/dev/null`
-  - Verify `.sandbox/.ssh.source` contains the correct absolute path
-    to the host key — the kit reads this to sync keys on every
-    create and attach.
+- **Sandbox git push/pull/fetch fails with 401 or 403:** The
+  sandbox reaches the repo over HTTPS using your repo-platform API
+  token. Causes:
+  - Token expired or was revoked on the platform. Re-run
+    `./team/join.sh` to re-prompt.
+  - Token scopes are insufficient. Bitbucket needs Repositories R+W
+    and Pull requests R+W; GitHub fine-grained PAT needs Contents
+    R+W and Pull requests R+W; GitLab needs `api`. Recreate with
+    the correct scopes and re-run `./team/join.sh`.
+  - macOS Keychain returned a stale token (e.g., after you
+    recreated the app password but reused the same label). Wipe
+    the Keychain entry with `security delete-generic-password -s
+    agent-team.<sandbox-name>` and re-run `./team/join.sh`.
 - **Sandbox build fails:** Check that Docker Desktop is running.
   Review the build output for version mismatches or network errors.
 - **`/project:team-start` not found:** Ensure
@@ -219,7 +217,7 @@ case, ask the Lead to regenerate this file).
 
 When you leave the project on this workstation, run
 `./team/leave.sh`. It destroys the sandbox VM and discards all
-developer-local state (SSH material, repo-platform API token,
-in-progress task files, git worktrees). Kit files and the project's
-committed code are untouched.
+developer-local state (repo-platform API token, in-progress task
+files, git worktrees). Kit files and the project's committed code
+are untouched.
 

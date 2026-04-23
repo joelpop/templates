@@ -41,8 +41,6 @@ SANDBOX_NAME="claude-${PARENT_DIR}-${PROJECT_NAME}"
 # actually being removed.
 has_state=0
 for path in \
-    "${PROJECT_DIR}/.sandbox/.ssh" \
-    "${PROJECT_DIR}/.sandbox/.ssh.source" \
     "${PROJECT_DIR}/.sandbox/.platform-api.env" \
     "${PROJECT_DIR}/.sandbox/.oauth-token" \
     "${PROJECT_DIR}/.sandbox/.last-directive" \
@@ -81,8 +79,6 @@ if [ -x "${PROJECT_DIR}/team/destroy.sh" ]; then
 fi
 
 # Per-developer state under .sandbox/ (all dot-prefixed per kit convention).
-rm -rf "${PROJECT_DIR}/.sandbox/.ssh"
-rm -f  "${PROJECT_DIR}/.sandbox/.ssh.source"
 rm -f  "${PROJECT_DIR}/.sandbox/.platform-api.env"
 rm -f  "${PROJECT_DIR}/.sandbox/.oauth-token"
 rm -f  "${PROJECT_DIR}/.sandbox/.last-directive"

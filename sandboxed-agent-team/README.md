@@ -66,8 +66,6 @@ machine, and project-config values Claude Code will ask about.
   strictly required at setup time — setup proceeds either way — but
   needed before you can use the **PR** merge method or push
   branches to collaborators.
-- If the project's Git remote uses SSH: your SSH key available at
-  the path referenced in `~/.ssh/config` for that remote.
 
 **Project config (the installer auto-discovers from `pom.xml` and
 git config where it can; you'll be prompted with the discovered
@@ -211,12 +209,6 @@ wiped and the next `join.sh` re-prompts.
 pasting anything. Agents will be able to read public repos but
 not push.
 
-**SSH material for side uses:** if your host origin is SSH, the
-kit still provisions SSH keys into `.sandbox/.ssh/` — not for
-origin access (that goes over HTTPS, above) but in case project
-tooling makes SSH calls to other hosts (e.g., `ssh-add`, sub-repo
-fetches).
-
 ## Daily Use
 
 Once agent team setup is complete:
@@ -323,8 +315,11 @@ worktree:
 - **Isolation & Infrastructure** — Each project gets its own Docker
   sandbox built from a customizable Dockerfile. One-command scripts
   handle startup and disposal. Claude Code authentication is
-  autodetected and injected via environment variable. SSH keys for
-  Git remote access are provisioned into the sandbox automatically.
+  autodetected and injected via environment variable. The sandbox
+  reaches the repo over HTTPS (Docker Sandbox blocks outbound port
+  22); a repo-platform API token is provisioned automatically for
+  private-repo access — see *A note on the sandbox's git access*
+  above.
 - **Auto-loading Lead in sandbox sessions** — The sandbox's Claude
   Code session starts with the Lead role pre-configured:
   `team/create.sh` passes `--append-system-prompt` to `claude` so
@@ -459,8 +454,6 @@ Infrastructure files go **inside** each project alongside the code:
 ~/workspaces/acme-corp/project-alpha/
 ├── .sandbox/                        # Sandbox image + developer-local state
 │   ├── Dockerfile                   # Custom sandbox image template (tracked)
-│   ├── .ssh/                        # (gitignored) SSH material copied into sandbox
-│   ├── .ssh.source                  # (gitignored) absolute path to host SSH key
 │   ├── .platform-api.env            # (gitignored) repo-platform API token + metadata (Linux/Windows only; macOS uses the Keychain)
 │   ├── .oauth-token                 # (gitignored) captured Claude OAuth token
 │   └── .last-directive              # (gitignored) hash of last Lead directive
@@ -507,7 +500,7 @@ The kit produces these files in a target project:
 |------|---------|-------|
 | `.sandbox/Dockerfile` | Custom sandbox image for this project | Built automatically by `create.sh` |
 | `team/README.md` | One-page reference for the scripts in this directory | Developer reads when onboarding |
-| `team/join.sh` | Provisions the developer's workstation (sandbox, SSH keys, API tokens) and launches the team | Human runs at host terminal (first time on this workstation) |
+| `team/join.sh` | Provisions the developer's workstation (sandbox, repo-platform API token) and launches the team | Human runs at host terminal (first time on this workstation) |
 | `team/leave.sh` | Discards developer-local sandbox state; preserves kit files | Human runs at host terminal |
 | `team/create.sh` | Builds the sandbox image and launches a fresh sandbox | Human runs at host terminal (or invoked by `join.sh`) |
 | `team/attach.sh` | Reattaches to an already-running sandbox | Human runs at host terminal (daily use) |

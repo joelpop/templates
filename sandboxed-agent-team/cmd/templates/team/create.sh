@@ -129,65 +129,6 @@ if [ -z "${AUTH_TOKEN}" ]; then
     exit 1
 fi
 
-# ── SSH key sync (host side) ─────────────────────────────────────────────────
-# Refresh the key pair in .sandbox/.ssh/ from the host path recorded in
-# .sandbox/.ssh.source, in case the developer rotated their key.
-SSH_SOURCE_FILE="${PROJECT_DIR}/.sandbox/.ssh.source"
-if [ -f "$SSH_SOURCE_FILE" ]; then
-    SSH_KEY=$(grep -v '^#' "$SSH_SOURCE_FILE" | head -1 | tr -d '[:space:]')
-    SSH_KEY="${SSH_KEY/#\~/$HOME}"
-    if [ -n "$SSH_KEY" ] && [ -f "$SSH_KEY" ]; then
-        SSH_DIR="${PROJECT_DIR}/.sandbox/.ssh"
-        mkdir -p "$SSH_DIR"
-        cp "$SSH_KEY" "$SSH_DIR/"
-        [ -f "${SSH_KEY}.pub" ] && cp "${SSH_KEY}.pub" "$SSH_DIR/"
-        echo "=== SSH key synced from ${SSH_KEY} ==="
-    else
-        echo ""
-        echo "SSH key '${SSH_KEY}' (from .sandbox/.ssh.source) not found."
-        echo ""
-        echo "  The project declares SSH use but the key at that path is"
-        echo "  missing. Git operations will fail inside the sandbox"
-        echo "  until this is fixed."
-        echo ""
-        echo "  If you know the correct path, enter it now — this script"
-        echo "  will update .sandbox/.ssh.source and re-sync. Otherwise,"
-        echo "  press Enter to abort; to reconfigure SSH interactively,"
-        echo "  start a Claude Code session at your host terminal in this"
-        echo "  project directory and say:"
-        echo "    Read ONBOARDING.md and execute the setup checklist."
-        echo ""
-        # Retry loop: accept empty input to abort; otherwise re-prompt
-        # if the given path doesn't exist (up to 3 attempts to prevent
-        # runaway loops from clipboard errors etc.).
-        NEW_PATH=""
-        for attempt in 1 2 3; do
-            read -p "  Correct SSH key path (or Enter to abort): " NEW_PATH
-            if [ -z "$NEW_PATH" ]; then
-                echo "Aborting. See the note above on re-running onboarding."
-                exit 1
-            fi
-            NEW_PATH="${NEW_PATH/#\~/$HOME}"
-            if [ -f "$NEW_PATH" ]; then
-                break
-            fi
-            echo "File '$NEW_PATH' not found."
-            if [ $attempt -eq 3 ]; then
-                echo "Aborting after 3 attempts. See the note above on re-running onboarding."
-                exit 1
-            fi
-            echo "Try again (attempt $((attempt + 1)) of 3) or press Enter to abort."
-        done
-        echo "$NEW_PATH" > "$SSH_SOURCE_FILE"
-        SSH_KEY="$NEW_PATH"
-        SSH_DIR="${PROJECT_DIR}/.sandbox/.ssh"
-        mkdir -p "$SSH_DIR"
-        cp "$SSH_KEY" "$SSH_DIR/"
-        [ -f "${SSH_KEY}.pub" ] && cp "${SSH_KEY}.pub" "$SSH_DIR/"
-        echo "=== Updated .sandbox/.ssh.source and synced SSH key from ${SSH_KEY} ==="
-    fi
-fi
-
 # ── Inject credentials into sandbox ──────────────────────────────────────────
 # docker sandbox run does not support passing env vars (-e), and the sandbox
 # auto-updates the claude binary (overwriting any Dockerfile-based wrapper).
@@ -221,18 +162,6 @@ inject_credentials() {
         "test -f /home/agent/.claude.json || echo '{}' > /home/agent/.claude.json; \
          jq '.hasCompletedOnboarding = true' /home/agent/.claude.json > /tmp/.claude.json \
          && mv /tmp/.claude.json /home/agent/.claude.json"
-
-    # ── SSH keys ──────────────────────────────────────────────────────────
-    # The workspace is mounted at PROJECT_DIR inside the sandbox (same path
-    # as on the host). Copy SSH material from .sandbox/.ssh/ to /home/agent/.ssh/.
-    if [ -d "${PROJECT_DIR}/.sandbox/.ssh" ]; then
-        docker sandbox exec "${SANDBOX_NAME}" bash -c \
-            "cp '${PROJECT_DIR}/.sandbox/.ssh/'* /home/agent/.ssh/ 2>/dev/null; \
-             chmod 600 /home/agent/.ssh/id_* 2>/dev/null; \
-             chmod 644 /home/agent/.ssh/*.pub /home/agent/.ssh/config \
-                       /home/agent/.ssh/known_hosts 2>/dev/null"
-        echo "=== SSH keys injected ==="
-    fi
 
     # ── Platform API credentials (for PR merge method + HTTPS git) ────────
     # Metadata (PLATFORM_TYPE, API URLs, repo owner/slug, etc.)

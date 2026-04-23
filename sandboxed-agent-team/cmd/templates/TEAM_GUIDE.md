@@ -124,11 +124,13 @@ without running the app yourself.
   attach. On macOS the new token is read automatically from the
   Keychain; on other systems update `CLAUDE_CODE_OAUTH_TOKEN` in
   your shell config first.
-- **SSH remote access fails:** If `git push/pull/fetch` fails with
-  "Permission denied" or "Host key verification failed", check that
-  `.sandbox/.ssh/` contains the correct key, config, and known_hosts.
-  If the key was rotated, copy the new key to `.sandbox/.ssh/` (or
-  re-run onboarding) and restart the sandbox.
+- **Sandbox git push/pull/fetch fails with 401 or 403:** The
+  sandbox reaches the repo over HTTPS with a repo-platform API
+  token. Most common causes: the token expired or was revoked, or
+  its scopes are insufficient (Bitbucket needs Repositories R+W
+  and Pull requests R+W; GitHub fine-grained PAT needs Contents
+  R+W and Pull requests R+W; GitLab needs `api`). Re-run
+  `./team/join.sh` to re-prompt for a fresh token.
 - **Dev branch is broken:** The Lead will escalate to you. The
   breakage may be from the team's own merge or from external changes.
   You decide: wait (another team may already be fixing it), fix it

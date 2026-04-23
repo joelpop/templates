@@ -66,11 +66,3 @@ USER agent
 RUN git config --global user.name "<GIT_USER_NAME>" \
     && git config --global user.email "<GIT_USER_EMAIL>"
 
-# ── SSH directory ─────────────────────────────────────────────────────────
-# Prepared for runtime SSH key injection. If the project's Git remote uses
-# SSH, onboarding provisions .sandbox/ssh/ with the developer's key,
-# config, and known_hosts. create.sh and attach.sh copy these into
-# /home/agent/.ssh/ via `docker sandbox exec` on every run. If SSH is
-# not used, this directory stays empty and has no effect. Remove this
-# block if not needed.
-RUN mkdir -p /home/agent/.ssh && chmod 700 /home/agent/.ssh

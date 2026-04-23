@@ -10,10 +10,16 @@
 # Scope:
 #   - verify the kit is installed on the current branch
 #   - stop any existing sandbox
-#   - provision SSH material (if origin is an SSH remote)
-#   - prompt for a platform API token (if MERGE_METHOD is PR)
+#   - prompt for a repo-platform API token (if MERGE_METHOD is PR)
 #   - create the sandbox and launch the team (delegating to team/create.sh)
 #   - record .claude/.last-onboarded
+#
+# Note: no SSH keys are provisioned inside the sandbox — Docker Sandbox
+# blocks outbound port 22, so the sandbox reaches the repo exclusively
+# over HTTPS (with url.insteadOf rewriting SSH-style origin URLs on
+# the fly; see create.sh). We still parse the host's ~/.ssh/config
+# here to resolve SSH host aliases (e.g. `bitbucket-work` →
+# `bitbucket.org`) for correct repo-platform detection.
 #
 # Idempotent: running again discards the local sandbox and rebuilds.
 
@@ -60,88 +66,34 @@ if [ -x "${PROJECT_DIR}/team/destroy.sh" ]; then
     "${PROJECT_DIR}/team/destroy.sh" --yes
 fi
 
-# ── SSH provisioning (if origin remote uses SSH) ────────────────────────────
+# ── Parse origin to resolve SSH host aliases (for platform detection) ──────
+# If origin uses an SSH-style URL, resolve any ~/.ssh/config HostName
+# alias (e.g. `bitbucket-work` → `bitbucket.org`) so the repo-platform
+# detection below can match against the real host. We do NOT copy SSH
+# keys into the sandbox — see the note at the top of this file.
 REMOTE_URL="$(git remote get-url origin 2>/dev/null || true)"
-
-if [[ "${REMOTE_URL}" == git@* || "${REMOTE_URL}" == ssh://* ]]; then
-    echo "=== Provisioning SSH material ==="
-
-    SSH_USER=""; SSH_HOST=""
-    if [[ "${REMOTE_URL}" == git@* ]]; then
-        SSH_USER="${REMOTE_URL%%@*}"
-        REST="${REMOTE_URL#*@}"
-        SSH_HOST="${REST%%:*}"
-    else
-        TMP="${REMOTE_URL#ssh://}"
-        if [[ "${TMP}" == *@* ]]; then
-            SSH_USER="${TMP%%@*}"
-            TMP="${TMP#*@}"
-        else
-            SSH_USER="git"
-        fi
-        SSH_HOST="${TMP%%/*}"
-    fi
-
-    IDENTITY_FILE=""
-    REAL_HOSTNAME=""
-    if [ -f "${HOME}/.ssh/config" ]; then
-        block=$(awk -v host="${SSH_HOST}" '
-            BEGIN { in_block = 0 }
-            /^[[:space:]]*Host[[:space:]]/ {
-                in_block = 0
-                for (i = 2; i <= NF; i++) {
-                    if ($i == host) { in_block = 1; break }
-                }
-                next
+SSH_HOST=""
+REAL_HOSTNAME=""
+if [[ "${REMOTE_URL}" == git@* ]]; then
+    REST="${REMOTE_URL#*@}"
+    SSH_HOST="${REST%%:*}"
+elif [[ "${REMOTE_URL}" == ssh://* ]]; then
+    TMP="${REMOTE_URL#ssh://}"
+    TMP="${TMP#*@}"
+    SSH_HOST="${TMP%%/*}"
+fi
+if [ -n "${SSH_HOST}" ] && [ -f "${HOME}/.ssh/config" ]; then
+    REAL_HOSTNAME=$(awk -v host="${SSH_HOST}" '
+        BEGIN { in_block = 0 }
+        /^[[:space:]]*Host[[:space:]]/ {
+            in_block = 0
+            for (i = 2; i <= NF; i++) {
+                if ($i == host) { in_block = 1; break }
             }
-            in_block == 1 { print }
-        ' "${HOME}/.ssh/config")
-        IDENTITY_FILE=$(echo "${block}" | awk 'tolower($1) == "identityfile" { print $2; exit }')
-        REAL_HOSTNAME=$(echo "${block}" | awk 'tolower($1) == "hostname" { print $2; exit }')
-        IDENTITY_FILE="${IDENTITY_FILE/#\~/${HOME}}"
-    fi
-
-    if [ -z "${IDENTITY_FILE}" ]; then
-        for candidate in "${HOME}/.ssh/id_ed25519" "${HOME}/.ssh/id_rsa"; do
-            if [ -f "${candidate}" ]; then
-                IDENTITY_FILE="${candidate}"
-                break
-            fi
-        done
-    fi
-
-    if [ -z "${IDENTITY_FILE}" ] || [ ! -f "${IDENTITY_FILE}" ]; then
-        echo "  Warning: no SSH key found for ${SSH_HOST}." >&2
-        echo "           Sandbox will start, but git over SSH may fail." >&2
-    else
-        [ -z "${REAL_HOSTNAME}" ] && REAL_HOSTNAME="${SSH_HOST}"
-        KEY_NAME="$(basename "${IDENTITY_FILE}")"
-        SSH_DIR="${PROJECT_DIR}/.sandbox/.ssh"
-        mkdir -p "${SSH_DIR}"
-        chmod 700 "${SSH_DIR}"
-        cp "${IDENTITY_FILE}" "${SSH_DIR}/${KEY_NAME}"
-        chmod 600 "${SSH_DIR}/${KEY_NAME}"
-        if [ -f "${IDENTITY_FILE}.pub" ]; then
-            cp "${IDENTITY_FILE}.pub" "${SSH_DIR}/${KEY_NAME}.pub"
-            chmod 644 "${SSH_DIR}/${KEY_NAME}.pub"
-        fi
-        cat > "${SSH_DIR}/config" <<EOF_CONFIG
-Host ${SSH_HOST}
-    HostName ${REAL_HOSTNAME}
-    User ${SSH_USER}
-    IdentityFile ~/.ssh/${KEY_NAME}
-    IdentitiesOnly yes
-EOF_CONFIG
-        if ssh-keyscan "${REAL_HOSTNAME}" > "${SSH_DIR}/known_hosts" 2>/dev/null \
-                && [ -s "${SSH_DIR}/known_hosts" ]; then
-            :
-        else
-            echo "  Warning: ssh-keyscan produced no output for ${REAL_HOSTNAME}." >&2
-            echo "           You may need to populate ${SSH_DIR}/known_hosts manually." >&2
-        fi
-        echo "${IDENTITY_FILE}" > "${PROJECT_DIR}/.sandbox/.ssh.source"
-        echo "  SSH material provisioned in .sandbox/.ssh/"
-    fi
+            next
+        }
+        in_block == 1 && tolower($1) == "hostname" { print $2; exit }
+    ' "${HOME}/.ssh/config")
 fi
 
 # ── Platform API token (for sandbox's HTTPS git access) ──────────────────────

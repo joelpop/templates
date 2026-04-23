@@ -23,9 +23,9 @@ running inside it.
 ./team/join.sh
 ```
 
-Provisions SSH material, a repo-platform API token (for HTTPS
-git access from the sandbox), and runs `create.sh` to build the
-sandbox image and launch the team.
+Provisions a repo-platform API token (for HTTPS git access from
+the sandbox) and runs `create.sh` to build the sandbox image and
+launch the team.
 
 **Daily: reconnect to your sandbox:**
 
@@ -50,8 +50,8 @@ has changed — in which case run `./team/destroy.sh` followed by
 
 Drops you into a bash shell inside the running sandbox (as the
 `agent` user, with the workspace as your cwd). Useful for
-checking injected credentials, SSH config, or running ad-hoc
-project commands outside a Claude Code session.
+checking injected credentials or running ad-hoc project commands
+outside a Claude Code session.
 
 Exit with `exit` or Ctrl-D. The sandbox VM itself keeps running; you've
 only exited the shell session, not stopped the sandbox.
@@ -69,7 +69,7 @@ When you're done with the project for the day (or longer), run
 ./team/leave.sh
 ```
 
-Discards your developer-local state (SSH material, API token,
+Discards your developer-local state (repo-platform API token,
 in-progress task files, worktrees) and destroys the sandbox.
 Does not remove the kit's versioned files.
 

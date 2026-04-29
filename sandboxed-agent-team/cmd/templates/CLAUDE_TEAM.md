@@ -56,12 +56,25 @@ for any project-specific servers.
 
 ## Documentation Index
 
-The kit's documentation convention splits `docs/` into two trees:
+The kit's documentation convention splits `docs/` into the
+following trees:
 
 - `docs/agnostic/` — project-agnostic patterns, preferences, and
   standing guidance (not tied to a specific project's requirements).
 - `docs/reqs/` — project-specific requirements following IEEE 830 /
   ISO 29148 (SRS structure) and ISO 25010 (quality model).
+- `docs/tech/` — project-specific technical reference (the
+  "pattern playbook"). Describes HOW the team implements recurring
+  patterns, at a level above code but below requirements. Curated
+  by the Architect, committed by the Analyst. Entries can describe
+  planned or already-implemented patterns and grow as new patterns
+  are decided.
+- `docs/glossary.md` — the project's implementation-agnostic
+  vocabulary used by requirements via inline Markdown links (e.g.,
+  "edit affordance" instead of "dialog"). Curated by the Architect,
+  committed by the Analyst. Note: the term "agnostic" here means
+  *implementation-agnostic* — separate from the `AGNOSTIC` tag,
+  which marks project-agnostic content under `docs/agnostic/`.
 
 The master index is `docs/INDEX.md`. It is a sample file seeded at
 setup time — setup does not overwrite it on re-runs, so edit it
@@ -100,6 +113,17 @@ freely as the project's docs evolve.
   `docs/reqs/technical/`. Re-read as relevant to the current task.
 - **ARCHITECTURAL** — structural debt and design decisions, under
   `docs/reqs/`. Every agent re-reads all of these before any task.
+- **TECH-REF** — implementation patterns the team uses (the
+  "pattern playbook"), under `docs/tech/`. Curated by the
+  Architect, committed by the Analyst. Re-read entries linked from
+  the in-scope requirements of your current task; the Architect
+  also reads these at task kickoff to anchor structural proposals
+  in existing patterns.
+- **GLOSSARY** — entries in `docs/glossary.md`, the project's
+  implementation-agnostic vocabulary used by requirements via
+  inline Markdown links. Curated by the Architect, committed by the
+  Analyst. Every agent re-reads `docs/glossary.md` before starting
+  any task (it is small) so requirement links resolve.
 
 Feature-scoped non-functional requirements (e.g., "dashboard loads in
 2 seconds") live under the feature as FUNCTIONAL-FEATURE-SUPPLEMENTAL,
@@ -469,19 +493,27 @@ verify you still have the context needed to work safely. Do this by
 explicitly re-reading the following files in order:
 
 1. `CLAUDE.md` (this file) — stack, ownership rules, critical constraints
-2. `docs/INDEX.md` — master list of all requirement documents
-3. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
-   ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL, ENVIRONMENTAL,
-   or EXTERNAL-INTERFACE docs relevant to your current task
-4. `docs/reqs/architecture-debt.md` — known structural debt
-5. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
-   all FEATURE-SUPPLEMENTAL docs linked from it
-6. `.claude/.tasks/<your-task>.md` — your specific assignment
-7. `.claude/.progress.md` — which task is active, which are suspended.
+2. `docs/INDEX.md` — master list of all requirement, glossary, and
+   tech-ref documents
+3. `docs/glossary.md` — agnostic vocabulary referenced inline by
+   requirement docs (Markdown links). Read this before any
+   requirement doc so the linked terms make sense.
+4. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
+   ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL,
+   ENVIRONMENTAL, EXTERNAL-INTERFACE, or TECH-REF docs relevant to
+   your current task
+5. `docs/reqs/architecture-debt.md` — known structural debt
+6. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
+   all FEATURE-SUPPLEMENTAL docs linked from it. Follow inline
+   Markdown links from the requirements into `docs/glossary.md` and
+   `docs/tech/` as you encounter them — those are part of the
+   requirement's intent.
+7. `.claude/.tasks/<your-task>.md` — your specific assignment
+8. `.claude/.progress.md` — which task is active, which are suspended.
    Verify you are working on the correct active task.
 
-**Worktree note:** Items 1–5 are version-controlled and exist in every
-worktree. Items 6–7 are gitignored and exist only in the main project
+**Worktree note:** Items 1–6 are version-controlled and exist in every
+worktree. Items 7–8 are gitignored and exist only in the main project
 root. Sub-agents in worktrees must use the absolute project root path
 (provided by the Lead at spawn time) to read these files — do not use
 relative paths.

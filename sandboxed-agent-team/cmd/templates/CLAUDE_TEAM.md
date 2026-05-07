@@ -54,6 +54,45 @@ compliance.
 in `.mcp.json`. Remove entries for servers not in use; add entries
 for any project-specific servers.
 
+## Canonical Claude Code References
+
+This project uses Claude Code's (currently) experimental Agent Teams
+feature (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in
+`.claude/settings.json`). The team mechanism — `TeamCreate`,
+`SendMessage`, the `TaskCreate` / `TaskUpdate` / `TaskGet` /
+`TaskList` shared task list, teammate persistence, the mailbox,
+the `TeammateIdle` hook — is documented at:
+
+- https://code.claude.com/docs/en/agent-teams.md
+- https://code.claude.com/docs/en/sub-agents.md (related but distinct mechanism)
+- https://code.claude.com/docs/en/hooks.md
+- https://code.claude.com/docs/en/skills.md
+- https://code.claude.com/docs/en/settings.md
+
+A `SessionStart` hook (`.claude/hooks/session-start-fetch-docs.sh`,
+registered in `.claude/settings.json` for `startup` / `resume` /
+`clear` / `compact` matchers) fetches the Agent Teams doc into
+context at every session start, including after resume and after
+context compaction. Defer to its content over training-time recall
+when answering any question about Agent Teams mechanics.
+
+### Verify before asserting Claude Code mechanics
+
+Claude's training data describes earlier versions of Claude Code
+and is known to conflate distinct features (most notably Agent
+Teams and subagents). Before asserting how *anything* in Claude
+Code works — hooks, skills, slash commands, the `Agent` tool,
+Agent Teams, settings fields, file conventions — verify against
+`code.claude.com/docs/...` first. Use the `fetch` MCP server,
+`WebFetch`, or the `claude-code-guide` subagent if available. If
+you cannot verify, say "I don't know — let me look it up" rather
+than answering from recall.
+
+This rule exists because past sessions on this kit spent many
+hours and significant tokens on designs built atop
+confidently-asserted mechanics that later turned out to be wrong.
+Verifying takes seconds. Drift compounds.
+
 ## Documentation Index
 
 The kit's documentation convention splits `docs/` into the

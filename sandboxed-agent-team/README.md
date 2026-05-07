@@ -8,20 +8,20 @@ isolated Docker sandbox for a software project, via a single
 cross-platform binary. Templates and logic ship together; variables
 live in the target project and survive kit upgrades.
 
-Two layers of isolation: a **Docker sandbox** keeps all agent
+Two layers of isolation: a **Docker sandbox** keeps all team
 activity, installed tools, and credentials off the developer's host
 machine and separated from other projects; **Git worktrees** give
-each teammate its own working copy of the repository so agents
+each teammate its own working copy of the repository so teammates
 never overwrite each other's in-progress work.
 
 **Key terms you'll see throughout:**
 
 - **Sandbox** — the Docker-based isolated environment where the
-  agents run.
+  team runs.
 - **Lead directive** — the instructions the sandboxed Claude Code
   auto-loads on session start so the Lead role takes over and the
-  team spawns from your first message, with no slash command
-  required.
+  team comes up automatically on your first message, with no slash
+  command required.
 - **Repo-platform API token** — a single credential from whichever
   service hosts your repository (your *repo platform*: Bitbucket,
   GitHub, or GitLab). Bitbucket calls it an app password; GitHub
@@ -164,7 +164,7 @@ your shell config.
 
 **A note on the sandbox's git access:** Docker Sandbox blocks
 outbound port 22 (SSH) for isolation. Regardless of how your host
-reaches the repo, agents *inside* the sandbox use **HTTPS** for
+reaches the repo, teammates *inside* the sandbox use **HTTPS** for
 git operations. The kit handles this transparently — your host's
 git config and origin URL are never modified.
 
@@ -195,7 +195,7 @@ What the kit does, once per project, on your first `./team/join.sh`:
    `ssh://git@host/…`), the sandbox's git also gets a
    `url.https://<host>/.insteadOf git@<alias>:` rewrite rule — so
    SSH URLs in your committed `.git/config` transparently resolve
-   to HTTPS when agents run git inside the sandbox.
+   to HTTPS when teammates run git inside the sandbox.
 
 **Token persistence:** survives `./team/destroy.sh` (which only
 destroys the sandbox VM), survives `agent-team-install` updates,
@@ -206,33 +206,36 @@ persists even across `leave.sh`; on Linux/Windows the file is
 wiped and the next `join.sh` re-prompts.
 
 **Public-repo opt-out:** at the token prompt, press Enter without
-pasting anything. Agents will be able to read public repos but
+pasting anything. Teammates will be able to read public repos but
 not push.
 
 ## Daily Use
 
 Once agent team setup is complete:
 
-**Note:** Teammates run as subagents within the Lead's session —
-their work appears as expandable blocks in the same terminal. Each
-agent does not get its own terminal pane.
+**Note:** Each teammate runs as a separate Claude Code instance
+with its own context window. From the Lead's terminal you can
+cycle through teammates with `Shift+Down` and message any of them
+directly, but you typically don't need to — the Lead coordinates
+the team for you.
 
 1. At your host terminal (in the project directory), reattach to
    the sandbox: `./team/attach.sh`. This drops you into a Claude
    Code session running inside the sandbox. The session's system
    prompt auto-loads the Lead role (see [Auto-loading Lead in
    sandbox sessions](#capabilities) under Capabilities), so the
-   team spawns as soon as you send your first message — no slash
+   team comes up automatically on your first message — the Lead
+   bootstraps and brings up the teammates for you. No slash
    command required. Once setup completes, the statusline shows
    "Agent Team Mode" as a visible confirmation that you're talking
    to the team. (If `attach.sh` tells you no sandbox exists — for
    example, because you ran `destroy.sh` last time — run
    `./team/create.sh` to build a fresh one.)
-2. The sandboxed Claude Code pre-authorizes common agent commands
+2. The sandboxed Claude Code pre-authorizes common shell commands
    (`mvn`, `git`, `ls`, `chmod`, etc.) via `.claude/settings.json`'s
-   allow/deny rules, so teammates can spawn agents, run builds,
-   run tests, and perform routine git operations without being
-   prompted. Destructive or out-of-scope operations
+   allow/deny rules, so teammates can run builds, tests, and
+   routine git operations without being prompted. Destructive or
+   out-of-scope operations
    (`git reset --hard`, `git push --force`, arbitrary shell through
    `curl | bash`, etc.) are explicitly denied by the same
    settings. The Lead will not implement directly — this is
@@ -254,11 +257,14 @@ agent does not get its own terminal pane.
 6. The Lead reports approximate cost per task (token usage and USD
    estimate per model, plus totals) at task wrap-up. You can also
    ask the Lead for the current cost at any time.
-7. You can ask agents to take screenshots of the running application
-   for visual verification — tell the Lead what you want to see.
+7. You can ask the team to take screenshots of the running
+   application for visual verification — tell the Lead what you
+   want to see.
 8. **If something goes wrong:**
-   - Agent seems stuck or unresponsive: tell the Lead. The Lead will
-     respawn the agent.
+   - Teammate seems stuck or unresponsive: tell the Lead. The
+     Lead will recover the teammate (resume first; replace from
+     the same agent definition if resume fails — see Teammate
+     Recovery in `team-start.md`).
    - The Lead itself loses context mid-session: run
      `/project:team-start` at the sandbox's Claude Code prompt to
      re-invoke the Lead (the auto-load fires only at session start,
@@ -323,21 +329,23 @@ worktree:
 - **Auto-loading Lead in sandbox sessions** — The sandbox's Claude
   Code session starts with the Lead role pre-configured:
   `team/create.sh` passes `--append-system-prompt` to `claude` so
-  the first turn reads `team-start.md` and spawns the team
-  automatically. The human does not need to remember
-  `/project:team-start`. Host Claude Code sessions are unaffected
-  (they don't go through `create.sh`/`attach.sh`). The
-  `/project:team-start` slash command remains available as a manual
-  re-invocation fallback if the Lead needs to be reset mid-session.
+  the first turn reads `team-start.md` and brings up the team
+  automatically (via `TeamCreate`). The human does not need to
+  remember `/project:team-start`. Host Claude Code sessions are
+  unaffected (they don't go through `create.sh`/`attach.sh`). The
+  `/project:team-start` slash command remains available as a
+  manual re-invocation fallback if the Lead needs to be reset
+  mid-session.
 - **"Agent Team Mode" statusline indicator** — The sandbox's
-  statusline displays "Agent Team Mode" once the Lead has completed
-  the Pre-Start Check and spawned the team, giving a visible cue at
-  the keyboard that the human is interacting with the team (not
-  bare Claude Code). Implemented via a `statusLine` entry in
-  `.claude/settings.json` that checks for a sentinel file
-  (`.claude/.team-active`) written by the Lead at the end of team
-  spawn. The indicator is blank before setup completes and between
-  sessions; it updates each session based on the current state.
+  statusline displays "Agent Team Mode" once the Lead has
+  completed the Pre-Start Check and brought up the team, giving a
+  visible cue at the keyboard that the human is interacting with
+  the team (not bare Claude Code). Implemented via a `statusLine`
+  entry in `.claude/settings.json` that checks for a sentinel file
+  (`.claude/.team-active`) written by the Lead after `TeamCreate`
+  succeeds. The indicator is blank before setup completes and
+  between sessions; it updates each session based on the current
+  state.
 - **Status Tracking** — Requirement status checkboxes (`[ ]`/`[-]`/`[x]`)
   in `docs/` plus role-assigned plan steps in task files. A progress
   dispatcher tracks active and suspended tasks for recovery after
@@ -347,11 +355,12 @@ worktree:
   a paired Unit Tester. Phases support dependencies between subtasks.
   Roles also work in parallel where possible: the Unit Tester and
   Architect review simultaneously after Coder work is merged.
-- **MCP Documentation Servers** — Agents consult MCP servers for
+- **MCP Documentation Servers** — Teammates consult MCP servers for
   authoritative framework documentation (Java, Vaadin, Spring,
   Playwright) rather than relying on training data. The Playwright
-  MCP server also provides visual debugging — agents can navigate the
-  running application, take screenshots, and interact with the UI.
+  MCP server also provides visual debugging — teammates can navigate
+  the running application, take screenshots, and interact with the
+  UI.
 - **Task Suspension & Resumption** — The Lead formally suspends a task
   when a prerequisite is discovered mid-work, preserving the branch and
   status. Resumption merges the latest development branch in and
@@ -385,7 +394,7 @@ worktree:
   Lead, who coordinates but does not implement directly.
 - **Requirements Management** — All requirements originate from the
   human and are documented by the Analyst. New capabilities go through
-  a requirement gate (Analyst drafts, human approves). Agents must
+  a requirement gate (Analyst drafts, human approves). Teammates must
   escalate ambiguity — guessing is forbidden. Refinements and
   preferences bypass the gate and go directly to the Coder.
   Requirement branches are per-topic or related group (e.g.,
@@ -396,7 +405,7 @@ worktree:
   implemented — requirement branches and task branches are independent.
 - **Branching & Merging** — Work branches off a configurable development
   branch. Requirement changes, implementation tasks, and individual
-  agent roles each get dedicated branches. Agents merge (never rebase).
+  teammate roles each get dedicated branches. Teammates merge (never rebase).
   All merges to the development branch are squash merges. The merge
   method (PR, Integrator merge, human merge, or custom) is configured per
   project.
@@ -427,9 +436,9 @@ worktree:
   the team's own merge or by external changes), the Lead escalates to
   the human and holds off on new work until the issue is resolved.
 - **Context Preservation** — Claude Code may silently compact context,
-  dropping loaded files. Every agent must re-read a defined set of files
-  before starting any task. Agents in worktrees access gitignored files
-  via absolute project root path.
+  dropping loaded files. Every teammate must re-read a defined set of
+  files before starting any task. Teammates in worktrees access
+  gitignored files via absolute project root path.
 
 ### Workspace Layout
 
@@ -467,7 +476,7 @@ Infrastructure files go **inside** each project alongside the code:
 │   ├── destroy.sh                   # Destroy the sandbox VM
 │   └── uninstall.sh                 # Remove the kit from the project
 ├── CLAUDE.md                        # Project-owned; kit adds a bracketed import line
-├── CLAUDE_TEAM.md                   # Kit-owned agent context (imported by CLAUDE.md)
+├── CLAUDE_TEAM.md                   # Kit-owned team context (imported by CLAUDE.md)
 ├── ONBOARDING.md                    # Developer onboarding (generated)
 ├── TEAM_GUIDE.md                    # Daily-use reference for humans (generated)
 ├── .mcp.json                        # Project-scoped MCP server config (canonical location)
@@ -508,7 +517,7 @@ The kit produces these files in a target project:
 | `team/destroy.sh` | Destroys the sandbox VM (and optionally the template image) | Human runs at host terminal |
 | `team/uninstall.sh` | Removes the kit from the project (chains through `leave.sh --yes`) | Human runs at host terminal |
 | `docs/INDEX.md` | Sample requirement-document index | Seeded once on initial setup; project-owned thereafter (re-setup and remove leave it alone) |
-| `CLAUDE_TEAM.md` | Project context for agents (kit-owned) | Imported into `CLAUDE.md` via a bracketed `@CLAUDE_TEAM.md` line |
+| `CLAUDE_TEAM.md` | Project context for the team (kit-owned) | Imported into `CLAUDE.md` via a bracketed `@CLAUDE_TEAM.md` line |
 | `CLAUDE.md` | Project-owned context file | Kit adds/removes only the bracketed import line; everything else is yours |
 | `.claude/team-variables.yaml` | Per-project persisted variables | Human-readable, hand-editable, survives kit upgrades |
 | `.claude/settings.json` | Agent team config and permissions | Auto-loaded by Claude Code at session start |

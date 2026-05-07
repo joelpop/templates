@@ -27,6 +27,6 @@ if ! docker sandbox ls 2>/dev/null | grep -qw "${SANDBOX_NAME}"; then
 fi
 
 # Start at the project workspace; the user expects to land where
-# agents normally work, not wherever docker's default cwd is.
+# the team normally works, not wherever docker's default cwd is.
 exec docker sandbox exec -it "${SANDBOX_NAME}" \
     bash -c 'cd "$1" && exec bash' _ "${PROJECT_DIR}"

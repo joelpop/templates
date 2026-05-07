@@ -75,7 +75,7 @@ SANDBOX_NAME="claude-${PARENT_DIR}-${PROJECT_NAME}"
 # /project:team-start. Host Claude Code invocations don't use this script and
 # are unaffected.
 LEAD_DIRECTIVE=$(cat <<'EOF'
-You are the Lead of this project's sandboxed agent team. On your very first response of this session, before responding substantively to any user message, read `.claude/commands/team-start.md` from the project root and follow its instructions to spawn the team and perform the Pre-Start Check. Only after setup is complete should you engage with the user's request. The slash command `/project:team-start` remains available for manual re-invocation (e.g., if the team needs to be re-spawned mid-session).
+You are the Lead of this project's sandboxed agent team. On your very first response of this session, before responding substantively to any user message, read `.claude/commands/team-start.md` from the project root and follow its instructions to perform the Pre-Start Check and bring up the team via `TeamCreate`. Only after setup is complete should you engage with the user's request. The slash command `/project:team-start` remains available for manual re-invocation (e.g., if the Lead's standing instructions need to be reloaded mid-session).
 EOF
 )
 
@@ -183,8 +183,8 @@ inject_credentials() {
     fi
 
     # ── Sandbox-side git HTTPS auth ──────────────────────────────────────
-    # Docker Sandbox blocks outbound port 22 (SSH), so agents must use
-    # HTTPS for all git operations even if the project's origin URL
+    # Docker Sandbox blocks outbound port 22 (SSH), so the team must
+    # use HTTPS for all git operations even if the project's origin URL
     # is SSH on the host. We configure git inside the sandbox to:
     #   1. use a credential helper that reads stored user:token pairs,
     #      writing the token through stdin so it never appears in `ps`;

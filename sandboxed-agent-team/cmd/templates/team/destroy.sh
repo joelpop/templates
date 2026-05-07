@@ -60,7 +60,7 @@ fi
 
 # Clean up git worktrees created by the agent team.
 if [ -d "${PROJECT_DIR}/.claude/.worktrees" ]; then
-    echo "Cleaning up agent worktrees..."
+    echo "Cleaning up teammate worktrees..."
     for wt in "${PROJECT_DIR}/.claude/.worktrees"/*/; do
         git -C "$PROJECT_DIR" worktree remove --force "${wt%/}" 2>/dev/null || true
     done

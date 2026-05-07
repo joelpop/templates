@@ -97,7 +97,7 @@ if [ -n "${SSH_HOST}" ] && [ -f "${HOME}/.ssh/config" ]; then
 fi
 
 # ── Platform API token (for sandbox's HTTPS git access) ──────────────────────
-# Docker Sandbox blocks outbound port 22, so agent git operations
+# Docker Sandbox blocks outbound port 22, so teammate git operations
 # (fetch, push, PR API) must go over HTTPS regardless of how the
 # host accesses the repo. We need an app password / PAT / GitLab
 # PAT to authenticate.
@@ -250,7 +250,7 @@ BANNER
 
         echo "=== Repo-platform API token (${REPO_PLATFORM_TYPE}) ==="
         echo ""
-        echo "Agents inside the sandbox push commits to your repo and"
+        echo "Teammates inside the sandbox push commits to your repo and"
         echo "drive PRs. The sandbox blocks outbound SSH, so this goes"
         echo "over HTTPS and needs a token scoped to this repo."
         echo ""
@@ -296,7 +296,7 @@ BANNER
                 # as the username alongside a PAT as the password.
                 API_USER="oauth2" ;;
         esac
-        echo "Leave the token blank to skip — agents can still read"
+        echo "Leave the token blank to skip — teammates can still read"
         echo "public repos but won't be able to push or drive PRs on"
         echo "private ones."
         echo ""

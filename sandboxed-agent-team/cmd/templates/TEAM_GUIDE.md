@@ -34,17 +34,20 @@ You only talk to the Lead. The Lead coordinates everything else.
 
 ## Daily Use
 
-**Note:** Teammates run as subagents within the Lead's session —
-their work appears as expandable blocks in the same terminal. Each
-agent does not get its own terminal pane.
+**Note:** Each teammate runs as a separate Claude Code instance
+with its own context window. From the Lead's terminal you can
+cycle through teammates with `Shift+Down` and message any of them
+directly, but you typically don't need to — the Lead coordinates
+the team for you.
 
 1. At your host terminal (in the project directory), reattach to
    your sandbox: `./team/attach.sh`. This drops you into a Claude
    Code session running inside the sandbox. The session's system
-   prompt auto-loads the Lead role, so the team spawns as soon as
-   you send your first message — no slash command required. Once
-   setup completes, the statusline shows "Agent Team Mode" as a
-   visible confirmation that you're talking to the team.
+   prompt auto-loads the Lead role, so the team comes up
+   automatically on your first message — the Lead bootstraps and
+   brings up the teammates for you. No slash command required.
+   Once setup completes, the statusline shows "Agent Team Mode" as
+   a visible confirmation that you're talking to the team.
    (If `attach.sh` reports no sandbox exists, run
    `./team/create.sh` to rebuild one.)
 2. Describe what you want to the Lead. The Lead coordinates the team
@@ -67,8 +70,9 @@ agent does not get its own terminal pane.
    per-project setting (`Include cost report in commit message:
    yes|no` in `CLAUDE.md`'s Branching section). Ask the Lead to
    change it if you want a different default.
-6. You can ask agents to take screenshots of the running application
-   for visual verification — tell the Lead what you want to see.
+6. You can ask the team to take screenshots of the running
+   application for visual verification — tell the Lead what you
+   want to see.
 
 ## How Requirements Work
 
@@ -84,9 +88,9 @@ agent does not get its own terminal pane.
 
 ## How Implementation Works
 
-- Each task has a task branch, and each agent gets a sub-branch for
-  their work. Agents merge into the task branch; the Integrator merges
-  the task branch to `<DEV_BRANCH_NAME>`.
+- Each task has a task branch, and each teammate gets a sub-branch
+  for their work. Teammates merge into the task branch; the
+  Integrator merges the task branch to `<DEV_BRANCH_NAME>`.
 - Within a task, the Lead may split file-disjoint work across multiple
   Coders, each with a paired Unit Tester. Dependencies between
   subtasks are handled in phases.
@@ -107,8 +111,10 @@ without running the app yourself.
 
 ## If Something Goes Wrong
 
-- **Agent seems stuck or unresponsive:** Tell the Lead. The Lead will
-  respawn the agent.
+- **Teammate seems stuck or unresponsive:** Tell the Lead. The
+  Lead will recover the teammate — resume first; spawn a
+  replacement from the same agent definition if resume fails (see
+  Teammate Recovery in `team-start.md`).
 - **The Lead itself loses context mid-session:** Run
   `/project:team-start` at the sandbox's Claude Code prompt to
   re-invoke the Lead. The auto-load fires only at session start, so

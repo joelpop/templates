@@ -15,11 +15,12 @@ the repo, so any developer joining the project can invoke it to
 recreate the same local environment.
 
 Onboarding creates three things: a **Docker sandbox** (an isolated
-environment where the agents run, built from a project-specific
+environment where the team runs, built from a project-specific
 Dockerfile), **authentication material** (Claude Code credentials
 and a repo-platform API token, provisioned into the sandbox at each
-startup so agents can reach Claude and the Git remote over HTTPS),
-and **agent team permissions** (`.claude/settings.json` tailored
+startup so teammates can reach Claude and the Git remote over
+HTTPS), and **agent team permissions** (`.claude/settings.json`
+tailored
 for this project). These artifacts are developer-local and
 gitignored — each developer generates their own from this file — so
 credentials and host-specific paths never get committed. The end
@@ -28,7 +29,7 @@ state is a running sandbox with the agent team ready for work.
 This document has two parts. Everything above the divider is
 human-facing front matter — read this to understand what onboarding
 provides and how to invoke it. Everything below the divider is a
-setup checklist executed by the agent when you point it at this file.
+setup checklist executed by Claude Code when you point it at this file.
 
 **In this section:**
 - [Quick Start](#quick-start) — invoke the setup checklist
@@ -56,7 +57,7 @@ you for the rest:
 - A **repo-platform API token** — Bitbucket app password, GitHub
   fine-grained PAT, or GitLab PAT. Required for any private repo
   so the sandbox can reach it over HTTPS. The sandbox can't use
-  SSH (Docker Sandbox blocks outbound port 22), so agents reach
+  SSH (Docker Sandbox blocks outbound port 22), so teammates reach
   the repo over HTTPS and need a token to authenticate pushes and
   PR API calls. Bitbucket: app password with Repositories R+W and
   Pull requests R+W. GitHub: fine-grained PAT with Contents R+W
@@ -112,9 +113,10 @@ Once onboarding is complete:
    context) or `fresh` (start a new session). Flags `--resume` and
    `--fresh` skip the prompt. You're dropped into Claude Code
    running inside the sandbox; the system prompt auto-loads the
-   Lead role, so the team spawns on your first message — no slash
-   command required. The statusline shows "Agent Team Mode" as
-   visible confirmation.
+   Lead role, so the team comes up automatically on your first
+   message — the Lead bootstraps and brings up the teammates for
+   you. No slash command required. The statusline shows "Agent
+   Team Mode" as visible confirmation.
 
    (If `attach.sh` reports no sandbox exists, run `./team/create.sh`
    to rebuild one.)

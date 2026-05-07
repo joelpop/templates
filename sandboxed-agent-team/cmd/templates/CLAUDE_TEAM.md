@@ -26,7 +26,7 @@
 
 ## Documentation Sources (MCP Servers)
 The following MCP servers are configured in `.mcp.json` at the
-project root and available to all agents. Prefer these over training
+project root and available to all teammates. Prefer these over training
 data — training data may be outdated or describe deprecated patterns.
 
 | Server | Provides | Primary Users |
@@ -39,9 +39,9 @@ data — training data may be outdated or describe deprecated patterns.
 
 When in doubt about a framework API, query the relevant MCP server
 before writing code. The "Primary Users" column is guidance — all
-servers are available to all agents.
+servers are available to all teammates.
 
-**Visual debugging with `playwright`:** Any agent can use the
+**Visual debugging with `playwright`:** Any teammate can use the
 `playwright` MCP server to interact with the running application
 (requires the dev server to be running — see Key Commands). Navigate
 to pages, take screenshots, click elements, and inspect visual state.
@@ -119,19 +119,19 @@ The master index is `docs/INDEX.md`. It is a sample file seeded at
 setup time — setup does not overwrite it on re-runs, so edit it
 freely as the project's docs evolve.
 
-### Tags and agent reading rules
+### Tags and teammate reading rules
 
 - **AGNOSTIC** — project-agnostic patterns, preferences, and
-  standing guidance under `docs/agnostic/`. Every agent re-reads
+  standing guidance under `docs/agnostic/`. Every teammate re-reads
   all of these before starting any task.
 - **NON-FUNCTIONAL** — quality attribute requirements under
-  `docs/reqs/non-functional/` (ISO 25010). Every agent re-reads all
+  `docs/reqs/non-functional/` (ISO 25010). Every teammate re-reads all
   of these before starting any task. Files listed that do not yet
   exist should be skipped — their absence is expected early in the
   project and does not indicate missing context.
 - **FUNCTIONAL-CROSS-CUTTING** — behavioral requirements spanning
   multiple features, under `docs/reqs/functional/cross-cutting/`.
-  Every agent re-reads all of these before any task.
+  Every teammate re-reads all of these before any task.
 - **FUNCTIONAL-DATA** — data model and persistence, under
   `docs/reqs/functional/data/`. Re-read when working on
   data-related tasks.
@@ -151,7 +151,7 @@ freely as the project's docs evolve.
 - **TECHNICAL** — stack, tooling, and design constraints, under
   `docs/reqs/technical/`. Re-read as relevant to the current task.
 - **ARCHITECTURAL** — structural debt and design decisions, under
-  `docs/reqs/`. Every agent re-reads all of these before any task.
+  `docs/reqs/`. Every teammate re-reads all of these before any task.
 - **TECH-REF** — implementation patterns the team uses (the
   "pattern playbook"), under `docs/tech/`. Curated by the
   Architect, committed by the Analyst. Re-read entries linked from
@@ -161,7 +161,7 @@ freely as the project's docs evolve.
 - **GLOSSARY** — entries in `docs/glossary.md`, the project's
   implementation-agnostic vocabulary used by requirements via
   inline Markdown links. Curated by the Architect, committed by the
-  Analyst. Every agent re-reads `docs/glossary.md` before starting
+  Analyst. Every teammate reads `docs/glossary.md` before starting
   any task (it is small) so requirement links resolve.
 
 Feature-scoped non-functional requirements (e.g., "dashboard loads in
@@ -198,20 +198,20 @@ These rules prevent teammates from overwriting each other's work:
   Lead updates this section to reflect the new layout.
 
 Ownership map (auto-derived — adjust after structural changes):
-- `src/main/java/`            → Coder agent
-- `src/main/resources/`       → Coder agent
-- `src/main/frontend/`        → Coder agent
-- `src/test/java/`            → Unit Tester agent
-- `<e2e-test-dir>/`           → E2E Tester agent
-- `docs/`                     → Analyst agent
+- `src/main/java/`            → Coder
+- `src/main/resources/`       → Coder
+- `src/main/frontend/`        → Coder
+- `src/test/java/`            → Unit Tester
+- `<e2e-test-dir>/`           → E2E Tester
+- `docs/`                     → Analyst
 - `pom.xml`                   → COORDINATE (Lead approves)
 - `README.md`                 → COORDINATE (Lead approves)
 - CI/CD config (e.g., `.github/workflows/`) → COORDINATE (Lead approves)
 - `Dockerfile` / `docker-compose.yml` → COORDINATE (Lead approves)
-- DB migrations (e.g., `src/main/resources/db/migration/`) → Coder agent (Architect reviews)
+- DB migrations (e.g., `src/main/resources/db/migration/`) → Coder (Architect reviews)
 
 **Multi-module projects:** Replace the map above with per-module
-entries (e.g., `module-a/src/main/java/` → Coder agent). Each module's
+entries (e.g., `module-a/src/main/java/` → Coder). Each module's
 `pom.xml` is COORDINATE. The root `pom.xml` is COORDINATE. The Lead
 may assign different Coders to different modules for parallel subtasks.
 
@@ -255,7 +255,7 @@ Specifically:
 Vaadin is a server-side UI framework. The UI is built in Java, runs on
 the server, and Vaadin handles all client-server communication
 automatically. This is fundamentally different from traditional web
-development, and agents MUST use Vaadin idioms — not patterns from
+development, and teammates MUST use Vaadin idioms — not patterns from
 their general web training data.
 
 **Core paradigm:**
@@ -284,7 +284,7 @@ their general web training data.
 - Servlet filters for auth — use Vaadin's view-level access control
   (`@RolesAllowed`, `@PermitAll`, `@AnonymousAllowed`)
 
-**Before starting any Vaadin-related task**, every agent must consult
+**Before starting any Vaadin-related task**, every teammate must consult
 the `vaadin` MCP server to get current information about modern Vaadin
 development. For Spring-related work, consult `spring-docs`. For Java
 API questions, consult `java`. Do not rely on training data —
@@ -299,7 +299,7 @@ content above with the relevant paradigm, anti-patterns, and
 documentation sources for the project's actual framework.
 
 ## CRITICAL: Requirements Are Not Negotiable
-**Agents must NEVER change project requirements to match their implementation.**
+**Teammates must NEVER change project requirements to match their implementation.**
 
 If a requirement specifies a version, library, framework, or approach:
 - Use that exact version/library/framework, even if you have limited
@@ -319,11 +319,11 @@ If a requirement specifies a version, library, framework, or approach:
 Violations of this rule — silently changing requirements or ignoring
 in-project documentation in favor of general training — are treated as
 the highest-severity issue and must be escalated to the Lead immediately
-by any agent that notices.
+by any teammate that notices.
 
 ## Requirements Ambiguity — Do Not Guess
 Requirements will sometimes be unclear, ambiguous, conflicting, or
-insufficiently specified. When this happens, agents must escalate —
+insufficiently specified. When this happens, teammates must escalate —
 not guess.
 
 **Recognize these ambiguity signals:**
@@ -462,24 +462,25 @@ Requirement branch statuses:
   approval. Tracked in `.claude/.progress.md`.
 - Task branches: `task/<task-id>` — branched off `<DEV_BRANCH_NAME>` by the
   Integrator for each implementation task.
-- Agent sub-branches: `task/<task-id>/<role>` — each agent branches off
-  the task branch to do their work:
+- Teammate sub-branches: `task/<task-id>/<role>` — each teammate
+  branches off the task branch to do their work:
   - `task/<task-id>/coder` (or `coder-a`, `coder-b` when the Lead
-    splits a task across parallel Coders — see Parallel Subtask Coders
-    in Coordination Rules in team-start.md)
+    splits a task across parallel Coders — see Parallel Subtask
+    Coders in Coordination Rules in team-start.md)
   - `task/<task-id>/unit-tester`
   - `task/<task-id>/e2e-tester`
   - `task/<task-id>/janitor`
   - The Analyst has no sub-branch — it works on `requirement/<slug>`
     branches and commits status marks directly on the task branch.
-  - The Architect has no branch — it reads code on other agents' branches
-    but does not commit.
-- Agent sub-branch operations: each agent creates their sub-branch once
-  at the start of the task and reuses it for all commit cycles within
-  that task. Merge (not rebase) in both directions — merge FROM the task
-  branch to stay current, merge INTO the task branch using the Task
-  Branch Merge Protocol (see Coordination Rules in team-start.md).
-  No agent commits to another agent's branch.
+  - The Architect has no branch — it reads code on other teammates'
+    branches but does not commit.
+- Teammate sub-branch operations: each teammate creates their
+  sub-branch once at the start of the task and reuses it for all
+  commit cycles within that task. Merge (not rebase) in both
+  directions — merge FROM the task branch to stay current, merge
+  INTO the task branch using the Task Branch Merge Protocol (see
+  Coordination Rules in team-start.md). No teammate commits to
+  another teammate's branch.
   Sub-branches are local only — they are never pushed to the remote. Only
   `<DEV_BRANCH_NAME>` interacts with the remote (via the Integration Merge
   Workflow).
@@ -553,7 +554,7 @@ explicitly re-reading the following files in order:
 
 **Worktree note:** Items 1–6 are version-controlled and exist in every
 worktree. Items 7–8 are gitignored and exist only in the main project
-root. Sub-agents in worktrees must use the absolute project root path
+root. Teammates in worktrees must use the absolute project root path
 (provided by the Lead at spawn time) to read these files — do not use
 relative paths.
 

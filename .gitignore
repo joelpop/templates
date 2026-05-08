@@ -17,3 +17,6 @@ ignored/
 # root; make release writes per-platform binaries to release/).
 /sandboxed-agent-team/agent-team-install
 /sandboxed-agent-team/release/
+# Stray dev binaries from `go build` inside cmd/.
+/sandboxed-agent-team/cmd/sandboxed-agent-team
+/sandboxed-agent-team/cmd/cmd

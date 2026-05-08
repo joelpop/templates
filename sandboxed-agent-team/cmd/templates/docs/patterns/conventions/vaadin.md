@@ -2,7 +2,7 @@
 
 Standards for building Vaadin 24+ server-side UI components, views, layouts, and event
 systems. Patterns are identical across 24.x and 25.x unless an inline **"Vaadin ≥X / <X"**
-note calls out a version-specific difference. See `docs/agnostic/README.md` → "Version
+note calls out a version-specific difference. See `docs/patterns/README.md` → "Version
 Compatibility" for the summary matrix.
 
 ## `@SpringComponent` over `@Component` in Vaadin Modules
@@ -122,7 +122,7 @@ Classes that do not extend `Component` — such as delegating dialogs — must u
 registration and event firing semantics as Vaadin's `ComponentEvent` system.
 
 The three infrastructure classes (`NonComponent`, `NonComponentEvent<N>`, and
-`NonComponentEventSupport<N>`) are defined in `docs/agnostic/ui/components.md` →
+`NonComponentEventSupport<N>`) are defined in `docs/patterns/ui/components.md` →
 "NonComponent Event Infrastructure" — copy them into a shared event package in your UI
 module. This section covers the *caller-side* pattern: defining typed event subclasses,
 exposing convenience `add*Listener` methods, and firing through the support instance.
@@ -357,7 +357,7 @@ may be displayed only as a toast.
 >
 > **Vaadin <24.4:** `@Menu` is not available. Register `SideNavItem` instances manually in
 > `MainLayout` and use the role-conditional rendering pattern (see
-> `docs/agnostic/ui/navigation.md` → Conditional Navigation Rendering).
+> `docs/patterns/ui/navigation.md` → Conditional Navigation Rendering).
 
 ```java
 @Route("items")

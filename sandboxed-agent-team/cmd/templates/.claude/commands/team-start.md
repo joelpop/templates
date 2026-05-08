@@ -184,27 +184,28 @@ without warning.
 
 1. `CLAUDE.md` — stack, ownership rules, critical constraints
 2. `docs/INDEX.md` — master list of all requirement, glossary, and
-   tech-ref documents
+   architecture documents
 3. `docs/glossary.md` — agnostic vocabulary referenced inline by
    requirement docs (Markdown links). Read this before any
    requirement doc so the linked terms make sense.
 4. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
    ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL,
-   ENVIRONMENTAL, EXTERNAL-INTERFACE, or TECH-REF docs relevant to
-   your current task
-5. `docs/reqs/architecture-debt.md` — known structural debt
-6. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
-   all FEATURE-SUPPLEMENTAL docs linked from it. Follow inline
-   Markdown links from the requirements into `docs/glossary.md` and
-   `docs/tech/` as you encounter them — those are part of the
-   requirement's intent.
+   ENVIRONMENTAL, or EXTERNAL-INTERFACE docs relevant to your
+   current task. Also any PATTERN entry your role's Primary
+   references list points at (see your agent definition).
+5. `docs/architecture/architecture-debt.md` — known structural debt
+6. The FEATURE doc in `docs/INDEX.md` matching your current task,
+   plus all FEATURE-SUPPLEMENTAL docs linked from it. Follow
+   inline Markdown links from the requirements into
+   `docs/glossary.md` and `docs/architecture/` as you encounter
+   them — those are part of the requirement's intent.
 7. `.claude/.tasks/<your-task>.md` — your specific assignment
 8. `.claude/.progress.md` — which task is active, which are suspended.
    Verify you are working on the correct active task.
 
 **Worktree note:** Items 1–6 are version-controlled and exist in every
 worktree. Items 7–8 are gitignored and exist only in the main project
-root. Sub-agents in worktrees must use the absolute project root path
+root. Teammates in worktrees must use the absolute project root path
 (provided by the Lead at spawn time) to read these files — do not use
 relative paths.
 
@@ -232,8 +233,8 @@ held hostage to a single implementation.
   requirements link to inline. The glossary is the canonical
   vocabulary; if a needed term is missing, the Architect proposes
   one during pre-review.
-- **Technical Reference** (`docs/tech/`, curated by the
-  Architect, committed by the Analyst; tagged TECH-REF in
+- **Technical Reference** (`docs/architecture/`, curated by the
+  Architect, committed by the Analyst; tagged ARCHITECTURE in
   `docs/INDEX.md`) — pattern playbook describing HOW the team
   builds things at a level above code but below requirements. Each
   entry covers a recurring pattern (e.g., "edit surfaces with
@@ -284,7 +285,7 @@ new glossary entries up front.
 4. Architect responds with one of three outcomes:
    a. **Linked** — Replaces or annotates implementation-suggestive
       terms with links into `docs/glossary.md` (agnostic
-      replacements) or `docs/tech/` (justified concrete terms).
+      replacements) or `docs/architecture/` (justified concrete terms).
       Returns the revised draft to the Analyst.
    b. **New glossary entry** — When no existing agnostic term
       captures the intent, the Architect drafts a new glossary
@@ -316,11 +317,11 @@ the human sanction the new vocabulary in step 6. Only flag back to
 the Analyst (4c) if the abstraction itself is unclear and needs
 human disambiguation before any term can be coined.
 
-**Tech-ref entries.**
-Tech-ref entries are usually proposed during task kickoff, not
+**Architecture entries.**
+Architecture entries are usually proposed during task kickoff, not
 requirement pre-review. When the Architect proposes a structural
 approach for a task and the human approves it (see Task Kickoff in
-Task and PR Flow), the Architect drafts a corresponding tech-ref
+Task and PR Flow), the Architect drafts a corresponding architecture
 entry; the Analyst commits it on the task branch. This records each
 pattern at the moment it is decided, not retroactively. Justification
 entries (for concrete terms that survive in a requirement) are
@@ -848,6 +849,114 @@ including mid-implementation. The procedure depends on the change:
    cycle needed). No impact on active tasks. If the clarification
    touches glossary-linked terms or introduces new vocabulary, route
    it through Architect pre-review like a revision.
+
+### Task Shapes
+
+The Task and PR Flow below is the most-detailed lifecycle, used by
+default for **New capability** tasks. Other task shapes use a
+*subset* of that flow — they skip the steps that aren't earning
+their keep for that kind of work. The Lead picks the shape based
+on the Request Triage classification (above) and tells the
+Integrator which shape applies when drafting the task file.
+
+| Triage classification | Task shape | Notes |
+|----------------------|-----------|-------|
+| New requirement | **New capability** | Default; full Task and PR Flow applies. Requirement Gate Workflow runs first to land the requirement, then the task is created against it. |
+| Refinement | **Refinement** | Slimmer — see below. |
+| Preference | **Trivial fix** | See below. |
+| Bug report | **Bug fix (doc-first)** | See below. |
+| New project-agnostic pattern | **Pattern intake** | See below. |
+| New architectural pattern | **Architecture intake** | Same shape as Pattern intake; the entry just lands in `docs/architecture/` instead of `docs/patterns/`. |
+| New glossary term | (no full task) | Handled inline by Architect Pre-Review of Requirements. |
+| Trivial change | **Trivial fix** | See below. |
+| Architectural refactor | **Architectural refactor** | See below. |
+| Question | (no task) | The Lead answers, routes, or escalates. |
+
+What each non-default shape skips or adds, relative to the full
+Task and PR Flow below:
+
+#### Refinement
+
+A change to *how* an existing requirement is implemented, within
+the requirement's current scope.
+
+- **Skip** the 5-teammate acknowledgment round (step 5) — there
+  is no new requirement to consistency-check.
+- **Skip** the Architect approach approval (step 6) unless the
+  refinement reveals an unanticipated structural concern; the
+  Architect can flag mid-stream via mailbox.
+- **Keep** the per-commit cycle (steps 8–11) — refinements still
+  need testing.
+- **Keep** the pre-PR gate (steps 12–14) — full unit suite +
+  full E2E suite + Analyst coverage check.
+
+#### Trivial fix
+
+Typo, formatting, comment update, single-line cleanup —
+classification clearly indicates no judgment work needed.
+
+- **Skip** the 5-teammate acknowledgment round (step 5).
+- **Skip** the Architect approach approval (step 6).
+- **Skip** per-commit Architect review — Architect doesn't review
+  trivial commits unless mailbox-flagged.
+- **Skip** the full E2E suite (step 13) if the change can't
+  affect UI behavior. Keep the full unit suite (step 12).
+- **Keep** Analyst coverage check (step 14, but light) and human
+  validation (step 15).
+
+#### Bug fix (doc-first)
+
+Triage's doc-first-fix routing already diagnosed the gap kind
+(missing requirement / AC / pattern / architecture entry). The
+fix path:
+
+1. Fix the doc gap first. Route to Analyst (for missing
+   requirement or AC), Architect (for missing pattern or
+   architecture entry); follow the relevant intake flow above.
+2. Once docs are committed, the code fix flows through the
+   normal per-commit cycle and pre-PR gate scoped to the parts
+   the doc fix surfaces.
+
+If the gap was "implementation defect with all docs intact," no
+doc fix needed — go straight to the per-commit cycle and pre-PR
+gate. Otherwise this shape is sequenced: docs first, code
+second, regardless of how small the code change is.
+
+#### Architectural refactor
+
+Recognized pattern requiring change across multiple call sites
+(the `ContentData` / `PersonName` kind of refactor). The
+Architect's proposed pattern is already documented in
+`docs/architecture/` (or `docs/patterns/` if portable) by Triage
+dispatch.
+
+- **Replace** step 6 with: Architect's pattern entry is binding;
+  no separate per-task design needed.
+- **Per-commit cycle**: same as default, but the work may span
+  many files and many commits. The Architect reviews each commit
+  in the cycle as usual. Watch for cases where the refactor
+  reveals call sites that don't fit cleanly — those become
+  follow-up work, not in-scope inflation.
+- **Pre-PR gate**: full unit suite + full E2E suite. Refactors
+  often affect a lot — be conservative.
+- **Human validation**: the human is reviewing structural change,
+  not feature behavior; expect different scrutiny.
+
+#### Pattern intake (and Architecture intake)
+
+Capturing a new project-agnostic pattern in `docs/patterns/` (or
+project-specific in `docs/architecture/`) without a code change.
+
+- **Skip** the entire per-commit / pre-PR gate sequence (no
+  code).
+- **Replace** with: Architect drafts the entry on a
+  `requirement/<slug>` branch (re-purposed for pattern intake).
+  Analyst commits. Lead presents to human for approval. On
+  approval, normal merge-to-dev (Integration Merge Workflow R
+  variant).
+- If the pattern intake also requires applying the pattern to
+  existing code, that's a separate **Architectural refactor**
+  task that the Lead creates after the pattern entry merges.
 
 ### Task and PR Flow
 

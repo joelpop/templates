@@ -95,74 +95,75 @@ Verifying takes seconds. Drift compounds.
 
 ## Documentation Index
 
-The kit's documentation convention splits `docs/` into the
-following trees:
+See `docs/INDEX.md` for the master pointer to the four-tree
+structure. Briefly:
 
-- `docs/agnostic/` — project-agnostic patterns, preferences, and
-  standing guidance (not tied to a specific project's requirements).
-- `docs/reqs/` — project-specific requirements following IEEE 830 /
-  ISO 29148 (SRS structure) and ISO 25010 (quality model).
-- `docs/tech/` — project-specific technical reference (the
-  "pattern playbook"). Describes HOW the team implements recurring
-  patterns, at a level above code but below requirements. Curated
-  by the Architect, committed by the Analyst. Entries can describe
-  planned or already-implemented patterns and grow as new patterns
-  are decided.
-- `docs/glossary.md` — the project's implementation-agnostic
-  vocabulary used by requirements via inline Markdown links (e.g.,
-  "edit affordance" instead of "dialog"). Curated by the Architect,
-  committed by the Analyst. Note: the term "agnostic" here means
-  *implementation-agnostic* — separate from the `AGNOSTIC` tag,
-  which marks project-agnostic content under `docs/agnostic/`.
+- `docs/reqs/` — project-specific requirements (Analyst owns).
+  IEEE 830 / ISO 29148 (SRS structure) and ISO 25010 (quality
+  model).
+- `docs/patterns/` — project-agnostic conventions, architecture
+  patterns, and recipes for the project's stack. Curated by the
+  Architect, committed by the Analyst. Designed to extract and
+  reuse across projects.
+- `docs/architecture/` — project-specific architecture and
+  design — *how this codebase realizes the requirements*.
+  Curated by the Architect, committed by the Analyst.
+- `docs/guides/` — install / deploy / user / admin / operator
+  guides. Owned by the Tech Writer; release-cadence updates.
+- `docs/glossary.md` — the project's canonical vocabulary
+  (implementation-agnostic terms with optional slang variants).
+  Curated by the Architect, committed by the Analyst.
 
-The master index is `docs/INDEX.md`. It is a sample file seeded at
-setup time — setup does not overwrite it on re-runs, so edit it
-freely as the project's docs evolve.
+`docs/INDEX.md` is a sample file seeded at setup time — setup
+does not overwrite it on re-runs, so edit it freely as the
+project's docs evolve.
 
 ### Tags and teammate reading rules
 
-- **AGNOSTIC** — project-agnostic patterns, preferences, and
-  standing guidance under `docs/agnostic/`. Every teammate re-reads
-  all of these before starting any task.
+- **PATTERN** — project-agnostic conventions, architecture
+  patterns, and recipes under `docs/patterns/`. Every teammate
+  reads relevant entries (per the Primary references in their
+  agent definition).
 - **NON-FUNCTIONAL** — quality attribute requirements under
-  `docs/reqs/non-functional/` (ISO 25010). Every teammate re-reads all
-  of these before starting any task. Files listed that do not yet
-  exist should be skipped — their absence is expected early in the
-  project and does not indicate missing context.
+  `docs/reqs/non-functional/` (ISO 25010). Every teammate reads
+  all of these before starting any task. Files listed that do not
+  yet exist should be skipped — their absence is expected early
+  in the project and does not indicate missing context.
 - **FUNCTIONAL-CROSS-CUTTING** — behavioral requirements spanning
   multiple features, under `docs/reqs/functional/cross-cutting/`.
-  Every teammate re-reads all of these before any task.
+  Every teammate reads all of these before any task.
 - **FUNCTIONAL-DATA** — data model and persistence, under
-  `docs/reqs/functional/data/`. Re-read when working on
-  data-related tasks.
+  `docs/reqs/functional/data/`. Read when working on data-related
+  tasks.
 - **FUNCTIONAL-FEATURE** — primary doc for a specific feature,
-  under `docs/reqs/functional/features/`. Re-read the primary doc
-  AND all supplementals for the feature currently being worked on.
+  under `docs/reqs/functional/features/`. Read the primary doc
+  AND all supplementals for the feature currently being worked
+  on.
 - **FUNCTIONAL-FEATURE-SUPPLEMENTAL** — additional detail for a
   feature (views, UX, feature-scoped NFRs, etc.); does not stand
   alone. Each entry must include an "Also read" pointer to its
   primary FEATURE doc, and vice versa.
 - **EXTERNAL-INTERFACE** — system boundary and interface
-  requirements, under `docs/reqs/external-interfaces/`. Re-read when
+  requirements, under `docs/reqs/external-interfaces/`. Read when
   touching those interfaces.
 - **ENVIRONMENTAL** — infrastructure and deployment requirements,
-  under `docs/reqs/environmental/`. Re-read when touching deployment
+  under `docs/reqs/environmental/`. Read when touching deployment
   or infrastructure.
-- **TECHNICAL** — stack, tooling, and design constraints, under
-  `docs/reqs/technical/`. Re-read as relevant to the current task.
-- **ARCHITECTURAL** — structural debt and design decisions, under
-  `docs/reqs/`. Every teammate re-reads all of these before any task.
-- **TECH-REF** — implementation patterns the team uses (the
-  "pattern playbook"), under `docs/tech/`. Curated by the
-  Architect, committed by the Analyst. Re-read entries linked from
-  the in-scope requirements of your current task; the Architect
-  also reads these at task kickoff to anchor structural proposals
-  in existing patterns.
-- **GLOSSARY** — entries in `docs/glossary.md`, the project's
-  implementation-agnostic vocabulary used by requirements via
-  inline Markdown links. Curated by the Architect, committed by the
-  Analyst. Every teammate reads `docs/glossary.md` before starting
-  any task (it is small) so requirement links resolve.
+- **TECHNICAL** — stack, tooling, and design constraints
+  expressed as requirements, under `docs/reqs/technical/`. Read
+  as relevant to the current task.
+- **ARCHITECTURAL** — structural debt and design decisions; the
+  project-specific architecture entries under
+  `docs/architecture/`. The Architect curates; every teammate
+  reads relevant entries during their task work (per the Primary
+  references in their agent definition).
+- **GUIDE** — user-facing guide content under `docs/guides/`.
+  Owned by the Tech Writer; teammates rarely consult unless
+  release notes or deployment behavior is in scope.
+- **GLOSSARY** — entries in `docs/glossary.md`. Curated by the
+  Architect, committed by the Analyst. Every teammate reads
+  `docs/glossary.md` before starting any task (it is small) so
+  requirement links resolve.
 
 Feature-scoped non-functional requirements (e.g., "dashboard loads in
 2 seconds") live under the feature as FUNCTIONAL-FEATURE-SUPPLEMENTAL,
@@ -778,19 +779,20 @@ explicitly re-reading the following files in order:
 
 1. `CLAUDE.md` (this file) — stack, ownership rules, critical constraints
 2. `docs/INDEX.md` — master list of all requirement, glossary, and
-   tech-ref documents
+   architecture documents
 3. `docs/glossary.md` — agnostic vocabulary referenced inline by
    requirement docs (Markdown links). Read this before any
    requirement doc so the linked terms make sense.
 4. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
    ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL,
-   ENVIRONMENTAL, EXTERNAL-INTERFACE, or TECH-REF docs relevant to
-   your current task
-5. `docs/reqs/architecture-debt.md` — known structural debt
+   ENVIRONMENTAL, or EXTERNAL-INTERFACE docs relevant to your
+   current task. Also any PATTERN entry your role's Primary
+   references list points at (see your agent definition).
+5. `docs/architecture/architecture-debt.md` — known structural debt
 6. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
    all FEATURE-SUPPLEMENTAL docs linked from it. Follow inline
    Markdown links from the requirements into `docs/glossary.md` and
-   `docs/tech/` as you encounter them — those are part of the
+   `docs/architecture/` as you encounter them — those are part of the
    requirement's intent.
 7. `.claude/.tasks/<your-task>.md` — your specific assignment
 8. `.claude/.progress.md` — which task is active, which are suspended.

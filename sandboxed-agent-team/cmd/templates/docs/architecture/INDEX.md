@@ -7,7 +7,7 @@ project commits to (which may be project-specific applications of a
 generic pattern from `docs/patterns/`).
 
 This tree is curated by the **Architect** and committed by the
-**Analyst** (per the GLOSSARY AND TECH-REF COMMITS rule in the
+**Analyst** (per the GLOSSARY AND ARCHITECTURE COMMITS rule in the
 Analyst role). New entries are added when:
 
 - The Architect proposes a structural approach at task kickoff and

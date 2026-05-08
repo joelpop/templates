@@ -100,7 +100,7 @@ Group code by operation type, not by component. Within a constructor or method, 
 in this order:
 
 1. **Component initializations** — creating instances and configuring properties
-2. **Signal definitions** — creating and configuring Vaadin Signals *(skip on Vaadin <25; see `docs/agnostic/conventions/vaadin.md` → "Signals — When to Use Them")*
+2. **Signal definitions** — creating and configuring Vaadin Signals *(skip on Vaadin <25; see `docs/patterns/conventions/vaadin.md` → "Signals — When to Use Them")*
 3. **Signal bindings** — connecting signals to components (reactive UI) *(skip on Vaadin <25)*
 4. **Binder bindings** — connecting form fields to bean model (with validation)
 5. **Value settings** — setting initial/default values on fields or bean on Binder

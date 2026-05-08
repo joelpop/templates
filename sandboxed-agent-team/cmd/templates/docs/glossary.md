@@ -13,7 +13,7 @@ The project's canonical vocabulary. Every term defined here has:
   the canonical form.
 
 The Architect curates this file (proposing new entries during
-requirement pre-review and tech-ref work). The Analyst commits
+requirement pre-review and architecture work). The Analyst commits
 entries on the requirement branch alongside the requirements that
 introduce them.
 

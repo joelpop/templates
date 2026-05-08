@@ -164,7 +164,7 @@ spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
-See `docs/agnostic/testing/patterns.md` for test data patterns.
+See `docs/patterns/testing/patterns.md` for test data patterns.
 
 ## Health Check
 
@@ -182,7 +182,7 @@ All other Actuator endpoints are restricted or disabled in production.
 
 Application code logs through **SLF4J** — the facade defined by `org.slf4j.Logger` and
 `org.slf4j.LoggerFactory`, declared in classes via the `@Slf4j` annotation (see
-`docs/agnostic/conventions/lombok.md` → "for Logging"). The implementation that actually
+`docs/patterns/conventions/lombok.md` → "for Logging"). The implementation that actually
 formats and writes log records is **Logback**, pulled in transitively by
 `spring-boot-starter-logging` (which every other `spring-boot-starter-*` depends on, so
 nothing else needs to be declared). The same starter includes bridges for

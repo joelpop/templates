@@ -3,7 +3,7 @@
 Reusable UI component patterns for Vaadin 24+ applications: Quick Filter, Avatar, grids,
 forms, dialogs, notifications, and loading indicators. The patterns in this document work
 identically across every supported Vaadin line; the `_` unused-parameter syntax used in
-code examples requires Java 21+ (see `docs/agnostic/conventions/java.md` → "Unused Lambda
+code examples requires Java 21+ (see `docs/patterns/conventions/java.md` → "Unused Lambda
 Parameters" for the Java 17–20 alternative).
 
 ## Quick Filter
@@ -64,7 +64,7 @@ application-specific UI requirements — see `docs/reqs/external-interfaces/user
 > (full-dataset loading, record count, row-click → edit) were
 > project-specific requirements, not agnostic patterns. They have been
 > moved to `docs/reqs/functional/cross-cutting/admin-list.md` (the
-> canonical cross-cutting requirement) and `docs/tech/admin-grid.md`
+> canonical cross-cutting requirement) and `docs/architecture/admin-grid.md`
 > (the impl companion). Only the genuinely agnostic Column Configuration
 > guidance remains below.
 >
@@ -134,7 +134,7 @@ form.setResponsiveSteps(
 
 ## Dialogs — Delegation Pattern
 
-See `docs/agnostic/conventions/vaadin.md` for the full dialog delegation pattern. Summary:
+See `docs/patterns/conventions/vaadin.md` for the full dialog delegation pattern. Summary:
 
 - Never extend `Dialog` — wrap it via delegation
 - Implement `NonComponent` for event publishing from dialog classes
@@ -265,7 +265,7 @@ Dispatch is keyed by the event's runtime class, so a listener registered on
 `ComponentEventBus` behavior. The `Registration` returned from `addListener` removes the
 listener on `remove()`.
 
-See `docs/agnostic/conventions/vaadin.md` → "NonComponent Event System for Delegating
+See `docs/patterns/conventions/vaadin.md` → "NonComponent Event System for Delegating
 Dialogs" for the caller-side pattern (defining `SaveEvent` / `CancelEvent` subclasses,
 exposing typed `addSaveListener(Consumer<SaveEvent>)` convenience methods, and firing
 through the support instance).

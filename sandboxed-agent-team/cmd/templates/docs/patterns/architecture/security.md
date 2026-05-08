@@ -2,7 +2,7 @@
 
 Authentication, authorization, session management, and hardening patterns for
 Vaadin 24+ with Spring Security (Spring Boot 3+). Version-sensitive notes are inline
-where they apply; see `docs/agnostic/README.md` → "Version Compatibility" for the summary
+where they apply; see `docs/patterns/README.md` → "Version Compatibility" for the summary
 matrix.
 
 ## Authentication
@@ -272,7 +272,7 @@ chrome before the redirect.
 On **Vaadin 24.x**, the access-checker issue does not apply and `@PermitAll`
 works without the `anyRequest=permitAll` override.
 
-See `docs/agnostic/conventions/vaadin.md` → "Access Annotations on Layout
+See `docs/patterns/conventions/vaadin.md` → "Access Annotations on Layout
 Classes" for additional context. Each view's own annotation still controls
 access — the layout annotation only determines whether the layout itself
 blocks navigation.
@@ -298,10 +298,10 @@ interactive.
 For the full three-mode rubric (do not generate / hide / disable), layout-preservation
 guidance, and the Vaadin-server-state authority rule, see:
 
-- `docs/agnostic/ui/components.md` → "Conditional Component Rendering — Do Not Generate
+- `docs/patterns/ui/components.md` → "Conditional Component Rendering — Do Not Generate
   vs. Hide vs. Disable" and its "Layout Preservation — When a Placeholder Is Needed"
   subsection.
-- `docs/agnostic/ui/navigation.md` → "Conditional Navigation Rendering" for the
+- `docs/patterns/ui/navigation.md` → "Conditional Navigation Rendering" for the
   application to `SideNavItem` / menu entries.
 
 This section stops at the security *rule* — the canonical UI patterns for expressing it
@@ -446,7 +446,7 @@ Error responses must not expose:
 - Framework version information
 
 Stack traces appear only in server-side logs. Spring Boot's default `/error` endpoint must
-be suppressed or overridden. See `docs/agnostic/ui/error-views.md` for error view patterns.
+be suppressed or overridden. See `docs/patterns/ui/error-views.md` for error view patterns.
 
 HTTP response headers must not reveal the server technology stack:
 - `Server` header: absent or generic

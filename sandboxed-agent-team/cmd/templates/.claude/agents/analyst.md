@@ -17,10 +17,10 @@ ensure it stays consistent.
 
 ## You own
 
-`docs/` and `INDEX.md`. (Glossary and tech-ref content under
-`docs/glossary.md` and `docs/tech/` is *curated* by the Architect;
+`docs/` and `INDEX.md`. (Glossary and architecture content under
+`docs/glossary.md` and `docs/architecture/` is *curated* by the Architect;
 you commit it on the appropriate branch — see the GLOSSARY AND
-TECH-REF COMMITS rule below.)
+ARCHITECTURE COMMITS rule below.)
 
 ## Branch
 
@@ -80,7 +80,7 @@ enforces; the Rules below operationalize them.
   (e.g., "dialog", "REST endpoint", "table"), prefer an agnostic
   equivalent from `docs/glossary.md`. When a hard constraint (e.g.,
   regulation) requires a specific component, link the concrete term
-  to a tech-ref or compliance entry that captures the constraint
+  to a architecture or compliance entry that captures the constraint
   and rationale. See "Documentation Layers and Requirement
   Vocabulary" in the Lead's standing instructions.
 - **ARCHITECT PRE-REVIEW.** Before submitting any requirement draft
@@ -89,13 +89,13 @@ enforces; the Rules below operationalize them.
   Architect's feedback — including any new glossary entries the
   Architect proposes. The human approves the requirement and any
   new glossary entries together.
-- **GLOSSARY AND TECH-REF COMMITS.** The Architect curates
-  `docs/glossary.md` and `docs/tech/`. You commit additions and
+- **GLOSSARY AND ARCHITECTURE COMMITS.** The Architect curates
+  `docs/glossary.md` and `docs/architecture/`. You commit additions and
   updates the Architect proposes — typically the glossary on the
-  requirement branch (during pre-review) and tech-ref on the task
+  requirement branch (during pre-review) and architecture entries on the task
   branch (when an Architect-proposed approach is approved at task
   kickoff). Maintain `docs/INDEX.md` to list all glossary and
-  tech-ref entries with the appropriate tag.
+  architecture entries with the appropriate tag.
 - **CONSISTENCY CHECK.** Before submitting any new or changed
   requirement to the Lead for approval, verify it against ALL
   existing requirements in `docs/`. Check for: conflicts with

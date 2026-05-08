@@ -38,7 +38,7 @@ This breaks with Hibernate for two reasons:
    `toString` with the same problem.
 
 Use the key-based `equals`/`hashCode` pattern from `RootEntity` (see
-`docs/agnostic/architecture/persistence.md`) instead. All entities inherit this via
+`docs/patterns/architecture/persistence.md`) instead. All entities inherit this via
 `BaseEntity`, so individual entity classes never declare `@EqualsAndHashCode`,
 `@Data`, or a manual override.
 
@@ -198,5 +198,5 @@ members covered under "for JPA Entities" above (`equals`/`hashCode`/`toString`),
 composes safely with every other convention in this kit, including on entity classes
 where logging is needed.
 
-See `docs/agnostic/architecture/security.md` → "PII Not in Logs" for the rule against
+See `docs/patterns/architecture/security.md` → "PII Not in Logs" for the rule against
 logging user-identifying information at INFO level and below.

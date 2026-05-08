@@ -10,7 +10,7 @@ and Spring Boot line.
 Service interfaces operate exclusively on UI model objects (POJOs from the `{app}-uimodel`
 module). No service interface method signature references a JPA entity, interface
 projection, repository, or MapStruct mapper. This is enforced at compile time by the
-module structure (see `docs/agnostic/architecture/modules.md`).
+module structure (see `docs/patterns/architecture/modules.md`).
 
 ### Query / Mutation Separation
 
@@ -93,12 +93,12 @@ public EmployeeDetail update(EmployeeDetail detail) {
 ```
 
 The entity itself implements the detail projection interface (see
-`docs/agnostic/architecture/persistence.md` → Interface Projections), so
+`docs/patterns/architecture/persistence.md` → Interface Projections), so
 `mapper.toDetail(entity)` is valid without a separate projection query.
 
 Do not call `save()` on a managed (already-loaded) entity — it is redundant.
 Do not call `save()` on a detached entity — it triggers a full-column overwrite.
-See `docs/agnostic/architecture/persistence.md` for full explanation.
+See `docs/patterns/architecture/persistence.md` for full explanation.
 
 ## Insert Pattern — save() for New Entities Only
 

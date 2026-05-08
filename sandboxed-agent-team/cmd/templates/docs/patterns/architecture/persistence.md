@@ -25,7 +25,7 @@ RootEntity<KEY>              @MappedSuperclass
                              - extends AuditedEntity; most principal entities extend this
 ```
 
-Note: The field is named `key`, not `id`. See `docs/agnostic/conventions/naming.md` for
+Note: The field is named `key`, not `id`. See `docs/patterns/conventions/naming.md` for
 the `_key` vs `_id` distinction.
 
 ### RootEntity Implementation
@@ -108,7 +108,7 @@ public abstract class AuditedEntity<KEY> extends VersionedEntity<KEY> {
 
 `@EnableJpaAuditing` must be present on a `@Configuration` class, and an
 `AuditorAware<UserEntity>` bean must be registered (see
-`docs/agnostic/architecture/modules.md`).
+`docs/patterns/architecture/modules.md`).
 
 `created_by` and `updated_by` are `@ManyToOne` references to the users table. The
 `AuditorAware` bean reads the surrogate key off the authenticated principal (which carries
@@ -341,7 +341,7 @@ Removing from the collection deletes from the database.
            orphanRemoval = true)
 private List<PhoneEntity> phones = new ArrayList<>();
 
-// Manual collection management — see docs/agnostic/conventions/lombok.md
+// Manual collection management — see docs/patterns/conventions/lombok.md
 public List<PhoneEntity> getPhones() { return Collections.unmodifiableList(phones); }
 public void addPhone(PhoneEntity... phones) { ... }
 public void removePhone(PhoneEntity... phones) { ... }

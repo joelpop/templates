@@ -11,7 +11,7 @@ navbar, and content slot. `SideNav` populates the drawer with navigation items.
 
 ```java
 @Layout
-@AnonymousAllowed  // See docs/agnostic/conventions/vaadin.md — do NOT use @PermitAll
+@AnonymousAllowed  // See docs/patterns/conventions/vaadin.md — do NOT use @PermitAll
 public class MainLayout extends AppLayout {
     // DO NOT add "implements RouterLayout" — already inherited from AppLayout
 

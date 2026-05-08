@@ -114,7 +114,7 @@ without a per-write DB lookup. `EntityManager.getReference` returns a Hibernate 
 holding just the key — JPA persists the FK from the proxy with no `SELECT` issued.
 
 `spring.jpa.open-in-view=false` must be set in `application.properties`. See
-`docs/agnostic/architecture/persistence.md` for why OSIV must be disabled.
+`docs/patterns/architecture/persistence.md` for why OSIV must be disabled.
 
 ## MapStruct Configuration
 

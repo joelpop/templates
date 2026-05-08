@@ -171,17 +171,42 @@ not under `docs/reqs/non-functional/`.
 ### Requirement status convention
 
 Every discrete requirement statement in a doc carries a status
-checkbox: `[ ]` not started, `[-]` in progress, `[x]` complete. See
-"Status Tracking" below for transition rules. Example format inside
-a requirement doc:
+checkbox: `[ ]` not started, `[-]` in progress, `[x]` complete. Under
+each requirement sit two kinds of child checkboxes:
+
+- **`implementation`** (one per requirement) — the **Coder** marks
+  `[x]` when the requirement's implementation is committed and ready
+  for testing. This is the Coder's record of work.
+- **`AC1`, `AC2`, ...** (one per acceptance criterion) — the **Tester**
+  (Unit Tester or E2E Tester, as applicable) marks `[x]` when an
+  automated test that verifies that AC is passing. One test per AC at
+  minimum; parameterized ACs may have multiple.
+
+The parent's checkbox is a roll-up that the **Analyst** maintains:
+`[x]` only when `implementation` is `[x]` AND every AC is `[x]`;
+`[-]` when any child is `[-]` or `[x]` but not all children are `[x]`;
+`[ ]` when all children are `[ ]`. See "Status Tracking" below for
+transition rules. Example format inside a requirement doc:
 
     ## Authentication
     - [ ] Users can log in with SSO via SAML 2.0
-      - Acceptance criteria: ...
+          ... additional detail and description ...
+      - [ ] implementation
+      - [ ] AC1: SAML 2.0 metadata exchange supported.
+      - [ ] AC2: Authenticated user lands on the post-login redirect target.
+      - [ ] AC3: Failed authentication displays a non-technical error.
     - [-] Passkey-based authentication is supported
-      - Acceptance criteria: ...
+          ... additional detail and description ...
+      - [x] implementation
+      - [x] AC1: Passkey registration available from account settings.
+      - [-] AC2: Passkey login available on the login view.
+      - [ ] AC3: Lost-passkey recovery flow.
     - [x] Session timeout after 30 minutes of inactivity
-      - Acceptance criteria: ...
+          ... additional detail and description ...
+      - [x] implementation
+      - [x] AC1: Inactive session ends after 30 minutes.
+      - [x] AC2: User is redirected to login on timeout.
+      - [x] AC3: Active sessions are not affected.
 
 ## Repository Structure
 ```
@@ -382,26 +407,51 @@ not guess.
 ## Status Tracking
 
 ### Requirement Status
-Every discrete requirement statement in `docs/` carries a status checkbox:
-- `[ ]` — not started (no task has begun implementing this requirement)
-- `[-]` — in progress (a task is actively implementing this requirement)
-- `[x]` — complete (implemented and verified through the full task lifecycle)
+Each requirement carries a parent status checkbox and three kinds of
+child checkboxes — one `implementation` child plus one per
+acceptance criterion. All checkboxes use the same notation:
+- `[ ]` — not started
+- `[-]` — in progress
+- `[x]` — complete
 
-Acceptance criteria beneath a requirement inherit the requirement's status
-and do not carry their own checkboxes.
+**Ownership of each checkbox:**
+- `implementation` — **Coder** marks. `[-]` when implementation
+  begins; `[x]` when the requirement's implementation is committed
+  and ready for testing.
+- `AC1`, `AC2`, ... — **Tester** (Unit Tester or E2E Tester per
+  scenario type) marks. `[-]` when test authoring or execution
+  begins; `[x]` when the automated test that verifies the AC passes.
+- Parent requirement — **Analyst** rolls up from the children. The
+  Analyst does not author leaf statuses; only the rollup.
+
+**Roll-up rule for the parent (computed by the Analyst):**
+- All children `[x]` → parent `[x]`
+- Any child `[-]` or `[x]` (but not all `[x]`) → parent `[-]`
+- All children `[ ]` → parent `[ ]`
 
 **Status transitions:**
-- `[ ]` → `[-]`: Analyst marks on the task branch at task kickoff
-  (first commit on the branch, before sub-branches are created).
-- `[-]` → `[x]`: Analyst marks on the task branch at the pre-PR gate
-  (after confirming requirement coverage). The squash merge carries
-  these to `<DEV_BRANCH_NAME>`. Dev only ever sees `[ ]` → `[x]`.
-- `[x]` → `[ ]` or `[-]` → `[ ]`: Analyst resets when adding or
-  substantively changing a requirement. Analyst must notify Lead on any
-  reset so Lead can assess impact on active or completed tasks.
-- Renaming or moving a requirement does not reset its status, but the
-  Analyst must update all cross-references (INDEX.md, active task files
-  in `.claude/.tasks/`).
+- `[ ]` → `[-]`: the owning role marks the leaf (Coder for
+  `implementation`, Tester for an AC) as work begins. The Analyst
+  updates the parent roll-up to `[-]` once any child is `[-]` or
+  `[x]`.
+- `[-]` → `[x]`: the owning role marks the leaf when its work is
+  done (Coder when implementation is committed; Tester when the
+  test passes). The Analyst updates the parent roll-up to `[x]`
+  only when all children are `[x]`. The squash merge carries the
+  final state to `<DEV_BRANCH_NAME>`. Dev only ever sees
+  `[ ]` → `[x]` transitions.
+- `[x]` → `[ ]` or `[-]` → `[ ]`: the Analyst resets a leaf when
+  adding a new AC, substantively changing an AC's intent, or
+  invalidating prior implementation. (The Analyst owns reset
+  authority across all leaves and the parent because a reset is a
+  scope-management call, not the leaf-owner's call.) Resetting any
+  child may cascade to the parent (a previously-`[x]` requirement
+  becomes `[-]` if a child resets to `[ ]`). The Analyst must
+  notify the Lead on any reset so the Lead can assess impact on
+  active or completed tasks.
+- Renaming or moving a requirement or AC does not reset status, but
+  the Analyst must update all cross-references (`INDEX.md`, active
+  task files in `.claude/.tasks/`).
 
 ### Task Plan Status
 Each task file in `.claude/.tasks/<task-id>.md` tracks progress at the

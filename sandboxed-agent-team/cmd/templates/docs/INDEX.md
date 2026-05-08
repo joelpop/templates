@@ -1,109 +1,66 @@
-# Documentation Index
+# Documentation Map
 
-*Sample file.* Setup writes this once if `docs/INDEX.md` does not
-exist. Re-setup and remove do not touch it. Edit freely to reflect
-the project's actual documents.
+The project's documentation lives in **four trees**, each with a
+distinct purpose, owner, and lifecycle. This file is the master
+pointer; each tree carries its own comprehensive index.
 
-The kit's documentation convention splits `docs/` into two trees:
+A shared **glossary** sits at the root, used by all four trees via
+inline Markdown links.
 
-- `docs/agnostic/` — project-agnostic patterns, preferences,
-  and standing guidance that apply regardless of which project
-  the team is working on.
-- `docs/reqs/` — project-specific requirements following
-  IEEE 830 / ISO 29148 (SRS structure) and ISO 25010 (quality
-  model).
+## [Requirements](reqs/INDEX.md) — `docs/reqs/`
 
-## Project-Agnostic (`docs/agnostic/`)
+What the system must do and which constraints it must satisfy.
+IEEE 830 / ISO 29148 (SRS structure) and ISO 25010 (quality model).
+Functional features, non-functional quality attributes, technical
+constraints, environmental requirements, external interfaces, and
+cross-cutting concerns. Owned by the **Analyst**; human-approved.
 
-Patterns, preferences, and cross-project requirements. Not
-"requirements" in the ISO sense — more like standing guidance the
-team applies everywhere. Each entry below is a seed example; add,
-remove, or restructure freely.
+Each requirement carries status checkboxes — see "Requirement
+Status" in `CLAUDE.md` for the convention.
 
-| Tag | File | Description |
-|-----|------|-------------|
-| AGNOSTIC | `docs/agnostic/preferences.md` | Developer / team preferences that persist across projects |
-| AGNOSTIC | `docs/agnostic/patterns.md` | Design patterns and idioms the team favors |
-| AGNOSTIC | `docs/agnostic/standards.md` | Coding standards and conventions |
+Also under this tree: [`open-items.md`](reqs/open-items.md), the
+single tracker for questions requiring human input before
+implementation can proceed.
 
-## Project Requirements (`docs/reqs/`)
+## [Patterns](patterns/INDEX.md) — `docs/patterns/`
 
-### Non-Functional Requirements
+**Project-agnostic** conventions, architecture patterns, recipes,
+and implementation guidelines for the project's framework stack.
+Designed to carry across projects — extractable, reusable, and
+augmentable. Owned by the **Architect**; committed by the
+**Analyst**. Includes generic conventions (Java, Vaadin, naming,
+Lombok, comments, abstraction, fix discipline), generic
+architecture patterns (modules, persistence, services, security),
+UI patterns, testing patterns, deployment patterns, Figma
+translation, and **recipes** (step-by-step how-to guides for
+recurring capabilities like passkey auth, OIDC/SSO).
 
-| Tag | File | Description |
-|-----|------|-------------|
-| NON-FUNCTIONAL | `docs/reqs/non-functional/performance.md` | Response time, throughput, capacity |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/security/authentication.md` | Authentication mechanisms, providers, login flows |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/security/authorization.md` | Roles, permissions, access control |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/security/data-protection.md` | Encryption, PII handling, retention |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/security/hardening.md` | Headers, CORS, CSP, rate limiting |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/reliability.md` | Availability, fault tolerance, recoverability |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/usability.md` | Learnability, accessibility, user error protection |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/maintainability.md` | Modularity, testability, coding standards |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/portability.md` | Supported platforms, browsers, devices |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/compatibility.md` | Co-existence, interoperability |
-<!-- Uncomment if applicable to this project:
-| NON-FUNCTIONAL | `docs/reqs/non-functional/internationalization.md` | Language support, localization, text direction |
-| NON-FUNCTIONAL | `docs/reqs/non-functional/observability.md` | Logging, monitoring, metrics, tracing |
--->
+## [Architecture](architecture/INDEX.md) — `docs/architecture/`
 
-### Functional Requirements — Cross-Cutting
+**Project-specific** architecture and design — *how this codebase
+realizes the requirements*. Names classes, traces flows, captures
+non-obvious design choices, and documents the patterns this project
+commits to (which may be project-specific applications of generic
+patterns from `docs/patterns/`). Owned by the **Architect**;
+committed by the **Analyst**.
 
-| Tag | File | Description |
-|-----|------|-------------|
-| FUNCTIONAL-CROSS-CUTTING | `docs/reqs/functional/cross-cutting/error-handling.md` | Error handling and reporting standards |
-| FUNCTIONAL-CROSS-CUTTING | `docs/reqs/functional/cross-cutting/data-validation.md` | Input validation rules and patterns |
-| FUNCTIONAL-CROSS-CUTTING | `docs/reqs/functional/cross-cutting/api-standards.md` | API design conventions and contracts |
-| FUNCTIONAL-CROSS-CUTTING | `docs/reqs/functional/cross-cutting/integration.md` | External APIs, third-party services, protocols |
+Also under this tree:
+[`architecture-debt.md`](architecture/architecture-debt.md), the
+append-only log of known structural debt and recommended
+resolutions.
 
-### Functional Requirements — Data
+## [Guides](guides/INDEX.md) — `docs/guides/`
 
-| Tag | File | Description |
-|-----|------|-------------|
-| FUNCTIONAL-DATA | `docs/reqs/functional/data/schema.md` | Entity model, relationships, constraints |
-| FUNCTIONAL-DATA | `docs/reqs/functional/data/migration.md` | Migration strategy, seed data |
+End-user, administrator, and operator-facing guides for using the
+running system. Distinct from the three trees above — those are
+about *building* the system; this tree is about *using* it. Owned
+by the **Tech Writer**. Updated at release boundaries, not on every
+implementation task.
 
-### Functional Requirements — Features
+## [Glossary](glossary.md) — `docs/glossary.md`
 
-| Tag | File | Description |
-|-----|------|-------------|
-| FUNCTIONAL-FEATURE | `docs/reqs/functional/features/feature-a.md` | <Feature A — one-line summary> |
-| FUNCTIONAL-FEATURE-SUPPLEMENTAL | `docs/reqs/functional/features/feature-a/views.md` | Views and dialogs for Feature A. Also read: `feature-a.md` |
-| FUNCTIONAL-FEATURE-SUPPLEMENTAL | `docs/reqs/functional/features/feature-a/ux.md` | Interaction patterns for Feature A. Also read: `feature-a.md` |
-| FUNCTIONAL-FEATURE | `docs/reqs/functional/features/feature-b.md` | <Feature B — one-line summary> |
-
-### External Interface Requirements
-
-| Tag | File | Description |
-|-----|------|-------------|
-| EXTERNAL-INTERFACE | `docs/reqs/external-interfaces/user-interfaces.md` | UI standards, interaction paradigms |
-| EXTERNAL-INTERFACE | `docs/reqs/external-interfaces/software-interfaces.md` | OS, libraries, third-party software |
-| EXTERNAL-INTERFACE | `docs/reqs/external-interfaces/communication-interfaces.md` | Network protocols, data exchange formats |
-
-### Environmental Requirements
-
-| Tag | File | Description |
-|-----|------|-------------|
-| ENVIRONMENTAL | `docs/reqs/environmental/infrastructure.md` | Hosting, containers, CI/CD pipelines |
-| ENVIRONMENTAL | `docs/reqs/environmental/platforms.md` | Supported browsers, OS, devices |
-| ENVIRONMENTAL | `docs/reqs/environmental/deployment.md` | Deployment strategy, environments |
-<!-- Uncomment if applicable to this project:
-| ENVIRONMENTAL | `docs/reqs/environmental/configuration.md` | Configuration management, feature flags, environment-specific settings |
--->
-
-### Technical Constraints
-
-| Tag | File | Description |
-|-----|------|-------------|
-| TECHNICAL | `docs/reqs/technical/stack.md` | Language, framework, DB versions |
-| TECHNICAL | `docs/reqs/technical/build.md` | Build tools, dependency management |
-| TECHNICAL | `docs/reqs/technical/constraints.md` | Regulatory, compliance, standards |
-
-### Architectural
-
-| Tag | File | Description |
-|-----|------|-------------|
-| ARCHITECTURAL | `docs/reqs/architecture-debt.md` | Known structural debt and recommended resolutions |
-<!-- Uncomment if applicable to this project:
-| ARCHITECTURAL | `docs/reqs/architecture-decisions.md` | Architecture Decision Records (ADRs) |
--->
+The project's canonical vocabulary. Used by requirement docs and
+other documents via inline Markdown links. Curated by the
+**Architect**, committed by the **Analyst**. Small by design —
+holds only ambiguous, project-specific, or implementation-agnostic
+terms.

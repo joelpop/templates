@@ -239,7 +239,7 @@ the team for you.
    (`git reset --hard`, `git push --force`, arbitrary shell through
    `curl | bash`, etc.) are explicitly denied by the same
    settings. The Lead will not implement directly — this is
-   enforced by its instructions in `team-start.md`.
+   enforced by its instructions in `.claude/agents/lead.md`.
 3. Describe what you want to the Lead. The Lead coordinates the team
    and drives the teammates through the workflows described in the
    Overview below.
@@ -264,9 +264,9 @@ the team for you.
    - Teammate seems stuck or unresponsive: tell the Lead. The
      Lead will recover the teammate (resume first; replace from
      the same agent definition if resume fails — see Teammate
-     Recovery in `team-start.md`).
+     Recovery in `.claude/agents/lead.md`).
    - The Lead itself loses context mid-session: run
-     `/project:team-start` at the sandbox's Claude Code prompt to
+     `/project:lead-reload` at the sandbox's Claude Code prompt to
      re-invoke the Lead (the auto-load fires only at session start,
      so mid-session recovery uses the slash command).
    - Sandbox crashes: back at your host terminal, run
@@ -332,11 +332,11 @@ worktree:
 - **Auto-loading Lead in sandbox sessions** — The sandbox's Claude
   Code session starts with the Lead role pre-configured:
   `team/create.sh` passes `--append-system-prompt` to `claude` so
-  the first turn reads `team-start.md` and brings up the team
+  the first turn reads `.claude/agents/lead.md` and brings up the team
   automatically (via `TeamCreate`). The human does not need to
-  remember `/project:team-start`. Host Claude Code sessions are
+  remember `/project:lead-reload`. Host Claude Code sessions are
   unaffected (they don't go through `create.sh`/`attach.sh`). The
-  `/project:team-start` slash command remains available as a
+  `/project:lead-reload` slash command remains available as a
   manual re-invocation fallback if the Lead needs to be reset
   mid-session.
 - **"Agent Team Mode" statusline indicator** — The sandbox's
@@ -385,7 +385,7 @@ worktree:
   sandbox sessions — the human's concurrent host Claude Code work
   is naturally excluded.
 - **Multi-Developer Support** — Shared context (`CLAUDE_TEAM.md`,
-  `team-start.md`) is version-controlled; developer-local state (tasks,
+  `.claude/agents/lead.md`) is version-controlled; developer-local state (tasks,
   progress, worktrees, settings) is gitignored. An `ONBOARDING.md` is
   generated for new developers.
 
@@ -490,12 +490,24 @@ Infrastructure files go **inside** each project alongside the code:
 ├── .claude/
 │   ├── settings.json                # Agent team config + permissions (tracked)
 │   ├── team-variables.yaml          # Persisted kit variables (tracked)
+│   ├── agents/
+│   │   ├── lead.md                  # Lead's role + standing instructions (tracked)
+│   │   ├── integrator.md            # Integrator role (tracked)
+│   │   ├── analyst.md               # Analyst role (tracked)
+│   │   ├── architect.md             # Architect role (tracked)
+│   │   ├── coder.md                 # Coder role (tracked)
+│   │   ├── unit-tester.md           # Unit Tester role (tracked)
+│   │   ├── e2e-tester.md            # E2E Tester role (tracked)
+│   │   └── tech-writer.md           # Tech Writer role (tracked)
 │   ├── commands/
-│   │   └── team-start.md            # Lead's operating manual (tracked)
+│   │   └── lead-reload.md           # Manual Lead-instruction-reload slash command (tracked)
+│   ├── hooks/
+│   │   └── session-start-fetch-docs.sh  # SessionStart hook (tracked)
 │   ├── .last-onboarded              # (gitignored) marker written by team/join.sh
 │   ├── .team-active                 # (gitignored) marker for statusline indicator
 │   ├── .progress.md                 # (gitignored) dispatcher task log
 │   ├── .tasks/                      # (gitignored) one file per active/suspended task
+│   ├── .cost-log.md                 # (gitignored) optional per-task cost log; controlled by COST_IN_LOG
 │   └── .worktrees/                  # (gitignored) per-teammate git worktrees
 ├── docs/
 │   └── INDEX.md                     # Sample doc index (project-owned after initial seed)
@@ -529,6 +541,6 @@ The kit produces these files in a target project:
 | `.claude/team-variables.yaml` | Per-project persisted variables | Human-readable, hand-editable, survives kit upgrades |
 | `.claude/settings.json` | Agent team config and permissions | Auto-loaded by Claude Code at session start |
 | `.mcp.json` | Project-scoped MCP server config | Auto-loaded by Claude Code at session start (canonical location for project-scoped MCP servers; see Claude Code docs) |
-| `.claude/commands/team-start.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `create.sh`); also exposed as `/project:team-start` for manual re-invocation |
+| `.claude/agents/lead.md` | Lead's operating manual | Auto-loaded by the sandboxed Claude Code at session start (via `--append-system-prompt` in `create.sh`); also exposed as `/project:lead-reload` for manual re-invocation |
 | `ONBOARDING.md` | Developer onboarding (generated) | New developer runs `./team/join.sh` |
 | `TEAM_GUIDE.md` | Daily-use reference for humans (generated) | Human reads for workflows, troubleshooting, recovery |

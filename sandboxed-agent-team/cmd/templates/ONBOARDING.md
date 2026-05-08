@@ -211,8 +211,8 @@ case, ask the Lead to regenerate this file).
     agent-team.<sandbox-name>` and re-run `./team/join.sh`.
 - **Sandbox build fails:** Check that Docker Desktop is running.
   Review the build output for version mismatches or network errors.
-- **`/project:team-start` not found:** Ensure
-  `.claude/commands/team-start.md` exists in the repo. Try `git pull`
+- **`/project:lead-reload` not found:** Ensure
+  `.claude/agents/lead.md` exists in the repo. Try `git pull`
   to get the latest.
 
 ### Offboarding

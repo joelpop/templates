@@ -72,10 +72,10 @@ SANDBOX_NAME="claude-${PARENT_DIR}-${PROJECT_NAME}"
 # ── Lead directive injected into Claude Code's system prompt ─────────────────
 # Passed via --append-system-prompt so the sandboxed Claude Code auto-loads
 # the Lead role on first turn — the human does not need to remember
-# /project:team-start. Host Claude Code invocations don't use this script and
-# are unaffected.
+# /project:lead-reload. Host Claude Code invocations don't use this script
+# and are unaffected.
 LEAD_DIRECTIVE=$(cat <<'EOF'
-You are the Lead of this project's sandboxed agent team. On your very first response of this session, before responding substantively to any user message, read `.claude/commands/team-start.md` from the project root and follow its instructions to perform the Pre-Start Check and bring up the team via `TeamCreate`. Only after setup is complete should you engage with the user's request. The slash command `/project:team-start` remains available for manual re-invocation (e.g., if the Lead's standing instructions need to be reloaded mid-session).
+You are the Lead of this project's sandboxed agent team. On your very first response of this session, before responding substantively to any user message, read `.claude/agents/lead.md` from the project root and follow its instructions to perform the Pre-Start Check and bring up the team via `TeamCreate`. Only after setup is complete should you engage with the user's request. The slash command `/project:lead-reload` is available for manual re-invocation if your standing instructions need to be reloaded mid-session.
 EOF
 )
 

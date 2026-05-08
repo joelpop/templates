@@ -118,9 +118,9 @@ without running the app yourself.
 - **Teammate seems stuck or unresponsive:** Tell the Lead. The
   Lead will recover the teammate — resume first; spawn a
   replacement from the same agent definition if resume fails (see
-  Teammate Recovery in `team-start.md`).
+  Teammate Recovery in `.claude/agents/lead.md`).
 - **The Lead itself loses context mid-session:** Run
-  `/project:team-start` at the sandbox's Claude Code prompt to
+  `/project:lead-reload` at the sandbox's Claude Code prompt to
   re-invoke the Lead. The auto-load fires only at session start, so
   mid-session recovery uses the slash command. The Lead reads
   `progress.md` to recover state.

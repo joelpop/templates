@@ -383,7 +383,7 @@ not guess.
   the HOW level (implementation details within the bounds an
   existing requirement defines) is professional judgment, not
   ambiguity — see the Requirement Gate Workflow's refinement rule
-  in `team-start.md`.
+  in `.claude/agents/lead.md`.
 - Implement both interpretations and "let the human choose later" —
   this creates dead code and doubles the test surface
 
@@ -521,7 +521,7 @@ Requirement branch statuses:
   branches off the task branch to do their work:
   - `task/<task-id>/coder` (or `coder-a`, `coder-b` when the Lead
     splits a task across parallel Coders — see Parallel Subtask
-    Coders in Coordination Rules in team-start.md)
+    Coders in Coordination Rules in `.claude/agents/lead.md`)
   - `task/<task-id>/unit-tester`
   - `task/<task-id>/e2e-tester`
   - The Analyst has no sub-branch — it works on `requirement/<slug>`
@@ -545,13 +545,13 @@ Requirement branch statuses:
   This keeps `<DEV_BRANCH_NAME>` history clean but loses per-commit
   granularity — ensure the squash commit message captures key decisions
   and affected components (see Integration Merge Workflow T.5 in
-  team-start.md).
+  `.claude/agents/lead.md`).
 - Merge method: `<MERGE_METHOD>`
 
 ### Cost report destinations
 
 The Integrator computes a per-model token/cost delta report at task
-conclusion (via `ccusage`, see T.6 in `team-start.md`). It is
+conclusion (via `ccusage`, see T.6 in `.claude/agents/lead.md`). It is
 **always reported verbally to the human** at task wrap-up
 regardless of the destination settings below; the settings control
 whether the report is also recorded durably.
@@ -589,7 +589,7 @@ the latest `<DEV_BRANCH_NAME>`.
 
 These are the cross-cutting procedures every teammate may need to
 execute or participate in. The Lead's standing instructions
-(`team-start.md`) reference these from team-side workflows; teammates
+(`.claude/agents/lead.md`) reference these from team-side workflows; teammates
 load them via this file (which their CLAUDE.md auto-loads at
 session start).
 
@@ -770,7 +770,7 @@ usability, and other quality attribute requirements.
 
 ## Context Compaction Warning
 <!-- SYNC NOTE: The file list below is duplicated in the Pre-Task
-     Context Check in team-start.md. If you update one, update both. -->
+     Context Check in `.claude/agents/lead.md`. If you update one, update both. -->
 This file is read at session start but may be LOST during long sessions
 when context compaction occurs. You cannot reliably detect whether
 compaction has occurred. Therefore: before starting ANY task, you MUST

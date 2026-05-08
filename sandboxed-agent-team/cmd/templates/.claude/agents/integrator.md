@@ -93,9 +93,9 @@ this role drives.
 - CLAUDE.md → "Team Coordination Procedures" → "Task Branch
   Merge Protocol" — how teammates merge into the task branch
   (you do not participate, but you observe the order).
-- team-start.md → "Integration Merge Workflow" — the C/R/T/P
+- `.claude/agents/lead.md` → "Integration Merge Workflow" — the C/R/T/P
   sequence you drive.
-- team-start.md → "Task and PR Flow" — task lifecycle stages,
+- `.claude/agents/lead.md` → "Task and PR Flow" — task lifecycle stages,
   cost baseline at kickoff, cost report at conclusion.
 - `docs/glossary.md` — project's canonical vocabulary; useful
   when drafting task files.

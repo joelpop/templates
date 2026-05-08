@@ -106,7 +106,9 @@ rm -rf -- \
     "${PROJECT_DIR}/ONBOARDING.md" \
     "${PROJECT_DIR}/TEAM_GUIDE.md" \
     "${PROJECT_DIR}/.claude/team-variables.yaml" \
-    "${PROJECT_DIR}/.claude/commands/team-start.md" \
+    "${PROJECT_DIR}/.claude/agents" \
+    "${PROJECT_DIR}/.claude/commands/lead-reload.md" \
+    "${PROJECT_DIR}/.claude/hooks/session-start-fetch-docs.sh" \
     "${PROJECT_DIR}/.sandbox" \
     "${PROJECT_DIR}/team"
 

@@ -25,7 +25,17 @@ projects on this stack.
 | [conventions/comments.md](conventions/comments.md) | Code comment discipline: default to no comments, comments justify invariants not history, the fix-mode trap (don't paste conversational explanations into the code), where the *why* of a fix actually belongs (commit message, PR description, architecture docs) |
 | [conventions/abstraction.md](conventions/abstraction.md) | Abstraction recognition: the third-instance rule, value-object patterns (the `ContentData` and `PersonName` examples), where extracted abstractions live, when to leave duplication alone |
 | [conventions/fixing.md](conventions/fixing.md) | Fix discipline: diagnose-before-fix classification (trivial / localized / structural), workaround signatures (suppression annotations, swallowed exceptions, defensive casts, masking null checks, copied code), two-attempt limit, right-thing vs working-thing, revert-before-rework, tests are part of the fix |
-| [conventions/requirements.md](conventions/requirements.md) | Requirement-writing form: system-facing imperative ("the system must..."), modal verbs (must/shall vs. should/may), one concept per requirement, testability, unambiguous agnostic vocabulary, distinguishing requirements from user stories and from acceptance criteria, active voice |
+
+## Writing
+
+Documentation-writing conventions (distinct from code conventions
+above). The `conventions/comments.md` rule above straddles —
+it's about comments *inside code* but is about writing as well.
+The entries here are about writing the documents themselves.
+
+| Path | Description |
+|------|-------------|
+| [writing/requirements.md](writing/requirements.md) | Requirement-writing form: system-facing imperative ("the system must..."), modal verbs (must/shall vs. should/may), one concept per requirement, testability, unambiguous agnostic vocabulary, distinguishing requirements from user stories and from acceptance criteria, active voice |
 
 ## Architecture
 

@@ -488,6 +488,258 @@ a UI state that wasn't anticipated.
    requirement doc and commits on the task branch.
 5. Work proceeds within the same task branch — no suspension needed.
 
+### Request Triage
+
+The Lead's first move on any new human message. The human may
+include multiple concerns in one message — new requirements,
+architectural preferences, coding guidance, reminders to revise
+existing implementations, glossary additions, ad-hoc questions.
+The Lead's job is to parse, classify, surface dependencies, echo
+back, iterate to confirmation, and only then dispatch.
+
+**Default expectation: human messages are wild west.** A typical
+message contains 0–N requests of mixed kinds, plus context. Treat
+"one concern per message" as the exception, not the rule.
+
+#### Step 1 — Parse
+
+Read the human's message and extract every distinct concern. A
+concern is anything that, if the human had said it alone, would
+require its own decision or piece of work. Examples:
+
+- A new piece of behavior the system should have
+- A revision to existing behavior
+- A reminder to revise an existing implementation
+- An architectural preference or a new convention / pattern / idiom
+- A new glossary term
+- A reported bug
+- A request for status or information
+- An out-of-band note ("by the way, …")
+
+Do not aggregate. If the human says "make the dashboard
+configurable per tenant, fix the typo on the login page, and we
+should always use BCrypt with cost factor 12," that is three
+concerns — not one.
+
+#### Step 2 — Classify each concern
+
+Classify each parsed concern into one of these buckets. The
+classification determines the dispatch destination.
+
+| Classification | What it is | Dispatch destination |
+|----------------|-----------|----------------------|
+| **New requirement** | New capability or constraint not covered by any existing requirement | Requirement Gate Workflow (Analyst → Architect pre-review → human approval → task creation) |
+| **Refinement** | Change to *how* an existing requirement is implemented, within its current scope | Standard task lifecycle, referencing the existing requirement |
+| **Preference** | Aesthetic / UX feedback that does not change behavior | Coder, as a small task or feedback on the current task |
+| **Bug report** | Something is wrong | Doc-first fix routing (below) |
+| **New project-agnostic pattern** | A rule, idiom, anti-pattern, framework guideline, or convention worth carrying across projects | Architect drafts entry to `docs/patterns/`; human approves; Analyst commits |
+| **New architectural pattern** | Project-specific: how *this* app does X, or a structural choice this project commits to | Architect drafts entry to `docs/architecture/`; human approves; Analyst commits |
+| **New glossary term** | Term needs canonical definition (with optional slang variants) | Architect drafts entry to `docs/glossary.md`; human approves; Analyst commits, typically on the requirement branch where the term first surfaces |
+| **Trivial change** | Typo, formatting, comment update, single-line cleanup | Coder, as a small task |
+| **Architectural refactor** | Structural change spanning multiple call sites — recognized as deserving abstraction (e.g., the `ContentData` value-object pattern from `docs/patterns/conventions/abstraction.md`) | Architect proposes the pattern; human approves; Architect documents in `docs/architecture/` (and optionally `docs/patterns/` if portable); Coder implements across call sites |
+| **Question** | Asking for status, information, or a decision — not requesting work | Lead answers from context, routes to the appropriate teammate, or escalates to the human if unanswerable |
+
+**When the classification is ambiguous, default to the heavier
+shape.** A concern that could be either a new requirement or a
+refinement → treat as new requirement; the requirement gate is
+cheaper than shipping behavior the human didn't sanction. A
+concern that could be either a project-agnostic pattern or a
+project-specific architectural pattern → treat as project-specific;
+project-local documentation is cheaper than over-generalization
+that won't survive the next project's contradictory needs.
+
+The Requirement Gate Workflow below carries an additional decision
+rule for the new-requirement / refinement boundary specifically;
+consult it when that distinction is fuzzy.
+
+##### The business / technical / convention three-way
+
+A common ambiguity: when the human says "we should always do X"
+or "X must be Y," the statement could be a **business
+requirement** (functional behavior the system owes the user), a
+**technical requirement** (a non-functional constraint — performance,
+security, compatibility, regulation), or a **convention / pattern**
+(the team's preferred way of doing something where alternatives
+would also satisfy the requirements). Each lands in a different
+tree.
+
+| Classification | What it is | Lives in |
+|----------------|-----------|----------|
+| Business requirement (functional) | Describes what the system does from a user, stakeholder, or domain perspective. Driven by user need, business goal, or regulation. | `docs/reqs/functional/` |
+| Technical requirement (non-functional) | A constraint the system must satisfy for performance, security, regulatory, compatibility, or operational reasons. | `docs/reqs/non-functional/` or `docs/reqs/technical/` |
+| Convention / pattern | The team's preferred way of doing something. Other approaches would also satisfy stakeholder and constraint requirements; this is the choice the project commits to for consistency. | `docs/patterns/` (project-agnostic) or `docs/architecture/` (project-specific) |
+
+**Decision tests:**
+
+- *Does the user or stakeholder care about this directly?* If
+  yes → business requirement.
+- *Is this driven by a measurable external constraint that
+  must be met* (latency budget, security policy, browser support,
+  compliance)? If yes → technical requirement.
+- *Would an alternative implementation that does not follow
+  this rule still satisfy the stakeholder and constraint
+  requirements?* If yes → convention / pattern.
+
+The boundary between **technical requirement** and **convention**
+is the fuzziest. Refined rule:
+
+- Failure to comply would violate a measurable external
+  constraint → technical requirement.
+- Failure to comply would just make the codebase inconsistent →
+  convention.
+
+**When the human's statement could plausibly be either, the Lead
+asks:** *"Is this required (a constraint we must meet) or
+preferred (a way we want to do things consistently)?"* The human's
+answer chooses the destination tree.
+
+Worked example — "Always use BCrypt cost 12":
+
+- If the security policy requires cost ≥ 12 → technical
+  requirement under `docs/reqs/non-functional/security/`.
+- If it's just team preference — any modern hash with reasonable
+  cost would also satisfy any external constraint → convention
+  under `docs/patterns/architecture/security.md` or similar.
+
+The classification matters because it determines who maintains the
+durable artifact, where teammates look for it, and what status
+checkboxes apply. Misclassification leads to the same rule
+duplicated across trees, or disappearing entirely.
+
+#### Step 3 — Surface dependencies and conflicts
+
+For each pair of concerns, look for:
+
+- **Dependency** — does X require Y first? (A new requirement may
+  depend on a new glossary term; an architectural refactor may
+  depend on a pattern entry being documented first.)
+- **Conflict** — do two concerns contradict each other? Surface it;
+  the human resolves it.
+- **Gap** — does any concern reference something missing from the
+  docs? A refinement of "feature X" when no "feature X" requirement
+  exists is itself a gap that becomes its own concern.
+
+#### Step 4 — Echo back to the human
+
+Before dispatching anything, write back to the human in this shape:
+
+```
+I heard the following:
+1. [classification] <one-line summary, with quoted source phrase>
+2. [classification] <one-line summary>
+…
+
+Proposed approach:
+- First: <which concern, why first>
+- Then: <next concern, why next>
+- …
+
+<Any conflicts, gaps, or assumptions surfaced.>
+
+Did I miss anything? Is the order right?
+```
+
+The Lead does **not** dispatch any work yet. The echo is the
+contract: confirm what was heard and the proposed sequencing
+before any teammate is involved.
+
+#### Step 5 — Iterate
+
+Based on the human's response:
+
+- **Confirm** — proceed to dispatch.
+- **Add a missed concern** — go back to step 1 for the addition;
+  re-echo the updated list.
+- **Reclassify** — update the bucket for the affected concern;
+  re-echo if the dispatch destination changes.
+- **Re-order** — accept the new order; re-echo briefly.
+- **Defer some concerns** — accept; echo the remaining set and
+  the deferred set, marked as such, so nothing gets lost.
+
+Iteration is expected. Do not push to dispatch prematurely; the
+cost of doing the wrong work is much higher than the cost of one
+more confirmation round.
+
+#### Step 6 — Dispatch
+
+For each confirmed concern, initiate the appropriate task shape:
+
+- **New requirement** → Requirement Gate Workflow.
+- **Refinement** → Lead tells the Integrator to draft a task
+  referencing the existing requirement; standard task lifecycle.
+- **Preference** → Lead messages the Coder directly with the
+  change; inline or a small follow-up task.
+- **Bug report** → doc-first fix routing (below).
+- **New project-agnostic pattern** → Lead messages the Architect
+  to draft an entry to `docs/patterns/`; on human approval
+  (presented by the Lead), Lead delegates the commit to the
+  Analyst.
+- **New architectural pattern** → same flow, entry goes in
+  `docs/architecture/`.
+- **New glossary term** → Architect proposes; human approves;
+  Analyst commits (typically on the requirement branch where the
+  term first surfaces).
+- **Trivial change** → Lead tells the Integrator to create a
+  minimal task; Coder implements; minimal lifecycle.
+- **Architectural refactor** → Architect proposes the pattern
+  with rationale; human approves; Architect documents in
+  `docs/architecture/`; Coder implements per the pattern,
+  refactoring affected call sites.
+- **Question** → Lead answers from documentation and team
+  context; if the answer requires teammate work, route to that
+  teammate; if it requires human input not yet available,
+  surface the question.
+
+If concerns are independent, dispatch in parallel — the Lead can
+fire `SendMessage` to multiple teammates in one turn. If they're
+sequenced, dispatch the first; the next dispatches when its
+prerequisite is done.
+
+#### Doc-first fix routing
+
+When a concern is classified as **Bug report**, the Lead's first
+move is to diagnose *what kind of doc gap* the bug exposes. The
+fix to the docs comes before the fix to the code. Possible gap
+kinds:
+
+| Gap kind | Symptom | Fix path |
+|----------|---------|----------|
+| Missing requirement | The reported behavior isn't required (or prohibited) by any existing req | New requirement → Requirement Gate Workflow → standard implementation flow |
+| Missing acceptance criterion | The req exists but the failing behavior isn't covered by an AC | Analyst adds AC → Architect pre-reviews → human approves → Tester writes test for the new AC → Coder makes it pass |
+| Missing project-agnostic pattern | Bug stems from a rule, idiom, or convention violation that should have been documented for portability | Architect drafts `docs/patterns/` entry → human approves → Analyst commits → Coder fixes per the new rule |
+| Missing architectural pattern | Bug exposes a structural issue the project's architecture hasn't documented | Architect drafts `docs/architecture/` entry → human approves → Analyst commits → Coder fixes per the new pattern |
+| Implementation defect with all docs intact | Reqs, ACs, patterns, architecture all correct; the implementation has a bug | Direct fix via standard task lifecycle |
+
+The Lead consults the Architect (for pattern / architecture gaps)
+or the Analyst (for requirement / AC gaps) to help diagnose the
+gap kind when it's not obvious.
+
+The doc-first principle: **every bug is an opportunity to
+strengthen the durable artifacts** so the next analogous bug is
+caught earlier or doesn't happen at all.
+
+#### When to refuse to triage
+
+Some human messages don't trigger triage:
+
+- **Pure conversation / context** — the human is sharing
+  background, not requesting work. The Lead acknowledges and
+  doesn't force a classification.
+- **A response to an active question** — the Lead has an
+  outstanding question (from a teammate's escalation, etc.); the
+  human's message is the answer. The Lead routes the answer to
+  the asking teammate; no fresh triage.
+- **Continuation of a recently-triaged exchange** — the human is
+  iterating on a triage echo (step 5). Handle that as iteration,
+  not a new triage cycle.
+- **Operational commands** — "Show me the current cost," "Pause
+  task X," "Switch to requirement branch Y." The Lead routes
+  these to the Integrator without triage.
+
+When in doubt, the Lead asks: *"Just to confirm — were you
+[describing context | answering my earlier question | giving an
+operational command | requesting new work]?"*
+
 ### Requirement Gate Workflow
 
 What changes over the project lifecycle is the *nature* of the human's

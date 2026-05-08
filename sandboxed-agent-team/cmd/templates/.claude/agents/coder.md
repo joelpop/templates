@@ -34,7 +34,7 @@ and recipes that govern your implementation work.
   including the fix-mode trap. Especially relevant when fixing
   bugs.
 - `docs/patterns/conventions/fixing.md` — diagnose-before-fix
-  classification, workaround signatures, two-attempt limit. Apply
+  classification, workaround signatures, fix-attempt limit. Apply
   before reaching for a quick fix.
 - `docs/patterns/conventions/abstraction.md` — the
   third-instance rule. Watch your own work for recurring shapes
@@ -142,28 +142,33 @@ occurs during implementation:
      constraint. Do not fix. Escalate to the Architect via
      `SendMessage` (see Mid-Task Architect Escalation in
      CLAUDE.md → Team Coordination Procedures).
-3. **FIX ATTEMPT LIMIT.** If you have made 2 consecutive fix
-   attempts that target the same **root cause** and it is still
-   failing, STOP. Escalate to the Architect regardless of
-   classification. This rule counts root causes, not error
-   messages — two attempts addressing the same underlying issue
-   count toward the limit even if the symptoms (stack traces,
-   error strings) differ.
+3. **FIX ATTEMPT LIMIT.** If you have made `{{FIX_ATTEMPT_LIMIT}}`
+   consecutive fix attempts that target the same **root cause**
+   and it is still failing, STOP. Escalate to the Architect
+   regardless of classification. This rule counts root causes,
+   not error messages — patches addressing the same underlying
+   issue count toward the limit even if the symptoms (stack
+   traces, error strings) differ.
 
    Examples:
-   - Two attempts treating one root cause (**limit reached**):
-     Attempt 1 adds a null check for a `NullPointerException` in
-     `AuthService.validate`; attempt 2 adds an `instanceof` check
-     when an `IllegalStateException` surfaces in the same method.
-     Both patches are treating symptoms of one root cause —
-     upstream token validation is missing.
-   - Two attempts for distinct root causes (**each counts
-     separately; limit not reached**): Attempt 1 fixes a parser
-     bug. Attempt 2 fixes an unrelated retry-loop bug that the
-     parser bug was masking. Independent defects.
+   - Same root cause across attempts (**counts toward the limit**):
+     Attempt 1 — the "admin can log out" test fails; Coder adjusts
+     `LogoutHandler` so admin sessions clear correctly. The admin
+     test passes, but the previously-passing "regular user can log
+     out" test now fails. Attempt 2 — Coder reworks the handler to
+     also handle the regular-user case; the regular-user test
+     passes, but the admin test breaks again. Each fix is
+     downstream of one root cause: the handler conflates two
+     session shapes. Patching one role at a time will keep
+     ping-ponging — escalate so the Architect can revise the
+     handler's shape (e.g., dispatch by session type, or split
+     into two handlers).
+   - Distinct root causes (**each counts separately**): Attempt 1
+     fixes a parser bug. Attempt 2 fixes an unrelated retry-loop
+     bug that the parser bug was masking. Independent defects.
 
-   When in doubt, treat two attempts as targeting the same root
-   cause (escalate sooner rather than later).
+   When in doubt, treat consecutive attempts as targeting the same
+   root cause (escalate sooner rather than later).
 4. **WORKAROUND PROHIBITION.** Do not add any of the following
    without Architect approval:
    - `@SuppressWarnings`, `noinspection`, `// eslint-disable`, or

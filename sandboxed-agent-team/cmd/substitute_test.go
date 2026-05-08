@@ -8,7 +8,7 @@ import (
 )
 
 func TestSubstitute(t *testing.T) {
-	input := []byte("Java <JAVA_VERSION> with Vaadin <VAADIN_VERSION>")
+	input := []byte("Java {{JAVA_VERSION}} with Vaadin {{VAADIN_VERSION}}")
 	vars := Variables{
 		"JAVA_VERSION":   "21",
 		"VAADIN_VERSION": "24.5.0",
@@ -24,7 +24,7 @@ func TestSubstitute(t *testing.T) {
 }
 
 func TestSubstituteMissing(t *testing.T) {
-	input := []byte("<ABSENT> here")
+	input := []byte("{{ABSENT}} here")
 	vars := Variables{}
 	_, err := Substitute(input, vars)
 	if err == nil {
@@ -36,9 +36,12 @@ func TestSubstituteMissing(t *testing.T) {
 }
 
 func TestSubstituteLeavesNonMatches(t *testing.T) {
-	// Lowercase and mixed-case angle-bracket content must not be
-	// treated as placeholders; bare identifiers without brackets too.
-	input := []byte("<lowercase> <Mixed_Case> JAVA_VERSION no brackets")
+	// Lowercase / mixed-case content inside double braces must not be
+	// treated as placeholders, and bare identifiers without braces
+	// must be left alone. Java generics like `<T>`, `<KEY>` must also
+	// pass through untouched (the regression that motivated switching
+	// from `<NAME>` to `{{NAME}}`).
+	input := []byte("{{lowercase}} {{Mixed_Case}} JAVA_VERSION no braces <T> Map<String, KEY>")
 	got, err := Substitute(input, Variables{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

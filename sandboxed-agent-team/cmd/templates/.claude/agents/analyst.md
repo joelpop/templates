@@ -25,7 +25,7 @@ ARCHITECTURE COMMITS rule below.)
 ## Branch
 
 `requirement/<slug>` — the Lead creates one per topic or related
-group off `<DEV_BRANCH_NAME>`. You do your primary work here.
+group off `{{DEV_BRANCH_NAME}}`. You do your primary work here.
 Multiple requirement branches can exist simultaneously at different
 stages (see `.claude/.progress.md`). When the human switches topics,
 commit your current work and switch to the other branch. The only
@@ -149,7 +149,7 @@ enforces; the Rules below operationalize them.
   the first commit before sub-branches are created. At the pre-PR
   gate, after confirming requirement coverage, mark those
   requirements `[x]` — commit this on the task branch so the squash
-  merge carries it to `<DEV_BRANCH_NAME>`. When you add a new
+  merge carries it to `{{DEV_BRANCH_NAME}}`. When you add a new
   requirement statement, mark it `[ ]`. When you substantively
   change an existing requirement (not just editorial/clarification),
   reset its status to `[ ]`. In both cases, notify the Lead so they

@@ -1,6 +1,6 @@
-# Agent Team Guide — <PROJECT_NAME>
+# Agent Team Guide — {{PROJECT_NAME}}
 
-> **Generated:** <UTC_TIMESTAMP>
+> **Generated:** {{UTC_TIMESTAMP}}
 > **GENERATED FILE** — do not edit directly. Edits here will be lost
 > the next time this file is regenerated. To change this file, edit
 > its template in the kit template source and
@@ -26,8 +26,9 @@ worktree:
   reviews code, does not write it.
 - **Coder** — implements features and fixes bugs; runs lint/format
   on touched files at commit; runs the dependency audit when
-  adding or removing a dependency. The Lead may spawn multiple
-  Coders for parallel subtasks within a single task.
+  adding or removing a dependency. The Lead may spawn up to
+  `{{MAX_PARALLEL_CODERS}}` Coders in parallel for file-disjoint
+  subtasks within a single task.
 - **Unit Tester** — unit and browserless UI tests.
 - **E2E Tester** — end-to-end browser tests (Node.js Playwright).
 - **Tech Writer** — owns `docs/guides/` (install / deploy / user /
@@ -94,7 +95,7 @@ the team for you.
 
 - Each task has a task branch, and each teammate gets a sub-branch
   for their work. Teammates merge into the task branch; the
-  Integrator merges the task branch to `<DEV_BRANCH_NAME>`.
+  Integrator merges the task branch to `{{DEV_BRANCH_NAME}}`.
 - Within a task, the Lead may split file-disjoint work across multiple
   Coders, each with a paired Unit Tester. Dependencies between
   subtasks are handled in phases.

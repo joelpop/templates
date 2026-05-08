@@ -1,6 +1,6 @@
 # Developer Onboarding
 
-> **Generated:** `<UTC_TIMESTAMP>`  <!-- ISO 8601 UTC, e.g. 2026-04-18T14:32:05Z -->
+> **Generated:** `{{UTC_TIMESTAMP}}`  <!-- ISO 8601 UTC, e.g. 2026-04-18T14:32:05Z -->
 > **GENERATED FILE** — do not edit directly. Edits here will be lost
 > the next time this file is regenerated. To change this file, edit
 > its template in the kit template source and
@@ -165,10 +165,10 @@ These values were captured during the project's agent team setup.
 Do not modify them unless the project's stack has changed (in which
 case, ask the Lead to regenerate this file).
 
-- **Project:** <PROJECT_NAME>
-- **Stack:** <STACK_SUMMARY>
-- **Build tool:** <BUILD_TOOL>
-- **Development branch:** <DEV_BRANCH_NAME>
+- **Project:** {{PROJECT_NAME}}
+- **Stack:** {{STACK_SUMMARY}}
+- **Build tool:** {{BUILD_TOOL}}
+- **Development branch:** {{DEV_BRANCH_NAME}}
 - **Auth method at original agent team setup:** <API_KEY | OAUTH>
 - **Git remote transport:** <SSH | HTTPS>
 - **Merge method:** <PR | INTEGRATOR_MERGE | HUMAN_MERGE>

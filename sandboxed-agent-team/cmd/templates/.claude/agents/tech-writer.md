@@ -21,7 +21,7 @@ role: `user-guide/`, `admin-guide/`, `operator-guide/`,
 ## Branch
 
 `guide/<slug>` for guide work. The Lead creates one per topic or
-release group off `<DEV_BRANCH_NAME>`; you do your primary work
+release group off `{{DEV_BRANCH_NAME}}`; you do your primary work
 there. Multiple guide branches can exist simultaneously at
 different stages.
 
@@ -78,7 +78,7 @@ the cross-tree relationships your guides reference.
   message them directly via `SendMessage`.
 - **HUMAN-OWNED.** Guide content represents the project's
   user-facing voice. Draft changes and submit to the Lead for
-  human approval before merging to `<DEV_BRANCH_NAME>`. Treat the
+  human approval before merging to `{{DEV_BRANCH_NAME}}`. Treat the
   guides as human-owned the same way the Analyst treats `docs/`.
 - **STABLE ACROSS RELEASES.** Avoid embedding screenshots tied to
   internal-version-specific UI; prefer descriptive callouts and

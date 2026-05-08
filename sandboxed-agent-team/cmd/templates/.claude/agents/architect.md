@@ -30,7 +30,7 @@ enforces during reviews and curation work.
   rule, value-object recognition. Apply during code review when
   you see a recurring shape.
 - `docs/patterns/conventions/fixing.md` — fix discipline,
-  workaround signatures, two-attempt limit. Watch for these in
+  workaround signatures, fix-attempt limit. Watch for these in
   Coder commits.
 - `docs/patterns/conventions/comments.md` — comment discipline,
   including the fix-mode trap. Watch for explanatory blocks

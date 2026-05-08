@@ -13,12 +13,12 @@ USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ── Java / Maven ───────────────────────────────────────────────────────────
-# Replace <JAVA_VERSION> with the project's Java version (e.g., 21, 17)
+# Replace {{JAVA_VERSION}} with the project's Java version (e.g., 21, 17)
 # The base image already includes make, curl, unzip, jq, socat, node, npm.
 # openssh-client is required for Git SSH remote access (the base image does
 # not include it). Remove it if the project uses HTTPS remotes only.
 RUN apt-get update \
-    && apt-get install -y openjdk-<JAVA_VERSION>-jdk maven openssh-client \
+    && apt-get install -y openjdk-{{JAVA_VERSION}}-jdk maven openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Playwright browser (Chromium only) ────────────────────────────────────
@@ -61,8 +61,8 @@ RUN timeout 120 npm install -g ccusage@latest 2>/dev/null || true
 USER agent
 
 # ── Git identity ──────────────────────────────────────────────────────────
-# Replace <GIT_USER_NAME> and <GIT_USER_EMAIL> with the developer's git
+# Replace {{GIT_USER_NAME}} and {{GIT_USER_EMAIL}} with the developer's git
 # identity (discovered from host `git config` during setup).
-RUN git config --global user.name "<GIT_USER_NAME>" \
-    && git config --global user.email "<GIT_USER_EMAIL>"
+RUN git config --global user.name "{{GIT_USER_NAME}}" \
+    && git config --global user.email "{{GIT_USER_EMAIL}}"
 

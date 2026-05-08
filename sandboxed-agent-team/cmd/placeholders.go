@@ -142,6 +142,33 @@ The task branch is never pushed; no PR is created.`,
 		Options: []string{"GitHub Actions", "GitLab CI", "Bitbucket Pipelines", "Jenkins", "none"},
 		Default: "GitHub Actions",
 	},
+	"FIX_ATTEMPT_LIMIT": {
+		Name:   "FIX_ATTEMPT_LIMIT",
+		Source: SourcePrompt,
+		Prompt: "Coder fix-attempt limit before escalating to the Architect (consecutive attempts on the same root cause)",
+		Default: "2",
+	},
+	"DOC_FIRST_FIX": {
+		Name:    "DOC_FIRST_FIX",
+		Source:  SourcePrompt,
+		Prompt:  "Route bug reports through doc-gap diagnosis (Analyst / Architect) before the code fix?",
+		Options: []string{"yes", "no"},
+		OptionDescriptions: []string{
+			`- Lead diagnoses what kind of doc gap (missing requirement / AC / pattern / architecture entry) the bug exposes.
+- Doc fix lands first; code fix follows.
+- Slower per bug, but each bug strengthens the durable artifacts so the next analogous bug is caught earlier.`,
+			`- Lead routes bug reports straight to the Coder for a direct code fix.
+- Faster per bug, but doesn't grow the requirements / patterns corpus.
+- Choose this if the docs corpus is still being built or if the team prefers to land fixes first and harvest patterns separately.`,
+		},
+		Default: "yes",
+	},
+	"MAX_PARALLEL_CODERS": {
+		Name:    "MAX_PARALLEL_CODERS",
+		Source:  SourcePrompt,
+		Prompt:  "Maximum Coders the Lead may run in parallel on a single task (1 disables parallel-subtask splitting)",
+		Default: "4",
+	},
 	"BUILD_TOOL": {
 		Name:    "BUILD_TOOL",
 		Source:  SourcePrompt,
@@ -178,6 +205,9 @@ var placeholderOrder = []string{
 	"CI_PLATFORM",
 	"COST_IN_COMMIT",
 	"COST_IN_LOG",
+	"FIX_ATTEMPT_LIMIT",
+	"DOC_FIRST_FIX",
+	"MAX_PARALLEL_CODERS",
 	// Auto-discovered fall-backs — rarely prompt:
 	"PROJECT_NAME",
 	"STACK_SUMMARY",

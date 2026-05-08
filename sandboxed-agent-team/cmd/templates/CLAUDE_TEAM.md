@@ -1,4 +1,4 @@
-# Project: <PROJECT_NAME>
+# Project: {{PROJECT_NAME}}
 
 ## Stack
 - Language: Java <version>
@@ -7,9 +7,9 @@
 - Testing:
   - Unit & Browserless UI (Unit Tester): JUnit <JUNIT_VERSION — e.g.,
     5 or 6> for unit tests; Vaadin Browserless Testing
-    (Vaadin 25.1+: `browserless-test-junit<JUNIT_VERSION>`, free /
+    (Vaadin 25.1+: `browserless-test-junit{{JUNIT_VERSION}}`, free /
     Apache 2.0, extends `SpringBrowserlessTest`; pre-25.1:
-    `vaadin-testbench-junit<JUNIT_VERSION>`, commercial, extends
+    `vaadin-testbench-junit{{JUNIT_VERSION}}`, commercial, extends
     `SpringUIUnitTest`) for in-process UI component and interaction
     tests (browser-less, container-less); Mockito for
     mocking. One test class per production class. Browserless UI
@@ -407,7 +407,7 @@ not guess.
   The description should explain *what changed and why*, not
   itemize files or lines touched.
 - All PRs require passing tests before merge.
-- Do NOT commit directly to `<DEV_BRANCH_NAME>`.
+- Do NOT commit directly to `{{DEV_BRANCH_NAME}}`.
 
 ## Status Tracking
 
@@ -443,7 +443,7 @@ acceptance criterion. All checkboxes use the same notation:
   done (Coder when implementation is committed; Tester when the
   test passes). The Analyst updates the parent roll-up to `[x]`
   only when all children are `[x]`. The squash merge carries the
-  final state to `<DEV_BRANCH_NAME>`. Dev only ever sees
+  final state to `{{DEV_BRANCH_NAME}}`. Dev only ever sees
   `[ ]` → `[x]` transitions.
 - `[x]` → `[ ]` or `[-]` → `[ ]`: the Analyst resets a leaf when
   adding a new AC, substantively changing an AC's intent, or
@@ -490,7 +490,7 @@ Structure:
 ## Active Task
 - <task-id>: <one-line description>
   <!-- Optional indented annotation if the task is resumed but held: -->
-  - blocked on `<DEV_BRANCH_NAME>` health since <ISO 8601 UTC>
+  - blocked on `{{DEV_BRANCH_NAME}}` health since <ISO 8601 UTC>
 
 ## Suspended Tasks
 - <task-id>: Blocked by <prerequisite task-id or description>
@@ -502,26 +502,27 @@ Structure:
 Requirement branch statuses:
 - `drafting` — Analyst is actively working on this branch
 - `awaiting-approval` — draft submitted to the Lead for human review
-- `approved` — human approved; ready to merge to `<DEV_BRANCH_NAME>`
-- `merged` — merged to `<DEV_BRANCH_NAME>`; branch can be deleted
+- `approved` — human approved; ready to merge to `{{DEV_BRANCH_NAME}}`
+- `merged` — merged to `{{DEV_BRANCH_NAME}}`; branch can be deleted
 
 ## Branching
-- Development branch: `<DEV_BRANCH_NAME>` (e.g., `develop`)
-- Requirement branches: `requirement/<slug>` — branched off `<DEV_BRANCH_NAME>`
+- Development branch: `{{DEV_BRANCH_NAME}}` (e.g., `develop`)
+- Requirement branches: `requirement/<slug>` — branched off `{{DEV_BRANCH_NAME}}`
   by the Integrator for the Analyst to draft requirement docs. One branch per
   topic or related group (e.g., `requirement/authentication`,
   `requirement/dashboard-v2`), not per individual requirement — the
   Analyst freely splits, merges, and cross-references requirements
   within a group. Multiple requirement branches can exist simultaneously
-  at different stages. Squash-merged back to `<DEV_BRANCH_NAME>` after human
+  at different stages. Squash-merged back to `{{DEV_BRANCH_NAME}}` after human
   approval. Tracked in `.claude/.progress.md`.
-- Task branches: `task/<task-id>` — branched off `<DEV_BRANCH_NAME>` by the
+- Task branches: `task/<task-id>` — branched off `{{DEV_BRANCH_NAME}}` by the
   Integrator for each implementation task.
 - Teammate sub-branches: `task/<task-id>/<role>` — each teammate
   branches off the task branch to do their work:
-  - `task/<task-id>/coder` (or `coder-a`, `coder-b` when the Lead
-    splits a task across parallel Coders — see Parallel Subtask
-    Coders in Coordination Rules in `.claude/agents/lead.md`)
+  - `task/<task-id>/coder` (or `coder-a` … `coder-<n>` when the
+    Lead splits a task across parallel Coders, up to
+    `{{MAX_PARALLEL_CODERS}}` — see Parallel Subtask Coders in
+    Coordination Rules in `.claude/agents/lead.md`)
   - `task/<task-id>/unit-tester`
   - `task/<task-id>/e2e-tester`
   - The Analyst has no sub-branch — it works on `requirement/<slug>`
@@ -539,14 +540,14 @@ Requirement branch statuses:
   Team Coordination Procedures below). No teammate commits to
   another teammate's branch.
   Sub-branches are local only — they are never pushed to the remote. Only
-  `<DEV_BRANCH_NAME>` interacts with the remote (via the Integration Merge
+  `{{DEV_BRANCH_NAME}}` interacts with the remote (via the Integration Merge
   Workflow).
-- Merge strategy: squash merge for all branch-to-`<DEV_BRANCH_NAME>` merges.
-  This keeps `<DEV_BRANCH_NAME>` history clean but loses per-commit
+- Merge strategy: squash merge for all branch-to-`{{DEV_BRANCH_NAME}}` merges.
+  This keeps `{{DEV_BRANCH_NAME}}` history clean but loses per-commit
   granularity — ensure the squash commit message captures key decisions
   and affected components (see Integration Merge Workflow T.5 in
   `.claude/agents/lead.md`).
-- Merge method: `<MERGE_METHOD>`
+- Merge method: `{{MERGE_METHOD}}`
 
 ### Cost report destinations
 
@@ -556,11 +557,11 @@ conclusion (via `ccusage`, see T.6 in `.claude/agents/lead.md`). It is
 regardless of the destination settings below; the settings control
 whether the report is also recorded durably.
 
-- **Include cost report in commit message:** `<COST_IN_COMMIT>`
+- **Include cost report in commit message:** `{{COST_IN_COMMIT}}`
   (`yes` or `no`). When `yes`, the Integrator appends the report
   as a trailing block of the final squash-merge commit message so
   it persists in git history.
-- **Append cost report to project log:** `<COST_IN_LOG>` (`yes` or
+- **Append cost report to project log:** `{{COST_IN_LOG}}` (`yes` or
   `no`). When `yes`, the Integrator appends the report (with task
   ID, date, and per-model breakdown) to `.claude/.cost-log.md` —
   a project-local log file (gitignored) for cumulative
@@ -574,7 +575,7 @@ destinations may be added over time.
 To change either setting later, ask the Lead ("change `Include
 cost report in commit message` to `yes`/`no`"). The Lead delegates
 to the Integrator, which creates a working branch off
-`<DEV_BRANCH_NAME>`, updates the line in `CLAUDE.md`, commits, and
+`{{DEV_BRANCH_NAME}}`, updates the line in `CLAUDE.md`, commits, and
 finalizes per the project's merge method above. **Caveat:**
 `CLAUDE.md` is read by every role at task start, so a
 mid-engagement edit can collide with any task/requirement branch
@@ -583,7 +584,7 @@ active tasks, no open requirement branches — so the new value is
 in effect uniformly for all subsequent work. If a change must
 happen while work is in flight, the Lead should pause new task
 creation until the edit is merged and all teammates have pulled
-the latest `<DEV_BRANCH_NAME>`.
+the latest `{{DEV_BRANCH_NAME}}`.
 
 ## Team Coordination Procedures
 
@@ -602,8 +603,9 @@ DIAGNOSIS-FIRST FIX PROTOCOL for triggers), use this procedure.
 **Triggers** (Coder MUST escalate, not MAY):
 
 - Failure classified as Structural
-- 2-attempt fix limit reached for the same root cause (see FIX
-  ATTEMPT LIMIT in the Coder's DIAGNOSIS-FIRST FIX PROTOCOL)
+- Fix-attempt limit reached for the same root cause
+  (`{{FIX_ATTEMPT_LIMIT}}` consecutive attempts; see FIX ATTEMPT
+  LIMIT in the Coder's DIAGNOSIS-FIRST FIX PROTOCOL)
 - Task requires modifying files or interfaces not identified in
   the task file's scope or the Architect's kickoff guidance (if
   any)
@@ -621,15 +623,28 @@ ATTEMPTED: [list fix attempts already made, if any]
 FILES TOUCHED SO FAR: [list of files modified since last commit]
 ```
 
-**Architect response** (one of three outcomes):
+**Architect response.** Default to evaluating the Coder's diagnosis
+before evaluating the approach. An exhausted Coder arriving with
+`{{FIX_ATTEMPT_LIMIT}}` failed attempts creates pressure to revise
+the architecture — that's the wrong instinct. Most fix-limit
+escalations are diagnosis errors, not architectural ones. The
+sound approach should stand unless the evidence shows it genuinely
+cannot be implemented correctly. Drifting from a good architecture
+poorly implemented to a worse architecture more easily implemented
+is the failure mode this section guards against.
 
-1. **TARGETED GUIDANCE** — the approach is sound; here is the
-   correct fix with rationale. Coder proceeds.
-2. **APPROACH REVISION** — the approach needs to change. Architect
-   provides a revised implementation plan for the remaining work.
-   Coder reverts uncommitted changes that conflict with the
-   revised plan (see REVERT-BEFORE-REWORK in Coder rules), then
-   proceeds with the new plan.
+One of three outcomes:
+
+1. **TARGETED GUIDANCE** *(default)* — the approach is sound; the
+   Coder's diagnosis or fix is wrong; here is the correct fix with
+   rationale. Coder proceeds. Most escalations land here.
+2. **APPROACH REVISION** *(reserved)* — the approach itself cannot
+   be made to work as designed. The Coder's struggle is not from
+   oversight but from genuine architectural mismatch with the
+   problem. Architect provides a revised implementation plan for
+   the remaining work. Coder reverts uncommitted changes that
+   conflict with the revised plan (see REVERT-BEFORE-REWORK in
+   Coder rules), then proceeds with the new plan.
 3. **SCOPE FLAG TO LEAD** — the problem reveals a gap in
    requirements or a cross-cutting concern that affects other
    tasks. Architect notifies the Lead for task re-scoping.

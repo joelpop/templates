@@ -385,25 +385,25 @@ The prerequisite follows the normal lifecycle:
   coexisting with the suspended task's file.
 
 **Resumption procedure:**
-1. Prerequisite task completes and merges to `<DEV_BRANCH_NAME>`.
+1. Prerequisite task completes and merges to `{{DEV_BRANCH_NAME}}`.
 2. Integrator updates `.claude/.progress.md`: moves the resumed task to
    Active, removes it from Suspended.
 3. Integrator checks out the suspended task branch (`task/<task-id>`).
-4. Integrator fetches `<DEV_BRANCH_NAME>` from remote. Before
-   merging, verify `<DEV_BRANCH_NAME>` is not currently degraded.
+4. Integrator fetches `{{DEV_BRANCH_NAME}}` from remote. Before
+   merging, verify `{{DEV_BRANCH_NAME}}` is not currently degraded.
    - **If healthy:** Integrator merges it into the task branch
      (brings in prerequisite changes). Proceed to step 5.
    - **If degraded:** (a) Integrator escalates per Dev-Branch
      Health in Coordination Rules. (b) Integrator annotates this
      task's entry in `.claude/.progress.md` with an indented
-     sub-bullet `blocked on <DEV_BRANCH_NAME> health since <ISO
+     sub-bullet `blocked on {{DEV_BRANCH_NAME}} health since <ISO
      8601 UTC>` so the hold survives across sessions — without
      this, the next session would see the task marked Active and
      assume work can proceed. (c) Do NOT merge into the resumed
      task branch — breakage would propagate.
      (d) **Notify the human**: Integrator reports the hold to the
      Lead; Lead tells the human: *"Resuming task `<task-id>` is
-     held pending `<DEV_BRANCH_NAME>` health — the prerequisite
+     held pending `{{DEV_BRANCH_NAME}}` health — the prerequisite
      merged but the dev branch is currently degraded, so bringing
      its changes into this task would propagate the breakage. I'll
      re-check when you ask, or when the Dev-Branch Health issue is
@@ -494,7 +494,7 @@ classification determines the dispatch destination.
 | **New requirement** | New capability or constraint not covered by any existing requirement | Requirement Gate Workflow (Analyst → Architect pre-review → human approval → task creation) |
 | **Refinement** | Change to *how* an existing requirement is implemented, within its current scope | Standard task lifecycle, referencing the existing requirement |
 | **Preference** | Aesthetic / UX feedback that does not change behavior | Coder, as a small task or feedback on the current task |
-| **Bug report** | Something is wrong | Doc-first fix routing (below) |
+| **Bug report** | Something is wrong | Bug routing (below) — `{{DOC_FIRST_FIX}}` controls whether doc-first diagnosis runs before the code fix |
 | **New project-agnostic pattern** | A rule, idiom, anti-pattern, framework guideline, or convention worth carrying across projects | Architect drafts entry to `docs/patterns/`; human approves; Analyst commits |
 | **New architectural pattern** | Project-specific: how *this* app does X, or a structural choice this project commits to | Architect drafts entry to `docs/architecture/`; human approves; Analyst commits |
 | **New glossary term** | Term needs canonical definition (with optional slang variants) | Architect drafts entry to `docs/glossary.md`; human approves; Analyst commits, typically on the requirement branch where the term first surfaces |
@@ -632,7 +632,9 @@ For each confirmed concern, initiate the appropriate task shape:
   referencing the existing requirement; standard task lifecycle.
 - **Preference** → Lead messages the Coder directly with the
   change; inline or a small follow-up task.
-- **Bug report** → doc-first fix routing (below).
+- **Bug report** → bug routing (below); the project's
+  `{{DOC_FIRST_FIX}}` setting controls whether the Lead diagnoses a
+  doc gap first or routes straight to the Coder.
 - **New project-agnostic pattern** → Lead messages the Architect
   to draft an entry to `docs/patterns/`; on human approval
   (presented by the Lead), Lead delegates the commit to the
@@ -658,12 +660,16 @@ fire `SendMessage` to multiple teammates in one turn. If they're
 sequenced, dispatch the first; the next dispatches when its
 prerequisite is done.
 
-#### Doc-first fix routing
+#### Bug routing
 
-When a concern is classified as **Bug report**, the Lead's first
-move is to diagnose *what kind of doc gap* the bug exposes. The
-fix to the docs comes before the fix to the code. Possible gap
-kinds:
+This project's `DOC_FIRST_FIX` setting is **`{{DOC_FIRST_FIX}}`**. The
+Lead picks the bug-handling path based on that value:
+
+##### When `DOC_FIRST_FIX` is `yes` — doc-first fix routing
+
+The Lead's first move is to diagnose *what kind of doc gap* the bug
+exposes. The fix to the docs comes before the fix to the code.
+Possible gap kinds:
 
 | Gap kind | Symptom | Fix path |
 |----------|---------|----------|
@@ -680,6 +686,22 @@ gap kind when it's not obvious.
 The doc-first principle: **every bug is an opportunity to
 strengthen the durable artifacts** so the next analogous bug is
 caught earlier or doesn't happen at all.
+
+##### When `DOC_FIRST_FIX` is `no` — direct fix routing
+
+The Lead skips the gap-diagnosis step and routes the bug straight
+to the Coder. Lead messages the Coder with the bug repro and the
+expected behavior; the Coder implements via the **Trivial fix**
+task shape unless the bug is large enough to warrant the full
+per-commit cycle (in which case Lead drafts it as a normal task
+referencing the bug report).
+
+Choose this routing when the project's documentation corpus is
+still being built up, or when the team's preference is to land
+fixes quickly and harvest patterns separately. Trade-off: bugs
+don't flow back into requirements, ACs, or pattern entries
+automatically — strengthening of durable artifacts must happen
+through some other channel.
 
 #### When to refuse to triage
 
@@ -787,7 +809,7 @@ shipping behavior the human didn't sanction.
    - NO → Lead tells the human: "This isn't documented as a requirement
      yet. I'll have the Analyst draft it for your approval."
 4. Lead tells the Integrator to create a `requirement/<slug>` branch
-   off `<DEV_BRANCH_NAME>` for this topic (or reuse an existing branch if
+   off `{{DEV_BRANCH_NAME}}` for this topic (or reuse an existing branch if
    the requirement belongs to a group already in progress). Integrator
    updates `.claude/.progress.md` to track the branch. Lead assigns the
    Analyst to draft the requirement on that branch.
@@ -814,7 +836,7 @@ shipping behavior the human didn't sanction.
    glossary entries, and updates `INDEX.md`.
 8. Lead tells the Integrator to initiate the Integration Merge Workflow
    for the requirement branch (see below). The requirement is now on
-   `<DEV_BRANCH_NAME>`.
+   `{{DEV_BRANCH_NAME}}`.
 9. Integrator updates `.claude/.progress.md` (branch status → `merged`).
 10. Lead proceeds to create a task (Task and PR Flow below).
 
@@ -878,7 +900,7 @@ Integrator which shape applies when drafting the task file.
 | New requirement | **New capability** | Default; full Task and PR Flow applies. Requirement Gate Workflow runs first to land the requirement, then the task is created against it. |
 | Refinement | **Refinement** | Slimmer — see below. |
 | Preference | **Trivial fix** | See below. |
-| Bug report | **Bug fix (doc-first)** | See below. |
+| Bug report | **Bug fix (doc-first)** when `{{DOC_FIRST_FIX}}` is `yes`; **Trivial fix** (or full task for large fixes) otherwise | See below. |
 | New project-agnostic pattern | **Pattern intake** | See below. |
 | New architectural pattern | **Architecture intake** | Same shape as Pattern intake; the entry just lands in `docs/architecture/` instead of `docs/patterns/`. |
 | New glossary term | (no full task) | Handled inline by Architect Pre-Review of Requirements. |
@@ -920,6 +942,8 @@ classification clearly indicates no judgment work needed.
 
 #### Bug fix (doc-first)
 
+Applies when `DOC_FIRST_FIX` is `yes` (this project: **`{{DOC_FIRST_FIX}}`**).
+
 Triage's doc-first-fix routing already diagnosed the gap kind
 (missing requirement / AC / pattern / architecture entry). The
 fix path:
@@ -935,6 +959,10 @@ If the gap was "implementation defect with all docs intact," no
 doc fix needed — go straight to the per-commit cycle and pre-PR
 gate. Otherwise this shape is sequenced: docs first, code
 second, regardless of how small the code change is.
+
+When `DOC_FIRST_FIX` is `no`, this shape doesn't apply — bug
+reports use the **Trivial fix** shape (or a full task if the
+change is non-trivial), per Triage dispatch.
 
 #### Architectural refactor
 
@@ -1059,11 +1087,11 @@ who delegates to the Integrator.
    in `docs/` (see Requirement Gate Workflow above). If it does not,
    the requirement must be documented and approved before a task can
    be created.
-3. Lead tells the Integrator to fetch `<DEV_BRANCH_NAME>` from remote and
+3. Lead tells the Integrator to fetch `{{DEV_BRANCH_NAME}}` from remote and
    fast-forward the local branch (`git pull --ff-only`). If fast-forward
-   fails, local `<DEV_BRANCH_NAME>` has diverged — investigate before
+   fails, local `{{DEV_BRANCH_NAME}}` has diverged — investigate before
    proceeding. Integrator creates a `task/<task-id>` branch off the
-   updated `<DEV_BRANCH_NAME>`.
+   updated `{{DEV_BRANCH_NAME}}`.
 4. Lead tells the Integrator to draft the task file (using the template
    above), specifying: requirements in scope (with cross-references to
    specific requirement statements in `docs/`), what is explicitly out
@@ -1132,15 +1160,15 @@ who delegates to the Integrator.
     on the task branch as the second gate check.
     **Unrelated regression:** If either full suite reveals a failure in
     code the current task did NOT touch, the Tester reports it to the
-    Lead. The Lead fetches `<DEV_BRANCH_NAME>` (an intervening push may have
-    landed) and has the Tester run the failing test against `<DEV_BRANCH_NAME>`
+    Lead. The Lead fetches `{{DEV_BRANCH_NAME}}` (an intervening push may have
+    landed) and has the Tester run the failing test against `{{DEV_BRANCH_NAME}}`
     directly.
-    - If the failure exists on `<DEV_BRANCH_NAME>` → pre-existing issue.
+    - If the failure exists on `{{DEV_BRANCH_NAME}}` → pre-existing issue.
       Handle via Dev-Branch Health. The pre-PR gate for the current task
       continues — this failure is not caused by the task.
-    - If the failure does NOT exist on `<DEV_BRANCH_NAME>` (i.e., `<DEV_BRANCH_NAME>`
+    - If the failure does NOT exist on `{{DEV_BRANCH_NAME}}` (i.e., `{{DEV_BRANCH_NAME}}`
       passes, possibly because a fix was pushed since the task branched) →
-      merge the updated `<DEV_BRANCH_NAME>` into the task branch and re-run
+      merge the updated `{{DEV_BRANCH_NAME}}` into the task branch and re-run
       the failing test. If it passes, the pre-PR gate continues. If it
       still fails, the task's changes caused an indirect regression —
       the Coder investigates (using the normal Diagnosis-First Fix
@@ -1168,32 +1196,32 @@ who delegates to the Integrator.
 
 ### Integration Merge Workflow
 This procedure is used whenever ANY working branch (requirement or task)
-is ready to merge back to `<DEV_BRANCH_NAME>`. Its purpose is to incorporate
-changes from other teams or developers that landed on `<DEV_BRANCH_NAME>` while
+is ready to merge back to `{{DEV_BRANCH_NAME}}`. Its purpose is to incorporate
+changes from other teams or developers that landed on `{{DEV_BRANCH_NAME}}` while
 this branch was in progress.
 
 **C. Common steps (both branch types):**
 Follow C, then R or T depending on branch type, then P.
 
-C.1. Integrator fetches latest `<DEV_BRANCH_NAME>` from remote/origin.
+C.1. Integrator fetches latest `{{DEV_BRANCH_NAME}}` from remote/origin.
 C.2. Integrator checks: is the working branch already up-to-date with
-     `<DEV_BRANCH_NAME>`?
+     `{{DEV_BRANCH_NAME}}`?
      - YES → skip to finalization (R.4 for requirement branches,
        T.5 for task branches).
      - NO → continue.
-C.3. Integrator merges `<DEV_BRANCH_NAME>` into the working branch.
+C.3. Integrator merges `{{DEV_BRANCH_NAME}}` into the working branch.
 
 **R. For requirement branches** (`requirement/<slug>`):
 R.1. If merge conflicts in docs → Analyst resolves on the requirement
      branch.
 R.2. Analyst re-checks consistency of the requirement docs against any
-     changes that arrived from `<DEV_BRANCH_NAME>` (another team may have
+     changes that arrived from `{{DEV_BRANCH_NAME}}` (another team may have
      landed conflicting requirements or code changes that affect
      assumptions).
 R.3. Lead presents final state to human for approval.
 R.4. Finalize per the merge method specified in CLAUDE.md:
      - **PR:** Integrator pushes the requirement branch to the remote
-       and creates a PR targeting `<DEV_BRANCH_NAME>` via the platform API.
+       and creates a PR targeting `{{DEV_BRANCH_NAME}}` via the platform API.
        Integrator reports the PR URL to the Lead. Lead tells the
        human: *"PR `<url>` is ready — please have it reviewed and
        tell me when reviewers have responded. Do not merge the PR;
@@ -1202,7 +1230,7 @@ R.4. Finalize per the merge method specified in CLAUDE.md:
        the Integrator, who checks the PR's overall approval status
        via the API and reports back to the Lead:
        - **All required approvals met** → Integrator merges via the
-         API, then fetches `<DEV_BRANCH_NAME>` from the remote and
+         API, then fetches `{{DEV_BRANCH_NAME}}` from the remote and
          confirms the PR's merge-commit SHA appears in the fetched
          history (rare flaky-network failure mode: API reports
          success but the merge isn't visible in the remote branch).
@@ -1220,11 +1248,11 @@ R.4. Finalize per the merge method specified in CLAUDE.md:
        - **Rejected** → Integrator closes the PR, deletes the remote
          branch, and proceeds to R.5.
        **If the PR was already merged** (by the human or another
-       reviewer) → Integrator skips the merge, fetches `<DEV_BRANCH_NAME>`
+       reviewer) → Integrator skips the merge, fetches `{{DEV_BRANCH_NAME}}`
        from the remote to pick up the merged changes, deletes the
        remote branch if still present, and proceeds to R.5.
      - **Integrator merge:** Integrator squash-merges the requirement
-       branch to `<DEV_BRANCH_NAME>` directly.
+       branch to `{{DEV_BRANCH_NAME}}` directly.
      - **Human merge:** Lead notifies the human that the requirement is
        approved and ready. Human performs the squash merge themselves.
 R.5. Integrator deletes the requirement branch (local; remote was
@@ -1245,7 +1273,7 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
      and notable decisions — so this information survives in git
      history after the task file is deleted in T.7.
      - **PR:** Integrator pushes the task branch to the remote and
-       creates a PR targeting `<DEV_BRANCH_NAME>` via the platform API,
+       creates a PR targeting `{{DEV_BRANCH_NAME}}` via the platform API,
        with a summary of changes and a reference to the task file and
        its documented requirement(s). Integrator reports the PR URL
        to the Lead. Lead tells the human: *"PR `<url>` is ready —
@@ -1255,7 +1283,7 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
        the Integrator, who checks the PR's overall approval status
        via the API and reports back to the Lead:
        - **All required approvals met** → Integrator merges via the
-         API, then fetches `<DEV_BRANCH_NAME>` from the remote and
+         API, then fetches `{{DEV_BRANCH_NAME}}` from the remote and
          confirms the PR's merge-commit SHA appears in the fetched
          history (rare flaky-network failure mode: API reports
          success but the merge isn't visible in the remote branch).
@@ -1274,10 +1302,10 @@ T.5. Finalize per the merge method specified in CLAUDE.md. The squash
        - **Rejected** → Integrator closes the PR, deletes the remote
          branch, and proceeds to T.7.
        **If the PR was already merged** → Integrator skips the merge,
-       fetches `<DEV_BRANCH_NAME>` to pick up the merged changes, deletes
+       fetches `{{DEV_BRANCH_NAME}}` to pick up the merged changes, deletes
        the remote branch if still present, and proceeds to T.6.
      - **Integrator merge:** Integrator squash-merges the task branch
-       to `<DEV_BRANCH_NAME>` directly. No PR is created.
+       to `{{DEV_BRANCH_NAME}}` directly. No PR is created.
      - **Human merge:** Lead posts a summary and notifies the human that
        all gates have passed. Human performs the squash merge themselves.
 T.6. Integrator builds the per-task cost report by subtracting the
@@ -1367,7 +1395,7 @@ T.7. Integrator removes the task from `.claude/.progress.md`. Integrator
      deletes the task branch and all teammate sub-branches.
 
 **P. Post-merge hygiene (both branch types):**
-Integrator runs a full build on `<DEV_BRANCH_NAME>` to verify the
+Integrator runs a full build on `{{DEV_BRANCH_NAME}}` to verify the
 merge did not break the baseline. If the build fails, Integrator
 messages the Lead (see Dev-Branch Health in Coordination Rules).
 Integrator does not run a routine dependency audit at this point;
@@ -1375,11 +1403,11 @@ on-demand audits run only when the human requests one (see the
 Integrator role's on-demand dependency audit rule).
 
 ### Dev-Branch Health
-`<DEV_BRANCH_NAME>` is the team's shared baseline. It can be degraded by
+`{{DEV_BRANCH_NAME}}` is the team's shared baseline. It can be degraded by
 the team's own merge or by external changes from other teams on the
 remote.
 
-**Who interacts with remote `<DEV_BRANCH_NAME>`:**
+**Who interacts with remote `{{DEV_BRANCH_NAME}}`:**
 Only the Integrator fetches from and pushes to the remote. This
 happens at:
 - Task kickoff step 3 (fetch before creating task branch)
@@ -1389,13 +1417,13 @@ happens at:
   the resumed task branch)
 
 **Health check — all teammates:**
-After any merge from `<DEV_BRANCH_NAME>` into a working branch, if the
-build or tests fail, check whether `<DEV_BRANCH_NAME>` itself is the cause
-before diagnosing your own code. Build `<DEV_BRANCH_NAME>` directly. If it
+After any merge from `{{DEV_BRANCH_NAME}}` into a working branch, if the
+build or tests fail, check whether `{{DEV_BRANCH_NAME}}` itself is the cause
+before diagnosing your own code. Build `{{DEV_BRANCH_NAME}}` directly. If it
 fails, message the Lead — do not attempt fixes, and do not count this
-against the Coder's fix attempt limit.
+against the Coder's fix-attempt limit (`{{FIX_ATTEMPT_LIMIT}}`).
 
-**Lead coordination when `<DEV_BRANCH_NAME>` is degraded:**
+**Lead coordination when `{{DEV_BRANCH_NAME}}` is degraded:**
 1. Determine the cause: the team's own merge, or external changes on
    the remote.
 2. **Team's own merge:** Lead coordinates a hotfix task. Escalate to
@@ -1405,12 +1433,12 @@ against the Coder's fix attempt limit.
    team may already be fixing it — the next fetch might resolve the
    issue without this team doing anything. The human decides: wait,
    fix it ourselves, or work on something else.
-4. While `<DEV_BRANCH_NAME>` is degraded, the Lead holds off on any
+4. While `{{DEV_BRANCH_NAME}}` is degraded, the Lead holds off on any
    workflow that merges from it:
-   - Task resumption: do not merge `<DEV_BRANCH_NAME>` into a resumed task
+   - Task resumption: do not merge `{{DEV_BRANCH_NAME}}` into a resumed task
      branch. Wait for the fix.
    - New task kickoff: do not branch a new task off a degraded
-     `<DEV_BRANCH_NAME>`.
+     `{{DEV_BRANCH_NAME}}`.
 
 ### Task Branch Merge Protocol
 
@@ -1426,6 +1454,15 @@ The Lead may split a task's implementation plan steps across multiple
 Coders when the subtasks are file-disjoint. This allows parallel
 implementation within a single task.
 
+**Parallelism cap:** Up to `{{MAX_PARALLEL_CODERS}}` Coders may run
+in parallel on a single task (suffixes `coder-a` through
+`coder-<n>`, where n ≤ `{{MAX_PARALLEL_CODERS}}`). If
+`{{MAX_PARALLEL_CODERS}}` is `1`, parallel-subtask splitting is
+disabled and all plan steps run sequentially with a single Coder.
+If the implementation plan reveals more parallelizable subtasks
+than the cap, the Lead executes them in waves: a first batch in
+parallel, then the remainder once the first wave merges.
+
 **When to split:**
 The Lead identifies plan steps that create or modify non-overlapping
 files. The Architect confirms disjointness before the Coders begin.
@@ -1435,10 +1472,11 @@ single Coder.
 **Setup:**
 - Lead spawns additional Coder and Unit Tester teammates from the
   `coder` and `unit-tester` agent definitions, naming them
-  `coder-a`, `coder-b`, `unit-tester-a`, `unit-tester-b`, etc., so
-  each parallel subtask has its own paired Coder + Unit Tester.
-  Each teammate gets its own worktree (the `isolation: worktree`
-  field in the agent definition handles this).
+  `coder-a`, `coder-b`, `unit-tester-a`, `unit-tester-b`, etc.
+  (up to the `{{MAX_PARALLEL_CODERS}}` cap), so each parallel
+  subtask has its own paired Coder + Unit Tester. Each teammate
+  gets its own worktree (the `isolation: worktree` field in the
+  agent definition handles this).
 - Sub-branches: `task/<task-id>/coder-a`, `task/<task-id>/coder-b`,
   `task/<task-id>/unit-tester-a`, `task/<task-id>/unit-tester-b`,
   etc.
@@ -1624,7 +1662,7 @@ validation gate, ambiguity resolution). If the human is unavailable:
   preferences (see Requirement Gate Workflow) do not require human
   approval and can proceed.
 - **Human validation gate cannot be delegated.** The human must
-  review completed work before it is merged to `<DEV_BRANCH_NAME>`. The
+  review completed work before it is merged to `{{DEV_BRANCH_NAME}}`. The
   team must wait.
 - **Implementation approach approvals:** If the Architect's proposed
   approach is straightforward and the human has not responded, the

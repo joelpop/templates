@@ -28,31 +28,35 @@ up:
 The classification step is the discipline. Rushing past it leads to
 patching symptoms, which compounds.
 
-## The two-attempt limit
+## The fix-attempt limit
 
-If two consecutive fix attempts target the same root cause and the
-problem persists, **stop**. Escalate, regardless of classification.
-Two attempts at one root cause means the diagnosis is wrong; a third
-attempt is unlikely to succeed and is very likely to deepen the mess.
+If `{{FIX_ATTEMPT_LIMIT}}` consecutive fix attempts target the same
+root cause and the problem persists, **stop**. Escalate, regardless
+of classification. Reaching the limit on one root cause means the
+diagnosis is wrong; another attempt is unlikely to succeed and is
+very likely to deepen the mess.
 
-This rule counts *root causes*, not error messages. Two patches
+This rule counts *root causes*, not error messages. Patches
 addressing the same underlying issue count toward the limit even if
 the symptoms (stack traces, error strings) differ. When in doubt,
-treat two attempts as targeting the same root cause and escalate
-sooner rather than later.
+treat consecutive attempts as targeting the same root cause and
+escalate sooner rather than later.
 
 Examples:
 
-- **Two attempts treating one root cause (limit reached):** attempt 1
-  adds a null check for a `NullPointerException` in
-  `AuthService.validate`; attempt 2 adds an `instanceof` check when an
-  `IllegalStateException` surfaces in the same method. Both are
-  treating symptoms of one root cause — upstream token validation is
-  missing.
-- **Two attempts on distinct root causes (each counts separately,
-  limit not reached):** attempt 1 fixes a parser bug; attempt 2 fixes
-  an unrelated retry-loop bug that the parser bug was masking.
-  Independent defects.
+- **Same root cause across attempts (counts toward the limit):**
+  Attempt 1 — the "admin can log out" test fails; Coder adjusts
+  `LogoutHandler` so admin sessions clear correctly. The admin test
+  passes, but the previously-passing "regular user can log out" test
+  now fails. Attempt 2 — Coder reworks the handler to also handle the
+  regular-user case; the regular-user test passes, but the admin test
+  breaks again. Each fix is downstream of one root cause: the handler
+  conflates two session shapes. Patching one role at a time will keep
+  ping-ponging — escalate so the Architect can revise the handler's
+  shape (e.g., dispatch by session type, or split into two handlers).
+- **Distinct root causes (each counts separately):** attempt 1 fixes
+  a parser bug; attempt 2 fixes an unrelated retry-loop bug that the
+  parser bug was masking. Independent defects.
 
 ## Workaround signatures
 

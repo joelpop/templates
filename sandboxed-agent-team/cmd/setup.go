@@ -259,6 +259,10 @@ func printInstallIntro(fresh bool) {
 	fmt.Println("     * Merge method")
 	fmt.Println("     * CI platform")
 	fmt.Println("     * Preference to include a cost report in commit messages")
+	fmt.Println("     * Team-discipline knobs:")
+	fmt.Println("       - Coder fix-attempt limit")
+	fmt.Println("       - Doc-first bug-fix routing (yes / no)")
+	fmt.Println("       - Maximum parallel Coders per task")
 	fmt.Println("     * Preference to set up your local sandbox after install")
 	fmt.Println("  2. Show all your choices for confirmation.")
 	fmt.Println("  3. Write the kit files to the target directory.")
@@ -317,6 +321,9 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 	printKV("CI platform", vars["CI_PLATFORM"])
 	printKV("Show cost in commit", vars["COST_IN_COMMIT"])
 	printKV("Append cost to project log", vars["COST_IN_LOG"])
+	printKV("Fix-attempt limit", vars["FIX_ATTEMPT_LIMIT"])
+	printKV("Doc-first bug-fix routing", vars["DOC_FIRST_FIX"])
+	printKV("Max parallel Coders / task", vars["MAX_PARALLEL_CODERS"])
 	if fresh {
 		if runJoinAfterInstall {
 			printKV("Run join after install", "yes")

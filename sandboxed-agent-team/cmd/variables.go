@@ -13,8 +13,8 @@ import (
 )
 
 // Variables is the in-memory representation of the persisted variables
-// file. Keys are the placeholder names as they appear inside angle
-// brackets in the templates (e.g., "JAVA_VERSION" for <JAVA_VERSION>).
+// file. Keys are the placeholder names as they appear inside double
+// braces in the templates (e.g., "JAVA_VERSION" for {{JAVA_VERSION}}).
 type Variables map[string]string
 
 // DefaultVariablesPath is the canonical location of the variables file
@@ -67,9 +67,13 @@ func SaveVariables(path string, v Variables) error {
 	return os.WriteFile(path, []byte(sb.String()), 0o644)
 }
 
-// placeholderPattern matches <UPPERCASE_NAME> with at least one character
-// and allowing digits and underscores after the first letter.
-var placeholderPattern = regexp.MustCompile(`<([A-Z][A-Z0-9_]*)>`)
+// placeholderPattern matches {{UPPERCASE_NAME}} with at least one
+// character and allowing digits and underscores after the first letter.
+// Double braces (Mustache / Handlebars / Go-template style) are used
+// rather than angle brackets so the pattern doesn't collide with Java
+// generic syntax (`<T>`, `<KEY>`, etc.) that appears in template content
+// under `templates/docs/patterns/`.
+var placeholderPattern = regexp.MustCompile(`\{\{([A-Z][A-Z0-9_]*)\}\}`)
 
 // ScanPlaceholders walks the given filesystem and returns every
 // placeholder name referenced by any file, sorted and deduplicated.

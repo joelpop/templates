@@ -21,7 +21,7 @@ var sampleFiles = map[string]bool{
 
 // RenderTemplate reads one template (path is relative to the embed FS
 // root, so it starts with "templates/") and substitutes every
-// <PLACEHOLDER> with its value from vars.
+// {{PLACEHOLDER}} with its value from vars.
 func RenderTemplate(embedPath string, vars Variables) ([]byte, error) {
 	raw, err := templateFS.ReadFile(embedPath)
 	if err != nil {
@@ -30,14 +30,16 @@ func RenderTemplate(embedPath string, vars Variables) ([]byte, error) {
 	return Substitute(raw, vars)
 }
 
-// Substitute replaces every <PLACEHOLDER> (uppercase + digits +
+// Substitute replaces every {{PLACEHOLDER}} (uppercase + digits +
 // underscores) in content with the corresponding value from vars.
 // Returns an error listing any placeholders for which vars has no
 // value — silently leaving them in output would be a data bug.
 func Substitute(content []byte, vars Variables) ([]byte, error) {
 	var missing []string
 	out := placeholderPattern.ReplaceAllFunc(content, func(match []byte) []byte {
-		name := string(match[1 : len(match)-1])
+		// Strip the leading "{{" (2 bytes) and trailing "}}" (2 bytes)
+		// to recover the placeholder name.
+		name := string(match[2 : len(match)-2])
 		v, ok := vars[name]
 		if !ok {
 			missing = append(missing, name)

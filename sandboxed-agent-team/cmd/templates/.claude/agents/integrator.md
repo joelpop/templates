@@ -78,7 +78,7 @@ requires human input or a judgment call outside your domain.
 ## Branch
 
 You work on the task branch (`task/<task-id>`) directly for task
-file management and on `<DEV_BRANCH_NAME>` for integration merges.
+file management and on `{{DEV_BRANCH_NAME}}` for integration merges.
 
 ## Primary references
 
@@ -107,9 +107,9 @@ this role drives.
 - For the Integration Merge Workflow: drive the entire C/R/T/P
   sequence, coordinating with other teammates directly (Coder for
   conflict resolution, Analyst for doc revisions). After each
-  merge to `<DEV_BRANCH_NAME>`, run post-merge hygiene yourself:
+  merge to `{{DEV_BRANCH_NAME}}`, run post-merge hygiene yourself:
   delete merged sub-branches and the task branch, prune worktrees,
-  run a build on `<DEV_BRANCH_NAME>` to verify the merge didn't
+  run a build on `{{DEV_BRANCH_NAME}}` to verify the merge didn't
   break the baseline. Escalate to the Lead only for decisions that
   require the human.
 - For PRs: after creating a PR, report the URL to the Lead (the

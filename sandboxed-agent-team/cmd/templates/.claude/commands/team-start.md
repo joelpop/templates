@@ -293,91 +293,16 @@ entries (for concrete terms that survive in a requirement) are
 committed on the requirement branch alongside the requirement that
 links to them.
 
-### Mid-Task Architect Escalation
-When the Coder encounters a problem during implementation that requires
-Architect involvement before committing (see the Coder's Diagnosis-First
-Fix Protocol for triggers), use this procedure.
+### Mid-Task Architect Escalation, Requirements Clarification Escalation
 
-**Triggers** (Coder MUST escalate, not MAY):
-- Failure classified as Structural
-- 2-attempt fix limit reached for the same root cause (see FIX
-  ATTEMPT LIMIT in the Coder's Diagnosis-First Fix Protocol)
-- Task requires modifying files or interfaces not identified in the
-  task file's scope or the Architect's kickoff guidance (if any)
-- Need to add a dependency or change a method signature in a shared
-  interface
-
-**Escalation message format** (Coder → Architect):
-```
-BLOCKER: [one-sentence description of what failed]
-ROOT CAUSE: [one-sentence diagnosis of why it failed]
-APPROACH IMPACT: [does this suggest the current approach needs to change,
-  or is it a gap in the plan?]
-ATTEMPTED: [list fix attempts already made, if any]
-FILES TOUCHED SO FAR: [list of files modified since last commit]
-```
-
-**Architect response** (one of three outcomes):
-1. TARGETED GUIDANCE: The approach is sound; here is the correct fix with
-   rationale. Coder proceeds.
-2. APPROACH REVISION: The approach needs to change. Architect provides a
-   revised implementation plan for the remaining work. Coder reverts
-   uncommitted changes that conflict with the revised plan (see
-   Revert-Before-Rework in Coder rules), then proceeds with the new plan.
-3. SCOPE FLAG TO LEAD: The problem reveals a gap in requirements or a
-   cross-cutting concern that affects other tasks. Architect notifies Lead
-   for task re-scoping.
-
-**Priority**: Mid-task escalations take priority over post-commit reviews.
-The Architect should respond before the Coder's next commit, not after it.
-
-**Coder behavior while waiting**: Do NOT continue building on top of the
-blocked code path. Work on an independent part of the task if one exists,
-or wait.
-
-### Requirements Clarification Escalation
-When any teammate identifies a requirement that is unclear,
-ambiguous, conflicting, or insufficiently specified (see
-"Requirements Ambiguity — Do Not Guess" in CLAUDE.md), use this
-procedure.
-
-**Step 1 — Teammate raises the ambiguity to the Architect:**
-```
-AMBIGUITY: [which requirement, with file path and line/section]
-CONFLICT/GAP: [what is unclear or contradictory]
-OPTIONS: [2-3 concrete interpretations, each with a one-sentence
-  consequence for the implementation]
-BLOCKED WORK: [what cannot proceed until this is resolved]
-```
-
-**Step 2 — Architect attempts internal resolution:**
-The Architect searches ALL project documentation (docs/, CLAUDE.md,
-code comments, commit messages) for evidence that resolves the ambiguity.
-If the docs collectively make the answer clear — even if no single doc
-states it explicitly — the Architect records the resolution and its
-rationale in the task file. Work proceeds.
-
-**Step 3 — Lead escalates to human (if Architect cannot resolve):**
-If the Architect cannot resolve the ambiguity from existing docs,
-the Lead presents the question to the human using the teammate's
-original format, plus the Architect's research summary. The Lead records the
-human's answer in the task file. If the answer reveals a gap in the
-docs, the Lead assigns the Analyst to draft an update to the
-relevant requirement doc. The Analyst submits the draft to the
-Architect for pre-review (see "Architect Pre-Review of
-Requirements") and incorporates feedback before submitting to the
-Lead. Because requirement docs are human-owned, the
-Architect-reviewed draft must be presented to the human for
-approval before it is committed (see Analyst rules).
-
-**While waiting for resolution:**
-- The teammate may continue working on unambiguous parts of the task
-- The teammate MUST NOT implement the ambiguous part using a guess,
-  placeholder, or TODO comment — incomplete implementations create
-  false progress and mislead other teammates
-- If the ambiguous part blocks ALL remaining work, the teammate
-  signals this in the escalation so the Lead knows to prioritize
-  the question
+These two procedures are documented in CLAUDE.md → Team
+Coordination Procedures. The Lead participates in their
+"Step 3 — Lead escalates to human" path: when the Architect
+cannot resolve a requirements ambiguity from existing docs,
+present the question to the human, record the answer in the task
+file, and (if the answer reveals a docs gap) assign the Analyst to
+draft an update through the Architect pre-review and
+human-approval flow.
 
 ### Task Suspension and Resumption
 A task is suspended when the Lead determines that it cannot proceed
@@ -469,24 +394,13 @@ progress, the Lead must either: (a) complete the active task first,
 conflict and let the human decide.
 
 ### Subtask Discovery
-During implementation, the team may discover that satisfying the
-in-scope requirements also requires work not originally in the plan
-steps — but this work does NOT require a separate full task lifecycle.
-Examples: an additional validation rule, a missing data migration step,
-a UI state that wasn't anticipated.
 
-**Procedure:**
-1. Agent reports the discovery to the Lead (per the existing ad-hoc
-   discovery flow).
-2. If the work maps to an existing documented requirement: Lead adds
-   the requirement cross-reference to the task file's "Requirements in
-   Scope" section and adds new plan steps.
-3. If the work requires a new requirement: follow the ad-hoc discovery
-   flow (Analyst drafts → human approves). Once approved, Lead adds
-   the cross-reference and plan steps.
-4. Analyst marks the newly in-scope requirement as `[-]` in the
-   requirement doc and commits on the task branch.
-5. Work proceeds within the same task branch — no suspension needed.
+Documented in CLAUDE.md → Team Coordination Procedures. The Lead
+receives the discovery report and decides whether the new work
+maps to an existing documented requirement (delegate to the
+Integrator to update the task file) or needs a new requirement
+(route through the ad-hoc discovery flow: Analyst drafts → Architect
+pre-reviews → human approves).
 
 ### Request Triage
 
@@ -1335,38 +1249,13 @@ against the Coder's fix attempt limit.
      `<DEV_BRANCH_NAME>`.
 
 ### Task Branch Merge Protocol
-When any teammate merges their sub-branch into the task branch,
-they must follow this protocol to prevent concurrent merges from
-creating conflicts:
 
-1. **Announce:** Message all teammates on the task: "I'm merging
-   to the task branch."
-2. **Hold:** All other teammates hold off on their own merges
-   until the announcement in step 5.
-3. **Sync:** Merge from the task branch into your sub-branch first
-   to pick up any recent changes. Resolve conflicts if necessary.
-4. **Merge:** Merge your sub-branch into the task branch.
-5. **Release:** Message all teammates: "I'm done merging to the
-   task branch."
-
-This protocol applies to all teammates that merge into the task
-branch (Coder, Unit Tester, E2E Tester), not just during parallel
-Coder work. Teammates waiting to merge proceed in the order they
-announced.
-
-**Crash recovery:** If a teammate does not post the release
-message (step 5) within 5 minutes of the announce (step 1), the
-Lead investigates:
-1. Check `git log` on the task branch to determine whether the
-   merge commit was created.
-2. If the merge completed: the Lead posts the release message on
-   behalf of the unresponsive teammate, then attempts recovery
-   per Teammate Recovery (resume first; spawn a replacement if
-   resume fails).
-3. If the merge did not complete (or is partial): the Lead
-   reverts any partial merge state on the task branch, then
-   recovers the teammate per Teammate Recovery.
-4. The Lead notifies all holding teammates before they proceed.
+Documented in CLAUDE.md → Team Coordination Procedures. The Lead's
+involvement is in the **Crash recovery** path: if a teammate
+doesn't post the release message within 5 minutes of announcing,
+the Lead investigates the task branch state, posts release on
+behalf of the unresponsive teammate (or reverts partial merge
+state), and triggers Teammate Recovery.
 
 ### Parallel Subtask Coders
 The Lead may split a task's implementation plan steps across multiple

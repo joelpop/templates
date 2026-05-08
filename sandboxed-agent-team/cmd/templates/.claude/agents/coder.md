@@ -108,8 +108,8 @@ occurs during implementation:
      not work, or the fix requires modifying interfaces, adding
      parameters, changing data flow, or working around a framework
      constraint. Do not fix. Escalate to the Architect via
-     `SendMessage` (see Mid-Task Architect Escalation in the
-     Lead's coordination rules).
+     `SendMessage` (see Mid-Task Architect Escalation in
+     CLAUDE.md → Team Coordination Procedures).
 3. **FIX ATTEMPT LIMIT.** If you have made 2 consecutive fix
    attempts that target the same **root cause** and it is still
    failing, STOP. Escalate to the Architect regardless of

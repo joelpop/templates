@@ -86,4 +86,5 @@ different stages.
 - When a feature requirement is ambiguous about user-facing
   behavior (and the ambiguity affects the guide more than the
   implementation), use the Requirements Clarification Escalation
-  procedure to surface the question to the human via the Lead.
+  procedure (see CLAUDE.md → Team Coordination Procedures) to
+  surface the question to the human via the Lead.

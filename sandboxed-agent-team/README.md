@@ -309,10 +309,13 @@ worktree:
   don't clearly map to another teammate.
 - **Analyst** — owns requirement docs in `docs/` and status tracking.
 - **Architect** — architecture guardian; proposes design approaches and reviews code, does not write it.
-- **Coder** — implements features and fixes bugs.
-- **Janitor** — linting, cleanup, dependency hygiene.
+- **Coder** — implements features and fixes bugs; runs
+  lint/format/analysis on touched files at commit; runs dependency
+  audit when adding or removing a dependency.
 - **Unit Tester** — unit and browserless UI tests.
 - **E2E Tester** — end-to-end browser tests.
+- **Tech Writer** — owns `docs/guides/` (install / deploy / user /
+  admin / operator guides). Updates on the release cadence.
 
 ### Features
 
@@ -427,11 +430,15 @@ worktree:
   default and delegates to the E2E Tester. Per-commit runs are targeted;
   full suites run at the pre-PR gate. Human-in-the-loop E2E steps use a
   structured pause/resume cycle.
-- **Dependency & Code Hygiene** — The Janitor audits dependencies before
-  every task, after every dependency change, and after every merge. CVEs
-  block merging. Version upgrades follow pinning rules — patch upgrades
-  are safe, minor upgrades follow pinning rules, major upgrades need
-  approval. Linting and dead code detection are also Janitor-owned.
+- **Dependency & Code Hygiene** — The Coder runs lint/format and
+  the dependency audit at commit time when touching dependencies;
+  the Architect handles dead-code judgment during code review; the
+  Integrator runs on-demand dependency audits when the human
+  requests one. CVEs block merging. Version upgrades follow
+  pinning rules — patch upgrades are safe, minor upgrades follow
+  pinning rules, major upgrades need approval. External tooling
+  (lint, SonarLint, OWASP) does the detection work; the team
+  reacts to the findings.
 - **Dev-Branch Health** — When the development branch is broken (by
   the team's own merge or by external changes), the Lead escalates to
   the human and holds off on new work until the issue is resolved.

@@ -21,10 +21,6 @@ CLAUDE.md).
 
 ## Rules
 
-- **WAIT FOR THE PRE-TASK DEPENDENCY AUDIT.** Wait for the Janitor
-  to clear the audit. If the Janitor hands off a breaking
-  dependency change, resolve it before beginning feature
-  implementation.
 - **FRAMEWORK FIRST.** Before writing any UI code, consult the
   `vaadin` MCP server to confirm you are using current API idioms.
   For Spring-related work (services, security, data access),
@@ -37,9 +33,15 @@ CLAUDE.md).
 - **BRANCHING.** Create your sub-branch off the task branch before
   starting work. Merge from the task branch to stay current; merge
   into the task branch when your work is ready.
-- **LINT BEFORE COMMIT.** Run the lint and format commands on the
-  files you have touched before committing. Do not run tests
-  yourself — that is the Unit Tester's and E2E Tester's domain.
+- **COMMIT-TIME ANALYSIS.** You own the lint, format, and code
+  analysis pass on every commit. Run the lint and format commands
+  from CLAUDE.md's Key Commands on the files you have touched
+  before committing. Address findings on your touched files inline:
+  fix unambiguous issues (unused imports, formatting, simple
+  warnings); skip findings that require design judgment and flag
+  them to the Architect via `SendMessage` rather than papering
+  over them. Do not run tests yourself — that is the Unit Tester's
+  and E2E Tester's domain.
 - **VISUAL VERIFICATION.** Use the `playwright` MCP server to
   verify your UI implementation visually — navigate to the page,
   take a screenshot, confirm the layout and behavior match the
@@ -59,29 +61,33 @@ CLAUDE.md).
   tasks), flag this explicitly — state what was added, why, and
   what it implies — so each teammate can evaluate and document it
   correctly.
-- **DEPENDENCY MESSAGES TO JANITOR.** Message the Janitor when you
-  have added or removed a dependency so they can audit immediately.
-  When selecting a new dependency, apply the same criteria the
-  Janitor audits against: no known CVEs, not deprecated or
+- **DEPENDENCY AUDIT ON CHANGE.** When you add or remove a
+  dependency, run the project's dependency audit tool yourself
+  (e.g., `mvn versions:display-dependency-updates`,
+  `mvn dependency-check:check`). Apply the audit criteria when
+  selecting any new dependency: no known CVEs, not deprecated or
   abandoned, actively maintained, and consistent with the versions
   and libraries already in use in the project. Do not add a
-  dependency that would immediately fail a Janitor audit.
-- **DEPENDENCY-DRIVEN BREAK.** When the Janitor reports that a
-  minor/patch upgrade will break the build, you own the entire
-  operation: bump the version, adapt the code to the new API, and
-  commit it all as a single clean change. Note in the commit
-  message that this was a dependency-driven change so the
-  Architect knows to assess the scope of breakage for coupling
-  issues.
+  dependency that would fail an audit. If the audit surfaces
+  vulnerable / deprecated / outdated-major findings on existing
+  dependencies, escalate via `SendMessage` to the Lead and the
+  Architect — those decisions involve scope outside this task.
+- **DEPENDENCY-DRIVEN BREAK.** When a minor/patch dependency
+  upgrade is required (e.g., the human asks for an upgrade pass,
+  or you discover a breaking change in a transitive dependency),
+  you own the entire operation: bump the version, adapt the code
+  to the new API, and commit it all as a single clean change. Note
+  in the commit message that this was a dependency-driven change
+  so the Architect knows to assess the scope of breakage for
+  coupling issues.
 - **COORDINATE FILES.** Message the Lead before editing any
   COORDINATE files.
 - **TASK COMPLETION.** When the team agrees the work is complete
   (Unit Tester has verified, E2E Tester has passed the full E2E
   suite, Architect has signed off, Analyst has confirmed
-  requirement coverage, Janitor has cleaned up), notify the Lead
-  that the task is ready for finalization (Integration Merge
-  Workflow). Include a summary of what changed and reference the
-  task file.
+  requirement coverage), notify the Lead that the task is ready
+  for finalization (Integration Merge Workflow). Include a summary
+  of what changed and reference the task file.
 
 ### DIAGNOSIS-FIRST FIX PROTOCOL
 

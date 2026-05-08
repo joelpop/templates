@@ -24,11 +24,15 @@ worktree:
 - **Analyst** — owns requirement docs in `docs/` and status tracking.
 - **Architect** — architecture guardian; proposes design approaches and
   reviews code, does not write it.
-- **Coder** — implements features and fixes bugs. The Lead may spawn
-  multiple Coders for parallel subtasks within a single task.
-- **Janitor** — linting, cleanup, dependency hygiene.
+- **Coder** — implements features and fixes bugs; runs lint/format
+  on touched files at commit; runs the dependency audit when
+  adding or removing a dependency. The Lead may spawn multiple
+  Coders for parallel subtasks within a single task.
 - **Unit Tester** — unit and browserless UI tests.
 - **E2E Tester** — end-to-end browser tests (Node.js Playwright).
+- **Tech Writer** — owns `docs/guides/` (install / deploy / user /
+  admin / operator guides). Updates on the release cadence, not the
+  per-task cadence.
 
 You only talk to the Lead. The Lead coordinates everything else.
 

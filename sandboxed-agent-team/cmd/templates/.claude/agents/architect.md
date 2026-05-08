@@ -177,15 +177,33 @@ None — you read code on other teammates' branches but do not commit.
   architecture or UX review trigger. Evaluate whether the
   application's navigation structure, state management, or
   test-data setup needs improvement.
-- **JANITOR SIGNALS.** When the Janitor reports that a minor/patch
-  dependency upgrade will break the build, the Coder will own the
-  version bump and code adaptation as a single commit, flagged in
-  the commit message. Treat this as an architecture review
-  trigger: read the Coder's changes and evaluate whether the scope
-  of breakage reveals tight coupling to internal dependency
-  details. Report your findings to the Coder before they begin, so
-  structural issues can be addressed at the same time rather than
-  baked in further.
+- **DEAD-CODE JUDGMENT.** During code review you are also the
+  decision authority on suspected dead code. External analysis
+  tools (IDE inspections, SonarLint, etc.) and the Coder will
+  surface candidate-unused symbols on commits you review. For each
+  flagged symbol decide: actually unused (ask the Coder to remove
+  it), public API or in-progress feature (leave it; record why in
+  `docs/architecture/` if non-obvious), or used through reflection
+  / dependency injection / framework magic (annotate so the next
+  reviewer doesn't relitigate). Do not remove code yourself; flag
+  the verdict to the Coder via `SendMessage`.
+- **DOC-HYGIENE NOTICES DURING REVIEW.** While reading touched
+  files, note mechanical doc problems and flag to the appropriate
+  owner:
+  - Missing / stale Javadoc on touched public types or methods
+    → flag to the Coder (Coder owns code-level docs).
+  - References to renamed or moved symbols in doc comments
+    → flag to the Coder.
+  - Broken links in `docs/` discovered while consulting reqs or
+    architecture entries → flag to the Analyst.
+  Do not fix documentation yourself — your role is detection and
+  routing; the owning role does the fix.
+- **DEPENDENCY-DRIVEN CHANGE.** When the Coder commits a
+  dependency-driven change (flagged in the commit message per
+  the Coder's DEPENDENCY-DRIVEN BREAK rule), treat it as an
+  architecture review trigger: read the Coder's changes and
+  evaluate whether the scope of breakage reveals tight coupling
+  to internal dependency details. Report findings to the Coder.
 - **DOCS/CODE DISAGREEMENT.** When the Unit Tester or E2E Tester
   reports a conflict between docs and code, determine which side
   is wrong and direct the Coder (for code and code-level docs) or

@@ -83,15 +83,15 @@ This project uses Claude Code's (currently) experimental Agent
 Teams feature. Seven teammates are defined as Agent Teams subagent
 definitions in `.claude/agents/`:
 
-| Teammate    | Definition                       | Purpose                                                                       |
-|-------------|----------------------------------|-------------------------------------------------------------------------------|
-| Integrator  | `.claude/agents/integrator.md`   | Operational lieutenant — task files, git, PR lifecycle, cost recording        |
-| Analyst     | `.claude/agents/analyst.md`      | Requirements engineer — owns `docs/`; runs consistency checks                 |
-| Architect   | `.claude/agents/architect.md`    | Architecture guardian; curates `docs/glossary.md` and `docs/tech/`            |
-| Coder       | `.claude/agents/coder.md`        | Implementer — features and bug fixes                                          |
-| Janitor     | `.claude/agents/janitor.md`      | Cleanup, lint, dependency hygiene                                             |
-| Unit Tester | `.claude/agents/unit-tester.md`  | Unit and browserless UI tests                                                 |
-| E2E Tester  | `.claude/agents/e2e-tester.md`   | Playwright browser tests                                                      |
+| Teammate    | Definition                       | Purpose                                                                                            |
+|-------------|----------------------------------|----------------------------------------------------------------------------------------------------|
+| Integrator  | `.claude/agents/integrator.md`   | Operational lieutenant — task files, git, PR lifecycle, post-merge hygiene, on-demand dep audits, cost recording |
+| Analyst     | `.claude/agents/analyst.md`      | Requirements engineer — owns `docs/reqs/`; runs consistency checks                                 |
+| Architect   | `.claude/agents/architect.md`    | Architecture guardian; curates `docs/glossary.md`, `docs/patterns/`, and `docs/architecture/`      |
+| Coder       | `.claude/agents/coder.md`        | Implementer — features, bug fixes, commit-time lint/format/analysis, dependency-audit-on-change   |
+| Unit Tester | `.claude/agents/unit-tester.md`  | Unit and browserless UI tests                                                                      |
+| E2E Tester  | `.claude/agents/e2e-tester.md`   | Playwright browser tests                                                                           |
+| Tech Writer | `.claude/agents/tech-writer.md`  | Owns `docs/guides/` — install / deploy / user / admin / operator guides; release-cadence updates  |
 
 The full role definitions — responsibilities, branches, operating
 rules — live in those files. Each teammate loads its definition's
@@ -923,18 +923,16 @@ including mid-implementation. The procedure depends on the change:
 - <filled in by Lead after Architect provides kickoff input>
 
 ## Plan Steps
-- [ ] Analyst: mark in-scope requirements `[-]` (first commit on task branch)
-- [ ] Janitor: pre-task dependency audit
+- [ ] Analyst: mark in-scope ACs `[-]` (first commit on task branch)
 - [ ] Architect: design <approach>
-- [ ] Coder: implement <component A>
-- [ ] Coder: implement <component B>
+- [ ] Coder: implement <component A> (lint/format on touched files at commit)
+- [ ] Coder: implement <component B> (lint/format on touched files at commit)
 - [ ] Unit Tester: write tests for <component A>
 - [ ] Unit Tester: write tests for <component B>
-- [ ] Architect: sign off
+- [ ] Architect: sign off (dead-code judgment + doc-hygiene notices during review)
 - [ ] Unit Tester: full unit suite (pre-PR gate); delegate browser-required scenarios to E2E Tester
 - [ ] E2E Tester: full E2E suite (pre-PR gate, after Unit Tester passes)
-- [ ] Analyst: confirm requirement coverage and mark requirements `[x]`
-- [ ] Janitor: lint and cleanup
+- [ ] Analyst: confirm requirement coverage and roll up `implementation` and AC checkboxes to `[x]`
 ```
 
 **Cost baseline sidecar file**: `.claude/.tasks/<task-id>.cost-baseline.json`.
@@ -963,9 +961,9 @@ clobbering another's changes, each section has a designated writer:
 - **Analyst** — marks the Requirements-in-Scope checkboxes (`[-]`
   at kickoff, `[x]` at the pre-PR gate). No other role edits these
   checkboxes.
-- **Each teammate** (Coder, Janitor, Unit Tester, E2E Tester,
-  Architect, Analyst) — marks their own Plan Steps as `[-]` when
-  starting and `[x]` when done. No teammate marks another
+- **Each teammate** (Coder, Unit Tester, E2E Tester, Architect,
+  Analyst, Tech Writer) — marks their own Plan Steps as `[-]`
+  when starting and `[x]` when done. No teammate marks another
   teammate's steps.
 - **Lead** — does not edit the task file directly; all Lead-driven
   updates are delegated to the Integrator.
@@ -1023,56 +1021,41 @@ who delegates to the Integrator.
 7. Lead resolves any remaining questions, incorporates the approved
    approach (if any) into the task file, and finalizes scope. Once all
    five acknowledge, scope is locked and the task file is not changed
-   without Lead approval. (The Janitor is not part of this review — their
-   gate is the pre-task dependency audit in step 8.) The Architect's approved approach is binding
+   without Lead approval. The Architect's approved approach is binding
    on the Coder.
 
-**Pre-task gate (before the Coder begins):**
-8. Janitor runs a full build on the task branch to verify the baseline
-   compiles. If the build fails before any team changes have been made,
-   `<DEV_BRANCH_NAME>` is degraded — Janitor messages the Lead (see
-   Dev-Branch Health in Coordination Rules) and does not proceed.
-   Once the baseline is verified, Janitor creates
-   `task/<task-id>/janitor` and runs a pre-task dependency audit. For
-   each permitted minor/patch upgrade, Janitor bumps the version and
-   rebuilds. If the build passes, commit the upgrade. If the build
-   fails, revert that version change and continue with the remaining
-   upgrades. After the audit is complete, Janitor merges all passing
-   upgrades to the task branch and reports any failed upgrades to the
-   Lead. The Lead presents failures to the human, who decides the
-   disposition (skip, schedule, or pin the current version in
-   CLAUDE.md to prevent re-attempts — see Janitor DEPENDENCY AUDITING
-   rules, category d). Janitor also reports any pinned versions that
-   have available upgrades beyond the pin, so the human can
-   re-evaluate whether the pin is still needed. Vulnerable or
-   deprecated dependencies are escalated to the Lead. Coder does not
-   start until the Janitor signals the audit is clear.
-
 **Per-commit cycle (repeats until Architect is satisfied):**
-9. Coder creates `task/<task-id>/coder` (if not already created),
-   implements on the sub-branch, and merges into the task branch.
-10. Coder notifies Unit Tester and Architect that changes are ready.
-    Both have the task file and can read the commit. If the commit
-    contains anything beyond task scope, the Coder flags it explicitly.
-11. Unit Tester and Architect work in parallel:
+8. Coder creates `task/<task-id>/coder` (if not already created),
+   implements on the sub-branch, runs lint/format on touched files
+   per the Coder's COMMIT-TIME ANALYSIS rule, and merges into the
+   task branch. If a dependency was added or removed, the Coder
+   runs the project's dep audit (per the Coder's DEPENDENCY AUDIT
+   ON CHANGE rule) before the merge.
+9. Coder notifies Unit Tester and Architect that changes are ready.
+   Both have the task file and can read the commit. If the commit
+   contains anything beyond task scope, the Coder flags it explicitly.
+10. Unit Tester and Architect work in parallel:
     - Unit Tester creates `task/<task-id>/unit-tester` (if not already
       created), merges latest from the task branch, writes new
       unit/browserless UI tests, runs the targeted suite, and merges passing
       tests into the task branch. Reports failures to Coder and
       Architect.
     - Architect reads the full changed files and evaluates implementation
-      quality and requirements compliance; reports findings to Coder.
-12. Coder addresses Unit Tester failures and Architect findings on the
+      quality, requirements compliance, dead-code candidates, and
+      doc-hygiene notices (per the Architect's DEAD-CODE JUDGMENT and
+      DOC-HYGIENE NOTICES DURING REVIEW rules); reports findings to
+      Coder.
+11. Coder addresses Unit Tester failures and Architect findings on the
     Coder sub-branch, then merges into the task branch again. Repeat
-    from step 10 until the Architect signs off and the Unit Tester
+    from step 9 until the Architect signs off and the Unit Tester
     reports a clean targeted run.
 
 **Pre-PR gate (once per task, after the cycle above is complete):**
-13. Architect signs off and asks the Unit Tester to run the FULL unit +
+12. Architect signs off and asks the Unit Tester to run the FULL unit +
     browserless UI test suite on the task branch as the first gate check. The
     Unit Tester delegates any browser-required scenarios to the E2E
     Tester at this time.
-14. If the full unit suite passes, Architect asks the E2E Tester to
+13. If the full unit suite passes, Architect asks the E2E Tester to
     create `task/<task-id>/e2e-tester`, write E2E tests for any
     delegated scenarios, and run the FULL end-to-end browser test suite
     on the task branch as the second gate check.
@@ -1092,14 +1075,16 @@ who delegates to the Integrator.
       the Coder investigates (using the normal Diagnosis-First Fix
       Protocol, escalating to the Architect if needed). Pre-PR gate
       checks restart after the fix.
-15. If the full E2E suite passes, Analyst confirms that the
-    implementation's scope matches the documented requirements — nothing
-    was added that isn't required, nothing required was omitted. Analyst
-    marks all in-scope requirements as `[x]` in the requirement docs
-    and commits on the task branch.
-16. Janitor runs the linter and flags dead code on the Janitor
-    sub-branch, merges cleanup into the task branch.
-17. **Human validation gate.** Lead presents a summary of the
+14. If the full E2E suite passes, Analyst confirms that the
+    implementation's scope matches the documented requirements —
+    nothing was added that isn't required, nothing required was
+    omitted. Analyst rolls up the parent requirement statuses (per
+    the Requirement Status convention in CLAUDE.md): the Coder has
+    marked `implementation` `[x]` per the Coder's commit-time work,
+    the Tester has marked each AC `[x]` as a passing test was
+    written, and the Analyst recomputes each parent requirement's
+    rollup, then commits on the task branch.
+15. **Human validation gate.** Lead presents a summary of the
     completed work to the human — what was implemented, which
     requirements are addressed, and how to exercise the changes (e.g.,
     which URL to visit, which action to perform). The human runs the
@@ -1107,7 +1092,7 @@ who delegates to the Integrator.
     - **Signs off** → Lead proceeds to the Integration Merge Workflow.
     - **Requests changes** → Lead relays feedback to the Coder. Coder
       fixes on the coder sub-branch, merges to the task branch. All
-      Pre-PR gate checks (steps 13-16) restart. After gates pass, the
+      Pre-PR gate checks (steps 12–14) restart. After gates pass, the
       human validates again.
 
 ### Integration Merge Workflow
@@ -1304,9 +1289,12 @@ T.7. Integrator removes the task from `.claude/.progress.md`. Integrator
      deletes the task branch and all teammate sub-branches.
 
 **P. Post-merge hygiene (both branch types):**
-Janitor runs a dependency audit and full build on `<DEV_BRANCH_NAME>`. If
-the build or audit fails, Janitor messages the Lead (see Dev-Branch
-Health in Coordination Rules).
+Integrator runs a full build on `<DEV_BRANCH_NAME>` to verify the
+merge did not break the baseline. If the build fails, Integrator
+messages the Lead (see Dev-Branch Health in Coordination Rules).
+Integrator does not run a routine dependency audit at this point;
+on-demand audits run only when the human requests one (see the
+Integrator role's on-demand dependency audit rule).
 
 ### Dev-Branch Health
 `<DEV_BRANCH_NAME>` is the team's shared baseline. It can be degraded by
@@ -1362,9 +1350,9 @@ creating conflicts:
    task branch."
 
 This protocol applies to all teammates that merge into the task
-branch (Coder, Unit Tester, E2E Tester, Janitor), not just during
-parallel Coder work. Teammates waiting to merge proceed in the
-order they announced.
+branch (Coder, Unit Tester, E2E Tester), not just during parallel
+Coder work. Teammates waiting to merge proceed in the order they
+announced.
 
 **Crash recovery:** If a teammate does not post the release
 message (step 5) within 5 minutes of the announce (step 1), the
@@ -1403,8 +1391,8 @@ single Coder.
   etc.
 - The task file's Plan Steps indicate which Coder owns which
   steps.
-- The Architect and Janitor remain single teammates shared across
-  all parallel subtasks.
+- The Architect remains a single teammate shared across all
+  parallel subtasks.
 
 **Per-commit cycle (parallel per Coder):**
 Each Coder/Unit Tester pair follows the normal per-commit cycle
@@ -1423,7 +1411,7 @@ independently and in parallel:
 Once all parallel Coders' work is individually reviewed and merged,
 the pre-PR gate runs on the combined task branch as normal — full
 unit + browserless UI suite, full E2E suite, Architect final sign-off,
-Analyst requirement coverage, and Janitor cleanup. This is the
+and Analyst requirement coverage. This is the
 integration step that verifies the combined work.
 
 The Integration Merge Workflow proceeds as normal after the pre-PR
@@ -1572,8 +1560,9 @@ Multiple workflows block on human input (requirement approval,
 validation gate, ambiguity resolution). If the human is unavailable:
 
 - **Team continues on unblocked work.** The Analyst can draft
-  requirements on other branches. The Janitor can handle cleanup.
-  Coders can work on unambiguous parts of the current task.
+  requirements on other branches. The Coder can work on
+  unambiguous parts of the current task. The Tech Writer can
+  draft or refresh guides.
 - **Lead queues blocked decisions.** Maintain a list of decisions
   waiting on the human, ordered by priority. Present them when the
   human returns.

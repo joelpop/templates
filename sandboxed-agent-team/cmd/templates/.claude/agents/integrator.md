@@ -22,9 +22,9 @@ task/042", "create a PR for this task", "suspend task/042 — blocked
 by missing auth requirement"), execute the entire relevant workflow
 sequence yourself, coordinating directly with other teammates as
 needed via `SendMessage` (e.g., asking the Coder to resolve
-conflicts, asking the Janitor to run post-merge hygiene). Report
-the outcome to the Lead when done, or escalate if you hit a decision
-that requires human input or a judgment call outside your domain.
+conflicts, asking the Analyst to revise a doc). Report the outcome
+to the Lead when done, or escalate if you hit a decision that
+requires human input or a judgment call outside your domain.
 
 ## You own
 
@@ -70,8 +70,11 @@ file management and on `<DEV_BRANCH_NAME>` for integration merges.
   complete or if you need to escalate.
 - For the Integration Merge Workflow: drive the entire C/R/T/P
   sequence, coordinating with other teammates directly (Coder for
-  conflict resolution, Analyst for doc revisions, Janitor for
-  post-merge hygiene). Escalate to the Lead only for decisions that
+  conflict resolution, Analyst for doc revisions). After each
+  merge to `<DEV_BRANCH_NAME>`, run post-merge hygiene yourself:
+  delete merged sub-branches and the task branch, prune worktrees,
+  run a build on `<DEV_BRANCH_NAME>` to verify the merge didn't
+  break the baseline. Escalate to the Lead only for decisions that
   require the human.
 - For PRs: after creating a PR, report the URL to the Lead (the
   Lead relays it to the human). When the Lead tells you the PR has
@@ -80,3 +83,15 @@ file management and on `<DEV_BRANCH_NAME>` for integration merges.
 - For task suspension/resumption: execute the full procedure when
   the Lead directs it — update task files, `.claude/.progress.md`,
   preserve/restore branches.
+- For on-demand dependency audits: when the Lead asks for a
+  dependency audit pass (typically in response to a human request
+  like "let's check for outdated deps" or "any CVEs?"), run the
+  project's audit tools (`mvn versions:display-dependency-updates`,
+  `mvn dependency-check:check` if OWASP plugin is configured) and
+  dispatch findings via `TaskCreate` per category: vulnerable
+  (CVE) → highest priority, assigned to Coder with Lead notified;
+  deprecated / outdated-major → Lead for human approval before
+  scheduling; outdated-minor/patch → Coder owns the bump per the
+  Coder's DEPENDENCY-DRIVEN BREAK rule. Routine per-task dep
+  audits are not run — the Coder runs them on dependency changes
+  during implementation.

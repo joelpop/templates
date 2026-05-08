@@ -228,7 +228,11 @@ Ownership map (auto-derived — adjust after structural changes):
 - `src/main/frontend/`        → Coder
 - `src/test/java/`            → Unit Tester
 - `<e2e-test-dir>/`           → E2E Tester
-- `docs/`                     → Analyst
+- `docs/reqs/`                → Analyst
+- `docs/patterns/`            → Architect curates / Analyst commits
+- `docs/architecture/`        → Architect curates / Analyst commits
+- `docs/guides/`              → Tech Writer
+- `docs/glossary.md`          → Architect curates / Analyst commits
 - `pom.xml`                   → COORDINATE (Lead approves)
 - `README.md`                 → COORDINATE (Lead approves)
 - CI/CD config (e.g., `.github/workflows/`) → COORDINATE (Lead approves)
@@ -519,11 +523,13 @@ Requirement branch statuses:
     Coders in Coordination Rules in team-start.md)
   - `task/<task-id>/unit-tester`
   - `task/<task-id>/e2e-tester`
-  - `task/<task-id>/janitor`
   - The Analyst has no sub-branch — it works on `requirement/<slug>`
     branches and commits status marks directly on the task branch.
   - The Architect has no branch — it reads code on other teammates'
     branches but does not commit.
+  - The Tech Writer has no task sub-branch — it works on
+    `guide/<slug>` branches on the release cadence, not the task
+    cadence.
 - Teammate sub-branch operations: each teammate creates their
   sub-branch once at the start of the task and reuses it for all
   commit cycles within that task. Merge (not rebase) in both

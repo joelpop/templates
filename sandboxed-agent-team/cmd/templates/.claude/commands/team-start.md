@@ -18,11 +18,12 @@ the human sees your response as you write it.
 Before spawning any teammates, verify that this developer's local
 setup is current:
 
-1. Clear any stale activation sentinel from a previous session:
-   `rm -f .claude/.team-active`. The statusline ("Agent Team Mode")
-   lights up only after the current session writes this file at the
-   end of Team Structure spawn — starting blank ensures the
-   indicator is accurate for this session.
+1. The SessionStart hook (`.claude/hooks/session-start-fetch-docs.sh`)
+   has already cleared any stale activation sentinel
+   (`.claude/.team-active`) at the start of this session. You do
+   not need to do this yourself. The statusline ("Agent Team
+   Mode") lights up only after the Integrator writes the sentinel
+   at the end of Team Initialization (below).
 2. Read the top banner of `ONBOARDING.md` in the project root,
    locate the `Generated:` marker, and leniently parse its value
    into a normalized timestamp. "Leniently parse and expand" means:
@@ -71,10 +72,10 @@ setup is current:
 6. Proceed to Team Initialization.
 
 Once `TeamCreate` returns successfully (see Team Initialization
-below), write the activation sentinel:
+below), tell the Integrator to write the activation sentinel:
 `touch .claude/.team-active`. This signals to the sandbox's
 statusline that the team is running ("Agent Team Mode" displays).
-Do not write the sentinel if `TeamCreate` failed or returned
+Do not delegate the write if `TeamCreate` failed or returned
 partial results.
 
 ## Team Initialization
@@ -113,11 +114,13 @@ project root in the spawn prompt so they can read gitignored files
 main working directory. Example wording: *"The main project root is
 `/home/agent/project/`. Use this path to read `.claude/` files."*
 
-Once `TeamCreate` succeeds, write `.claude/.team-active`
-(`touch .claude/.team-active`). The sandbox statusline reads this
-sentinel and displays "Agent Team Mode" once the team is live. Do
-not write the sentinel if `TeamCreate` failed or returned partial
-results.
+Once `TeamCreate` succeeds, message the Integrator to `touch
+.claude/.team-active`. The sandbox statusline reads this sentinel
+and displays "Agent Team Mode" once the team is live. Do not
+delegate the write if `TeamCreate` failed or returned partial
+results. (The Lead does not write files directly; the Integrator
+owns this filesystem op as part of its operational duties — see
+the Integrator agent definition.)
 
 **Inter-teammate communication.**
 Teammates message each other directly via `SendMessage` addressed
@@ -132,6 +135,37 @@ it directly.
 Before starting ANY task, every teammate completes the Pre-Task
 Context Check (see Coordination Rules below). Do not begin work
 until it passes.
+
+**Lead's primary references.**
+Beyond this file (your standing instructions) and CLAUDE.md
+(auto-loaded), consult these durable surfaces when triaging
+requests, drafting task files, or routing teammate questions:
+
+- `docs/glossary.md` — project vocabulary; consult when a
+  request uses an ambiguous term (or a slang variant of a
+  canonical term).
+- `docs/reqs/INDEX.md` — current requirements; consult when
+  classifying whether a request is a new requirement or a
+  refinement.
+- `docs/reqs/open-items.md` — outstanding human-input
+  questions; consult when a request might resolve a pending
+  question.
+- `docs/patterns/INDEX.md` — project-agnostic patterns the team
+  follows; consult when a request might land as a new pattern
+  entry vs. a project-specific decision.
+- `docs/architecture/INDEX.md` — project's architecture and
+  design entries; consult when a request might land as a new
+  architecture entry, or when an architectural concern is in
+  flight.
+- `docs/guides/INDEX.md` — when a request affects user-facing
+  documentation (route to Tech Writer).
+- `.claude/agents/*.md` — each teammate's role definition,
+  including their own Primary references list. Useful when
+  delegating edge cases.
+
+The session-start hook also injects the canonical Agent Teams
+documentation into your context at session start (see
+`.claude/hooks/session-start-fetch-docs.sh`).
 
 ## Coordination Rules
 
@@ -1176,18 +1210,25 @@ T.6. Integrator builds the per-task cost report by subtracting the
 
      **Always**: Integrator hands the formatted report to the Lead,
      who reads the per-model lines and totals to the human verbally
-     at task wrap-up — regardless of the project's commit-message
-     setting.
+     at task wrap-up — regardless of the destination settings
+     below.
 
-     **If `Include cost report in commit message: yes`** (in
-     `CLAUDE.md`'s Branching section): Integrator appends the
-     formatted report as a trailing block of the final squash-merge
-     commit message (which already carries the task's scope,
-     Architect guidance, and rationale per T.5). The report
-     persists in git history.
+     **Then write to additional destinations** per `CLAUDE.md`'s
+     Branching section → "Cost report destinations":
 
-     **If `no`**: skip the commit-message append. The verbal report
-     to the human still happens; no git-history record is created.
+     - **If `Include cost report in commit message: yes`**:
+       Integrator appends the formatted report as a trailing block
+       of the final squash-merge commit message (which already
+       carries the task's scope, Architect guidance, and rationale
+       per T.5). The report persists in git history.
+     - **If `Append cost report to project log: yes`**: Integrator
+       appends the report (with a header line `## <task-id> —
+       <YYYY-MM-DD>`) to `.claude/.cost-log.md` — a project-local
+       cumulative log file (gitignored). Useful when the team
+       wants cost visibility but does not want it in git history.
+
+     Both destinations can be `yes` (record in both places). Both
+     `no` means verbal-only; no durable record is created.
 
      > **Note on precision:** the delta is accurate for the
      > **current task** as long as the baseline was captured at

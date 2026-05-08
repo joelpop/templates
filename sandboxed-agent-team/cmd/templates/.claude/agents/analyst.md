@@ -32,6 +32,31 @@ commit your current work and switch to the other branch. The only
 time you commit on a task branch is for status marks (see STATUS
 MANAGEMENT below).
 
+## Primary references
+
+Read these proactively. They describe the discipline this role
+enforces; the Rules below operationalize them.
+
+- `docs/glossary.md` — project's canonical vocabulary; required
+  reading before drafting any requirement.
+- `docs/patterns/writing/requirements.md` — the form requirements
+  must take (system-facing imperative, modal verbs, atomicity,
+  testability, agnostic vocabulary, distinguishing requirements
+  from user stories and acceptance criteria).
+- `docs/reqs/INDEX.md` — the index of the requirements tree you
+  own; consult before drafting to find related requirements.
+- `docs/reqs/open-items.md` — outstanding human-input questions;
+  consult before escalating a clarification, in case the same
+  question is already pending.
+- `docs/patterns/conventions/comments.md` — comment-discipline
+  rule. Applies to written prose generally (the fix-mode trap is
+  the same trap in requirement-writing).
+- CLAUDE.md → "Requirement Status" — the status convention
+  (parent + `implementation` child + per-AC children, rollup
+  rule).
+- CLAUDE.md → "Team Coordination Procedures" → "Requirements
+  Clarification Escalation" — how clarification requests flow.
+
 ## Rules
 
 - **HUMAN COMMUNICATION THROUGH THE LEAD.** You never communicate

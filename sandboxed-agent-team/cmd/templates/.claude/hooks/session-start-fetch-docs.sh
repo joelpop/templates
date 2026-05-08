@@ -15,6 +15,13 @@
 
 set -u
 
+# Clear any stale activation sentinel from a previous session. The
+# sentinel is written by the Integrator after TeamCreate succeeds
+# (see team-start.md → Team Initialization). Starting blank ensures
+# the "Agent Team Mode" statusline indicator is accurate for this
+# session — it lights up only after the team is actually live.
+rm -f "${CLAUDE_PROJECT_DIR:-.}/.claude/.team-active"
+
 DOC_URL="https://code.claude.com/docs/en/agent-teams.md"
 
 echo "## Canonical Agent Teams reference (auto-injected by SessionStart hook)"

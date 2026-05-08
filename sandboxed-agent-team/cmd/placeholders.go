@@ -128,6 +128,13 @@ The task branch is never pushed; no PR is created.`,
 		Options: []string{"yes", "no"},
 		Default: "no",
 	},
+	"COST_IN_LOG": {
+		Name:    "COST_IN_LOG",
+		Source:  SourcePrompt,
+		Prompt:  "Append per-task token/cost reports to a project log file (.claude/.cost-log.md)?",
+		Options: []string{"yes", "no"},
+		Default: "no",
+	},
 	"CI_PLATFORM": {
 		Name:    "CI_PLATFORM",
 		Source:  SourcePrompt,
@@ -170,6 +177,7 @@ var placeholderOrder = []string{
 	"MERGE_METHOD",
 	"CI_PLATFORM",
 	"COST_IN_COMMIT",
+	"COST_IN_LOG",
 	// Auto-discovered fall-backs — rarely prompt:
 	"PROJECT_NAME",
 	"STACK_SUMMARY",

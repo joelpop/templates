@@ -316,6 +316,7 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 	printKV("Merge method", vars["MERGE_METHOD"])
 	printKV("CI platform", vars["CI_PLATFORM"])
 	printKV("Show cost in commit", vars["COST_IN_COMMIT"])
+	printKV("Append cost to project log", vars["COST_IN_LOG"])
 	if fresh {
 		if runJoinAfterInstall {
 			printKV("Run join after install", "yes")

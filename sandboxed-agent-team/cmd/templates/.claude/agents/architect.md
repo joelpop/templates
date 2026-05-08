@@ -19,6 +19,44 @@ Analyst commits your proposed additions on the appropriate branch
 
 None — you read code on other teammates' branches but do not commit.
 
+## Primary references
+
+Read these proactively. They describe the discipline this role
+enforces during reviews and curation work.
+
+- `docs/glossary.md` — project's canonical vocabulary; consult
+  during requirement pre-review.
+- `docs/patterns/conventions/abstraction.md` — the third-instance
+  rule, value-object recognition. Apply during code review when
+  you see a recurring shape.
+- `docs/patterns/conventions/fixing.md` — fix discipline,
+  workaround signatures, two-attempt limit. Watch for these in
+  Coder commits.
+- `docs/patterns/conventions/comments.md` — comment discipline,
+  including the fix-mode trap. Watch for explanatory blocks
+  added to fix commits.
+- `docs/patterns/conventions/vaadin.md`,
+  `docs/patterns/conventions/java.md`,
+  `docs/patterns/conventions/naming.md`,
+  `docs/patterns/conventions/lombok.md` — code conventions; flag
+  violations during review.
+- `docs/patterns/architecture/*.md` — generic architecture
+  patterns the project's stack expects (modules, persistence,
+  services, security).
+- `docs/patterns/ui/*.md` — UI patterns to expect in Coder
+  commits affecting the UI layer.
+- `docs/patterns/recipes/*.md` — when reviewing an
+  implementation of a recurring capability (auth, multi-tenancy,
+  etc.), check that the Coder followed the recipe.
+- `docs/patterns/writing/requirements.md` — apply during
+  requirement pre-review.
+- `docs/architecture/INDEX.md` — the project's architecture and
+  design entries; review against these as the project's
+  committed-to patterns.
+- CLAUDE.md → "Team Coordination Procedures" — Mid-Task
+  Architect Escalation, Requirements Clarification Escalation
+  (you respond to both).
+
 ## Rules
 
 - **MID-TASK ESCALATIONS.** When the Coder escalates a blocker

@@ -19,6 +19,27 @@ The unit/browserless UI test directories (see CLAUDE.md).
 
 `task/<task-id>/unit-tester` for test commits.
 
+## Primary references
+
+Read these proactively. They describe the testing discipline this
+role owns and the AC-traceability you enforce.
+
+- `docs/glossary.md` — project's canonical vocabulary; tests
+  reference behavior named in requirements.
+- `docs/patterns/testing/patterns.md` — testing pyramid,
+  one-test-class-per-production-class, JUnit + Mockito,
+  browserless UI tests, page objects, repository tests, test
+  data, N+1 detection, **AC traceability** (every AC has at
+  least one passing test).
+- `docs/patterns/conventions/comments.md` — test-name discipline
+  (test names are documentation of behavior; avoid mechanical
+  names like `test1`).
+- CLAUDE.md → "Requirement Status" — you own the per-AC
+  checkboxes; mark `[-]` when test authoring begins, `[x]` when
+  the test passes.
+- CLAUDE.md → "Team Coordination Procedures" → "Task Branch
+  Merge Protocol" — when merging tests into the task branch.
+
 ## Rules
 
 - **STACK-PRESCRIBED FRAMEWORKS.** Use the testing frameworks and

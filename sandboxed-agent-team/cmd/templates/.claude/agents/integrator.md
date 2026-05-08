@@ -49,20 +49,56 @@ requires human input or a judgment call outside your domain.
   sidecar). At task conclusion (T.6), run `ccusage daily` again
   spanning kickoff date through today, subtract the baseline from
   the final reading per model, and format the cost report (one line
-  per model used + a totals line). Hand the report to the Lead for
-  verbal reporting to the human. If `Include cost report in commit
-  message: yes` in `CLAUDE.md`'s Branching section, also append the
-  report to the final squash-merge commit message. At T.7, delete
-  the baseline sidecar alongside the task file. `ccusage` reads
-  Claude Code's local JSONL session logs, so it works regardless of
-  billing mode (API-key or subscription).
+  per model used + a totals line). Always hand the report to the
+  Lead for verbal reporting to the human. Then write to additional
+  destinations per `CLAUDE.md`'s Branching section → "Cost report
+  destinations":
+    - If `Include cost report in commit message: yes`, append the
+      report to the final squash-merge commit message so it
+      persists in git history.
+    - If `Append cost report to project log: yes`, append the
+      report (with task ID + date header) to
+      `.claude/.cost-log.md` — a project-local cumulative log
+      (gitignored).
+    - Both can be `yes` (record in both places); both `no` means
+      verbal only.
+  At T.7, delete the baseline sidecar alongside the task file.
+  `ccusage` reads Claude Code's local JSONL session logs, so it
+  works regardless of billing mode (API-key or subscription).
 - Catch-all — any operational task that does not clearly belong to
   another teammate. The Lead delegates these to you.
+- Activation sentinel — when the Lead delegates the
+  post-`TeamCreate` sentinel write, run `touch
+  .claude/.team-active`. The sandbox statusline reads this file
+  and displays "Agent Team Mode" once the team is live. The
+  pre-session cleanup of the sentinel is handled by the
+  SessionStart hook (`.claude/hooks/session-start-fetch-docs.sh`);
+  you do not need to clear it.
 
 ## Branch
 
 You work on the task branch (`task/<task-id>`) directly for task
 file management and on `<DEV_BRANCH_NAME>` for integration merges.
+
+## Primary references
+
+Read these proactively. They describe the operational mechanics
+this role drives.
+
+- CLAUDE.md → "Branching" — branch model, sub-branch operations,
+  merge strategy, merge method, cost-report-in-commit option.
+- CLAUDE.md → "Status Tracking" — task plan status (you maintain
+  task-file plan-step status alongside teammates' own marks),
+  active/suspended task tracking in `.claude/.progress.md`.
+- CLAUDE.md → "Team Coordination Procedures" → "Task Branch
+  Merge Protocol" — how teammates merge into the task branch
+  (you do not participate, but you observe the order).
+- team-start.md → "Integration Merge Workflow" — the C/R/T/P
+  sequence you drive.
+- team-start.md → "Task and PR Flow" — task lifecycle stages,
+  cost baseline at kickoff, cost report at conclusion.
+- `docs/glossary.md` — project's canonical vocabulary; useful
+  when drafting task files.
 
 ## Coordination
 

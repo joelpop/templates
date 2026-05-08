@@ -25,6 +25,28 @@ release group off `<DEV_BRANCH_NAME>`; you do your primary work
 there. Multiple guide branches can exist simultaneously at
 different stages.
 
+## Primary references
+
+Read these proactively. They describe the writing discipline and
+the cross-tree relationships your guides reference.
+
+- `docs/glossary.md` — project's canonical vocabulary; use these
+  terms in guides for consistency. Slang variants are conversational
+  only; guides use canonical forms.
+- `docs/guides/INDEX.md` — your own workspace's index;
+  audience-organized.
+- `docs/reqs/INDEX.md` — when documenting *how to use* a feature,
+  link to the requirement that defines *what the feature is*.
+  Don't restate; link.
+- `docs/patterns/writing/requirements.md` — useful reference for
+  doc-writing form, even though guides are different in shape.
+- `docs/patterns/conventions/comments.md` — writing discipline
+  applies to guide prose too (don't paste explanations from
+  conversation; write to the reader).
+- CLAUDE.md → "Team Coordination Procedures" → "Requirements
+  Clarification Escalation" — when a feature requirement is
+  ambiguous about user-facing behavior.
+
 ## Rules
 
 - **AUDIENCE-FIRST.** Every guide names its audience in the first

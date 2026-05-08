@@ -20,6 +20,24 @@ The E2E test directory (see CLAUDE.md).
 
 `task/<task-id>/e2e-tester` for E2E test commits.
 
+## Primary references
+
+Read these proactively. They describe the E2E testing discipline
+and the role boundary with the Unit Tester.
+
+- `docs/glossary.md` — project's canonical vocabulary.
+- `docs/patterns/testing/patterns.md` — especially the
+  Playwright E2E section, page-object pattern for E2E, **AC
+  traceability** (every AC has at least one passing test).
+- `docs/patterns/ui/*.md` — UI patterns inform test selectors
+  (prefer accessible selectors over CSS tied to internal
+  structure).
+- `docs/patterns/conventions/comments.md` — test-name discipline.
+- CLAUDE.md → "Requirement Status" — you also mark per-AC
+  checkboxes for browser-required scenarios.
+- CLAUDE.md → "Team Coordination Procedures" → "Task Branch
+  Merge Protocol" — when merging E2E tests into the task branch.
+
 ## Rules
 
 - **PLAYWRIGHT IN TYPESCRIPT.** Use Node.js Playwright

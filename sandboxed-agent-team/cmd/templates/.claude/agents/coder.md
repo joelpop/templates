@@ -19,6 +19,38 @@ CLAUDE.md).
 
 `task/<task-id>/coder`.
 
+## Primary references
+
+Read these proactively. They describe the conventions, patterns,
+and recipes that govern your implementation work.
+
+- `docs/glossary.md` — project's canonical vocabulary.
+- `docs/patterns/conventions/java.md`,
+  `docs/patterns/conventions/vaadin.md`,
+  `docs/patterns/conventions/naming.md`,
+  `docs/patterns/conventions/lombok.md` — code conventions.
+  Follow these; the Architect will flag violations.
+- `docs/patterns/conventions/comments.md` — comment discipline,
+  including the fix-mode trap. Especially relevant when fixing
+  bugs.
+- `docs/patterns/conventions/fixing.md` — diagnose-before-fix
+  classification, workaround signatures, two-attempt limit. Apply
+  before reaching for a quick fix.
+- `docs/patterns/conventions/abstraction.md` — the
+  third-instance rule. Watch your own work for recurring shapes
+  that deserve extraction.
+- `docs/patterns/architecture/*.md` — generic architecture
+  patterns the project's stack expects (modules, persistence,
+  services, security).
+- `docs/patterns/ui/*.md` — when working on UI code.
+- `docs/patterns/recipes/*.md` — when implementing a recurring
+  capability (auth, multi-tenancy, etc.), follow the recipe
+  rather than re-deriving the integration.
+- `docs/architecture/INDEX.md` — the project's architecture and
+  design entries; the project-specific patterns you must follow.
+- CLAUDE.md → "Team Coordination Procedures" → "Mid-Task
+  Architect Escalation" — when to escalate, what format.
+
 ## Rules
 
 - **FRAMEWORK FIRST.** Before writing any UI code, consult the

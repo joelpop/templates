@@ -546,25 +546,43 @@ Requirement branch statuses:
   and affected components (see Integration Merge Workflow T.5 in
   team-start.md).
 - Merge method: `<MERGE_METHOD>`
-- Include cost report in commit message: `<COST_IN_COMMIT>` (`yes` or
-  `no`). When `yes`, the Integrator appends a per-model token/cost
-  delta report (via `ccusage`) to the final squash-merge commit
-  message so it persists in git history. When `no`, the report is
-  still shown to the human at task conclusion but is not recorded
-  in git. See T.6 in `team-start.md` for the exact flow. To change
-  this setting later, ask the Lead ("change `Include cost report
-  in commit message` to `yes`/`no`"). The Lead delegates to the
-  Integrator, which creates a working branch off `<DEV_BRANCH_NAME>`,
-  updates this line in `CLAUDE.md`, commits, and finalizes per the
-  project's merge method above. **Caveat:** `CLAUDE.md` is read by
-  every role at task start, so a mid-engagement edit can collide
-  with any task/requirement branch in flight. Prefer to make this
-  change during a quiet period — no active tasks, no open
-  requirement branches — so the new value is in effect uniformly
-  for all subsequent work. If a change must happen while work is
-  in flight, the Lead should pause new task creation until the
-  edit is merged and all teammates have pulled the latest
-  `<DEV_BRANCH_NAME>`.
+
+### Cost report destinations
+
+The Integrator computes a per-model token/cost delta report at task
+conclusion (via `ccusage`, see T.6 in `team-start.md`). It is
+**always reported verbally to the human** at task wrap-up
+regardless of the destination settings below; the settings control
+whether the report is also recorded durably.
+
+- **Include cost report in commit message:** `<COST_IN_COMMIT>`
+  (`yes` or `no`). When `yes`, the Integrator appends the report
+  as a trailing block of the final squash-merge commit message so
+  it persists in git history.
+- **Append cost report to project log:** `<COST_IN_LOG>` (`yes` or
+  `no`). When `yes`, the Integrator appends the report (with task
+  ID, date, and per-model breakdown) to `.claude/.cost-log.md` —
+  a project-local log file (gitignored) for cumulative
+  developer-local cost tracking. Useful when the team wants
+  cost visibility but does not want it in git history.
+
+Both settings can be `yes` (record in both places), one `yes` and
+one `no` (single destination), or both `no` (verbal only). Other
+destinations may be added over time.
+
+To change either setting later, ask the Lead ("change `Include
+cost report in commit message` to `yes`/`no`"). The Lead delegates
+to the Integrator, which creates a working branch off
+`<DEV_BRANCH_NAME>`, updates the line in `CLAUDE.md`, commits, and
+finalizes per the project's merge method above. **Caveat:**
+`CLAUDE.md` is read by every role at task start, so a
+mid-engagement edit can collide with any task/requirement branch
+in flight. Prefer to make this change during a quiet period — no
+active tasks, no open requirement branches — so the new value is
+in effect uniformly for all subsequent work. If a change must
+happen while work is in flight, the Lead should pause new task
+creation until the edit is merged and all teammates have pulled
+the latest `<DEV_BRANCH_NAME>`.
 
 ## Team Coordination Procedures
 

@@ -26,6 +26,7 @@ var kitGitignoreEntries = []string{
 	".claude/.tasks/",
 	".claude/.progress.md",
 	".claude/.worktrees/",
+	".claude/.cost-log.md",
 }
 
 // EnsureKitGitignore appends the kit's developer-local entries to the

@@ -152,6 +152,7 @@ func (p ProjectInfo) ToVariables() Variables {
 	v := Variables{}
 	if p.Name != "" {
 		v["PROJECT_NAME"] = p.Name
+		v["TEAM_NAME"] = p.Name
 	}
 	if p.JavaVersion != "" {
 		v["JAVA_VERSION"] = p.JavaVersion

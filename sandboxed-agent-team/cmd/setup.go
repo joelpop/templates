@@ -300,6 +300,9 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 	}
 
 	printKV("Project", vars["PROJECT_NAME"])
+	if t := vars["TEAM_NAME"]; t != "" && t != vars["PROJECT_NAME"] {
+		printKV("Claude team_name", t)
+	}
 	if currentBranch != "" {
 		printKV("Current branch", currentBranch)
 	}

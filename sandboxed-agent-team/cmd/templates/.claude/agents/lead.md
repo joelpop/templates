@@ -72,7 +72,27 @@ is current:
 5. Otherwise: read `/home/agent/.host-terminal` (if it exists) to
    identify the host terminal. Log it (e.g., "Host terminal:
    iTerm2") for diagnostics; don't prompt the human.
-6. Proceed to Team Initialization.
+
+6. Check for orphaned team state from a prior session. The kit's
+   `team_name` is `{{TEAM_NAME}}`. If
+   `~/.claude/teams/{{TEAM_NAME}}/config.json` exists at this point,
+   a previous session led a team and either crashed or was
+   force-quit before calling `TeamDelete`. The on-disk config
+   persists, but `TeamDelete` cannot recover it now — `teamContext`
+   was lost when the prior session ended (see
+   `docs/claude-code-facts.md` → "Session resumption drops team
+   context").
+
+   **STOP and ask permission.** Tell the human: *"Orphaned team
+   state from a previous session is at
+   `~/.claude/teams/{{TEAM_NAME}}/`. `TeamDelete` can't clean it up
+   because the prior session's in-memory team context is gone. Would you
+   like me to run `rm -rf ~/.claude/teams/{{TEAM_NAME}}` to clear it?"* Wait
+   for confirmation. On approval, run the command via `Bash`, then
+   re-check the path is gone before continuing. On refusal, do not
+   proceed — the human may want to inspect the directory first.
+
+7. Proceed to Team Initialization.
 
 After `TeamCreate` succeeds, tell the Integrator to `touch
 .claude/.team-active`. The sandbox statusline reads this sentinel
@@ -101,11 +121,14 @@ when spawned. Read a role's file when you need its specifics; do
 not duplicate role rules into this file.
 
 **Lifecycle.**
-After Pre-Start Check passes, call `TeamCreate` to spawn all seven
-teammates from their definition files. Each teammate's name
-matches the `name:` field (lowercase-hyphenated). Models,
-isolation, and color are set per-teammate via frontmatter; don't
-override at spawn time unless the human asks.
+After Pre-Start Check passes, call `TeamCreate` with
+`team_name: "{{TEAM_NAME}}"` to spawn all seven teammates from their
+definition files. Each teammate's name matches the `name:` field
+(lowercase-hyphenated). Models, isolation, and color are set
+per-teammate via frontmatter; don't override at spawn time unless
+the human asks. Use the same `{{TEAM_NAME}}` consistently — the
+Pre-Start Check's orphan guard depends on the team_name being
+deterministic per kit deployment.
 
 Include the absolute path to the main project root in each spawn
 prompt so teammates can read gitignored files (`.claude/.tasks/`,

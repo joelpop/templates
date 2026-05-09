@@ -180,6 +180,56 @@ the docs" as proof of absence.
 
 ---
 
+## Session resumption drops team context (lead and teammate alike)
+
+**Common false belief:** `/resume` restores in-process teammates, or
+at least re-attaches the lead to its on-disk team state. The kit can
+rely on resume to pick up where a team left off.
+
+**Verified:** Team context is held entirely in memory. The
+reconnection path (`computeInitialTeamContext`) only restores context
+when the *parent process* set dynamic team context at spawn time
+(`setDynamicTeamContext` writes to a module-level variable; resume
+doesn't repopulate it).
+
+On `/resume`:
+
+- The lead's `teamContext` is null. The lead has no awareness of any
+  prior team.
+- The on-disk config at `~/.claude/teams/<team_name>/config.json`
+  persists, but `TeamDelete` cannot reach it — it reads
+  `teamContext.teamName` from in-memory state, which is empty.
+- Reconnection logs for orphaned cases:
+  *"No teammate context set (not a teammate)."*
+
+The public docs say `/resume` doesn't restore in-process teammates;
+the actual scope is broader — the *lead* loses team awareness too,
+not just the teammate processes.
+
+**How to verify:**
+
+```bash
+strings "$(realpath "$(which claude)")" \
+  | grep -E 'computeInitialTeamContext|setDynamicTeamContext|No teammate context set'
+```
+
+Force-quit a team session and inspect `~/.claude/teams/` — the
+`config.json` for the orphaned team remains; a new `claude` session
+in the same project starts with empty `teamContext`.
+
+**Don't "fix" by:** assuming `/resume` returns the lead to a working
+team; calling `TeamDelete` to clean up after resume (it cannot see
+the prior `team_name`); leaving the kit silent about orphan state on
+disk.
+
+**Kit guard:** the lead's Pre-Start Check looks for
+`~/.claude/teams/{{TEAM_NAME}}/config.json` and prompts the human to
+clean it up before calling `TeamCreate`. Manual cleanup:
+`rm -rf ~/.claude/teams/{{TEAM_NAME}}` — `TeamDelete` cannot recover
+context once the session has ended.
+
+---
+
 ## When this file disagrees with a fresh fetch from `code.claude.com`
 
 If the public docs and this file disagree, neither is automatically

@@ -55,6 +55,11 @@ var knownPlaceholders = map[string]PlaceholderDef{
 		Source: SourceAuto,
 		Prompt: "Project name (used in CLAUDE_TEAM.md)",
 	},
+	"TEAM_NAME": {
+		Name:   "TEAM_NAME",
+		Source: SourceAuto,
+		Prompt: "Claude Code team_name passed to TeamCreate (defaults to PROJECT_NAME — must be deterministic so the Lead's orphan-team guard can find leftover state at ~/.claude/teams/<TEAM_NAME>/)",
+	},
 	"JAVA_VERSION": {
 		Name:   "JAVA_VERSION",
 		Source: SourcePrompt,
@@ -210,6 +215,7 @@ var placeholderOrder = []string{
 	"MAX_PARALLEL_CODERS",
 	// Auto-discovered fall-backs — rarely prompt:
 	"PROJECT_NAME",
+	"TEAM_NAME",
 	"STACK_SUMMARY",
 	"GIT_USER_NAME",
 	"GIT_USER_EMAIL",

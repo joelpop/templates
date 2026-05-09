@@ -90,6 +90,98 @@ composition, and abbreviation choices live in renderers — formatting
 code, not the data model. Every "we need yet another variant" pull is a
 sign the rendering responsibility has leaked into the model.
 
+## Beyond value objects: sizing the abstraction
+
+Not every duplication wants a record. The third-instance rule still
+applies, but the *size* of the abstraction has to match the shape of
+the duplication. Two larger shapes recur often enough to be worth
+recognizing on sight: a shared structural template (a base class) and
+a cohesive multi-class capability (a package).
+
+### Repeated structural template → shared base class
+
+When several classes share *structure* — layout, chrome, lifecycle,
+fixture wiring — rather than state, the abstraction is a base class,
+not a value object. Recognition signal: every implementer rebuilds
+the same scaffolding before doing the part that's actually different.
+
+```java
+// Avoid — every view re-implements the same chrome
+public class CustomersView extends Composite<VerticalLayout> {
+    public CustomersView() {
+        var title = new H2("Customers");
+        title.addClassNames(/* standard view-title styling */);
+        var header = new HorizontalLayout(title, /* actions slot */);
+        // ... shared scaffolding repeated in every view ...
+        getContent().add(header, body);
+    }
+}
+public class OrdersView extends Composite<VerticalLayout> { /* same shape, copied */ }
+
+// Preferred — chrome lives in a base; subclasses say only what differs
+public class BaseView extends Composite<VerticalLayout> {
+    private final HorizontalLayout headerActions = new HorizontalLayout();
+    private final VerticalLayout body = new VerticalLayout();
+    protected BaseView(String title) { /* builds header + body once */ }
+    protected void setHeader(Component c)  { headerActions.removeAll(); headerActions.add(c); }
+    protected void setContent(Component c) { body.removeAll(); body.add(c); }
+}
+
+public class CustomersView extends BaseView {
+    public CustomersView() { super("Customers"); setContent(new CustomersGrid()); }
+}
+```
+
+Wrong-size signs:
+
+- The "base" defines a single hook and nothing else → callers are
+  still doing the work; the base earns nothing.
+- Subclasses override most methods → the shared shape isn't real;
+  the duplication was apparent, not structural.
+- A new feature requires changing the base to accommodate one
+  caller → the base is leaking caller-specific knowledge; either
+  parameterise or split.
+
+### Cohesive multi-class capability → component-family package
+
+When N classes together realise one capability the requirements name
+as a unit, the abstraction is a *package*, not a class. Each class
+is a partial answer; the capability is the package. Recognition
+signal: the package boundary maps to a requirement boundary, and the
+public face is one or two types — the rest are package-private.
+
+```
+// Avoid — three list-view features each rebuild the same
+// toolbar + quick-filter + filter-popover + grid skeleton
+ui/customers/CustomersGrid.java       + toolbar, filter, popover code
+ui/orders/OrdersGrid.java             + toolbar, filter, popover code
+ui/products/ProductsGrid.java         + toolbar, filter, popover code
+
+// Preferred — the capability is one package, parameterised over the
+// row type; features use the package, not the parts inside
+ui/component/itembrowser/
+    ItemBrowser.java<T>           // public face: parameterised list view
+    Toolbar.java                  // package-private; an ItemBrowser part
+    FilterPopover.java            // package-private; an ItemBrowser part
+    filter/
+        CustomFilter.java         // public; features pass these in
+
+ui/customers/CustomersView.java extends BaseView {
+    setContent(new ItemBrowser<Customer>(/* configured for customers */));
+}
+```
+
+Wrong-size signs:
+
+- A package with one class → it's a class, not a package.
+- Internals reused independently outside the package → either the
+  capability isn't really cohesive (split the package) or you've
+  built a feature-specific subsystem where a generic mechanism
+  belonged (broaden, move to `docs/patterns/architecture/`).
+- Extending the package requires deep cross-knowledge of its
+  internals → it's a directory, not a package; the public surface
+  is too narrow or the parts are too coupled.
+
 ## Don't extract prematurely
 
 Two callers with *similar-looking* code aren't necessarily the same
@@ -111,13 +203,15 @@ isn't ready.
 
 ## Where extracted abstractions live
 
-| Kind of duplication | Where the abstraction usually goes |
-|---------------------|-------------------------------------|
-| State bundle (fields used together) | A value type / record / Java class |
-| Logic shape (algorithmic duplication) | A method on the relevant class, or a utility |
-| Cross-cutting concern (validation, logging, mapping, etc.) | A shared mechanism (interface + implementation, or aspect) |
-| Branching on type | Polymorphism — split the type, dispatch via virtual call |
-| Repeated try/catch + error wrapping | A wrapper method or higher-order helper |
+| Duplication shape | Right size | Where the abstraction goes |
+|-------------------|-----------|-----------------------------|
+| State bundle (fields used together) | Value object | Record / value type / Java class |
+| Logic shape (algorithmic duplication) | Method | On the relevant class, or a utility |
+| Repeated try/catch + error wrapping | Method | Wrapper method or higher-order helper |
+| Branching on type | Polymorphism | Split the type, dispatch via virtual call |
+| Repeated structural template (chrome, lifecycle, fixture) | Shared base class | Abstract or concrete base class — see "Sizing the abstraction" |
+| N classes realising one named capability | Component-family package | A package; capability boundary = package boundary — see "Sizing the abstraction" |
+| Cross-cutting concern (validation, logging, mapping, etc.) | Shared mechanism | Interface + implementation (or aspect); document the contract in `docs/architecture/` |
 
 When the answer is "shared mechanism," that mechanism deserves an
 [architecture entry](../../architecture/) describing its contract — not

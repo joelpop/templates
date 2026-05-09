@@ -1,11 +1,10 @@
 # Responsive Layout Patterns
 
-Breakpoints, device detection, and adaptive behavior for Vaadin 24+ applications across
-phone, tablet, and desktop form factors. `FormLayout` responsive steps, `AppLayout` drawer
-behavior, and LumoUtility classes are stable across all supported Vaadin lines. The
-`retrieveExtendedClientDetails` API used for server-side width detection differs between
-Vaadin 24 and 25 — see `docs/patterns/conventions/vaadin.md` → "Version-Specific Notes" in
-the Browser Client Details section.
+Breakpoints, device detection, and adaptive behavior for Vaadin 24+ across phone, tablet,
+and desktop. `FormLayout` responsive steps, `AppLayout` drawer behavior, and LumoUtility
+classes are stable across all supported Vaadin lines. The `retrieveExtendedClientDetails`
+API for server-side width detection differs between Vaadin 24 and 25 — see
+`docs/patterns/conventions/vaadin.md` → "Version-Specific Notes".
 
 ## Breakpoints
 
@@ -15,14 +14,13 @@ the Browser Client Details section.
 | Tablet | 600px–1023px | Two-column where appropriate, drawer overlays content |
 | Desktop | 1024px+ | Full layout, persistent nav sidebar |
 
-These breakpoints apply to all primary views. Layouts must not produce horizontal scrolling
-or clipped content at any breakpoint.
+Layouts must not produce horizontal scrolling or clipped content at any breakpoint.
 
 ## Vaadin Responsive Tools — Not CSS Frameworks
 
-Use Vaadin's built-in responsive features. Do not use Bootstrap, Tailwind, or any other CSS
-framework grid system. Layout changes at breakpoints are achieved with `LumoUtility` classes
-and Vaadin component responsive APIs.
+Use Vaadin's built-in responsive features — not Bootstrap, Tailwind, or any other CSS
+framework grid system. Achieve breakpoint changes with `LumoUtility` classes and Vaadin
+component responsive APIs.
 
 ```java
 // Preferred — Vaadin responsive step on FormLayout
@@ -62,8 +60,7 @@ dialog.addClassName("mobile-full-width");
 
 ### Reduced Grid Columns
 
-Grids reduce to essential columns on screens below 600px. Full detail is accessible via
-row click opening a detail dialog.
+Grids reduce to essential columns below 600px. Full detail is accessible via row click.
 
 ```java
 var nameColumn = grid.addColumn(Item::getName).setHeader("Name").setFlexGrow(1);
@@ -83,15 +80,14 @@ addAttachListener(_ -> {
 
 ### Collapsed Navigation
 
-On mobile, the AppLayout drawer is collapsed by default and opened via `DrawerToggle`.
-Consider a bottom tab bar for the 3–5 most frequently accessed views as an alternative or
-supplement to the drawer on very small screens.
+The AppLayout drawer is collapsed by default on mobile, opened via `DrawerToggle`.
+Consider a bottom tab bar for the 3–5 most accessed views on very small screens.
 
 ## Tablet (600px–1023px)
 
 ### Two-Column Forms
 
-`FormLayout` with `ResponsiveStep` naturally produces two-column forms at tablet width:
+`FormLayout` with `ResponsiveStep` produces two-column forms at tablet width:
 
 ```java
 form.setResponsiveSteps(
@@ -102,21 +98,20 @@ form.setResponsiveSteps(
 
 ### Drawer Overlay
 
-The AppLayout drawer overlays the content at tablet width rather than pushing it aside.
-This is the default Vaadin AppLayout behavior — no additional configuration needed.
+The AppLayout drawer overlays content at tablet width — default Vaadin behavior, no
+additional configuration.
 
 ### Touch Targets
 
-Ensure interactive elements (buttons, grid rows, form fields) have adequate touch target
-size. Vaadin's default component sizing is designed for touch, but avoid custom compact
-styles that reduce hit areas below 44px.
+Vaadin's default sizing is touch-friendly; avoid custom compact styles that reduce hit
+areas below 44px.
 
 ## Desktop (1024px+)
 
 ### Persistent Navigation
 
-At desktop width the navigation sidebar is visible by default and does not overlay content.
-AppLayout handles this automatically at its built-in breakpoint.
+The navigation sidebar is persistent at desktop width — AppLayout handles this at its
+built-in breakpoint.
 
 ### Multi-Column Layouts
 
@@ -125,7 +120,7 @@ content panels where appropriate.
 
 ## Server-Side Breakpoint Detection
 
-For Java-level decisions based on viewport width, use Vaadin's `Page` API:
+For server-side decisions based on viewport width, use Vaadin's `Page` API:
 
 ```java
 UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> {
@@ -134,8 +129,8 @@ UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> {
 });
 ```
 
-Use this sparingly — prefer CSS-based responsive rules via `LumoUtility` or `@media`
-queries for visual-only changes.
+Use sparingly — prefer CSS-based responsive rules via `LumoUtility` or `@media` queries
+for visual-only changes.
 
 ## Accessibility at All Breakpoints
 

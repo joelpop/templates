@@ -22,8 +22,8 @@ components.
 ## LumoUtility for Spacing, Color, and Layout
 
 Use `LumoUtility` class constants for padding, margin, color, flexbox, and sizing instead
-of writing custom CSS. This ensures consistency, theme-awareness, and correct behavior
-across light and dark modes.
+of custom CSS. This ensures consistency, theme-awareness, and correct behavior across
+light and dark modes.
 
 ```java
 // Preferred — LumoUtility constants
@@ -74,13 +74,12 @@ badge.getElement().getThemeList().add("badge success");
 badge.getElement().getThemeList().add("badge error");
 ```
 
-Check available variants for each component in the Vaadin documentation before writing
-custom CSS.
+Check available variants in the Vaadin documentation before writing custom CSS.
 
 ## Brand Customization via CSS Custom Properties
 
-Override Lumo CSS custom properties in a dedicated stylesheet. Do not modify Lumo component
-internals directly.
+Override Lumo CSS custom properties in a dedicated stylesheet — do not modify Lumo
+component internals directly.
 
 ```css
 /* styles.css — brand overrides */
@@ -113,22 +112,20 @@ Common overridable properties:
 ## Custom CSS — When It Is Acceptable
 
 Custom CSS files are acceptable only for:
-- Brand overrides not expressible via `LumoUtility` (e.g., custom font loading, logo placement)
-- Component-specific tweaks that variants do not cover
+- Brand overrides not expressible via `LumoUtility` (custom font loading, logo placement)
+- Component tweaks that variants do not cover
 - Application-specific layout rules for non-standard compositions
 
-Custom CSS files must be minimal. A large custom CSS file is a signal that framework
-capabilities are being bypassed.
+Keep custom CSS minimal. A large custom CSS file signals framework capabilities are
+being bypassed.
 
 ## Logo and Brand Assets
 
-Place brand assets (logo, fonts) in `src/main/frontend/` and reference them via
-`@StyleSheet` or `@JsModule` annotations on `Application.java`, or from the custom
-CSS stylesheet.
+Place brand assets (logo, fonts) in `src/main/frontend/` and reference via `@StyleSheet`
+or `@JsModule` on `Application.java`, or from the custom CSS stylesheet.
 
 ## Dark Mode
 
-Lumo supports dark mode via the `dark` theme variant on the `<html>` element. If the
-application supports dark mode, use Lumo's semantic color tokens (`--lumo-primary-color`,
-`--lumo-base-color`, etc.) throughout — these automatically adapt to the active theme variant.
-Do not hardcode hex color values in component styles.
+Lumo supports dark mode via the `dark` theme variant on `<html>`. Use Lumo's semantic
+color tokens (`--lumo-primary-color`, `--lumo-base-color`, etc.) — they adapt
+automatically. Do not hardcode hex values in component styles.

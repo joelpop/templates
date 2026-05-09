@@ -18,9 +18,8 @@ List<ItemListItem> items = itemService.listAll();
 
 ## Member Variable Initialization
 
-Initialize member variables in constructors, not at the declaration site. This keeps all
-initialization logic visible in one place and allows local variables (cheaper) for components
-used only during construction.
+Initialize member variables in constructors, not at the declaration site. All initialization
+is visible in one place; components needed only during construction stay as locals.
 
 ```java
 // Preferred
@@ -45,18 +44,10 @@ public class EditDialog {
 ## UI Initialization in Constructors
 
 Keep all UI initialization in the constructor rather than splitting it across helper methods
-such as `createHeader()`, `createContent()`, etc.
-
-Benefits:
-- All initialization is visible in one place
-- Components needed only during construction are local variables — not fields
-- Avoids arbitrary decisions about which sub-components deserve their own factory method
-
-A constructor assembled this way can grow long for a non-trivial view — that is
-expected and acceptable. The "breaking up into sections" that factory methods would
-have provided can and should be achieved with **sectioning comments** inside the
-constructor, not by extracting helpers. Keep related component setup together under
-a labeled section so the constructor reads top-to-bottom like a narrative:
+such as `createHeader()`, `createContent()`, etc. A non-trivial view constructor will grow
+long — that is expected. Use **sectioning comments** inside the constructor instead of
+extracting helpers; keep related setup together under a label so the constructor reads
+top-to-bottom like a narrative:
 
 ```java
 // Preferred
@@ -90,9 +81,8 @@ private HorizontalLayout createToolbar() { ... }
 private Grid<Item> createGrid() { ... }
 ```
 
-Sectioning comments give readers the same scanning cues a factory method name would
-have — without losing the "all initialization in one place" property or creating the
-arbitrary-extraction problem.
+Sectioning comments give readers the same scanning cues as factory method names, without
+scattering initialization or creating arbitrary-extraction decisions.
 
 ## Code Organization Within Methods
 
@@ -142,12 +132,10 @@ binder.forField(activeCheckbox)
 binder.setBean(item);
 ```
 
-Note on `ComboBox` (and any selection component): `setItems(...)` belongs in **component
-initialization** (step 1). It populates the list of *available options*, which is part
-of configuring the component — not a selection and not a binding. The component's
-current value (which option is selected) comes from `binder.setBean(...)` in step 5,
-via the bean's property. Keep `setItems` next to the other `setXxx` configuration calls
-on the component, not mixed in with bindings or value settings.
+**`ComboBox` (and other selection components):** `setItems(...)` belongs in step 1
+(component initialization) — it configures the available options, not the selection.
+The selected value comes from `binder.setBean(...)` in step 5. Keep `setItems` next to
+other `setXxx` calls, not mixed with bindings.
 
 ## Local Variable Declaration
 
@@ -287,15 +275,12 @@ public class FleetAcuityOidcUserService {
 }
 ```
 
-Constructor injection makes dependencies explicit at the type level, allows
-`final` fields (eliminates a class of mutability bugs), works in plain unit tests
-without reflection, and fails fast at instantiation rather than at first use.
+Constructor injection makes dependencies explicit, allows `final` fields, works in
+plain unit tests without reflection, and fails fast at instantiation.
 
-**Avoid `@PostConstruct` for validation or simple setup** — throw from the
-constructor instead. A constructor that throws causes bean creation to fail,
-which causes Spring Boot startup to fail with a clear stack trace pointing at
-the offending class. This is the right signal; there is no reason to defer
-validation to a later lifecycle phase.
+**Avoid `@PostConstruct` for validation or simple setup** — throw from the constructor
+instead. A constructor that throws fails Spring Boot startup with a clear stack trace;
+there's no reason to defer validation to a later lifecycle phase.
 
 ```java
 // Preferred — fail from the constructor
@@ -323,13 +308,9 @@ public class AuthMethodCombinabilityValidator {
 }
 ```
 
-Reserve `@PostConstruct` for the rare case that genuinely requires all beans'
-lifecycles to be complete before work can begin (e.g., cross-bean warm-up that
-cannot be expressed through constructor arguments). For the common case,
-constructor-based setup suffices.
-
-Setter / field injection is acceptable only for truly optional or
-reconfigurable dependencies — a pattern you should not need in this codebase.
+Reserve `@PostConstruct` for the rare case requiring all beans' lifecycles to be
+complete before work can begin (e.g., cross-bean warm-up). Setter / field injection
+is acceptable only for truly optional or reconfigurable dependencies — not needed here.
 
 ## SOLID Principles
 
@@ -369,10 +350,8 @@ var bean = (Map<String, Object>) legacyApi.getProperties();
 public class EmployeeEntity extends BaseEntity<Long> { ... }
 ```
 
-Suppressions without an explanation are indistinguishable from cargo-culted ones —
-future readers can't tell whether the suppression is still load-bearing or whether
-the underlying issue has since been fixed. The comment documents intent; the annotation
-alone does not.
+Without a comment, a suppression is indistinguishable from a cargo-culted one — future
+readers can't tell whether it's still load-bearing or the underlying issue has been fixed.
 
 ## JavaDoc
 

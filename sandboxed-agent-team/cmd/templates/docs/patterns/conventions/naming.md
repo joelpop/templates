@@ -101,10 +101,9 @@ which projection feeds which model.
 | Edit form / detail view | `EmployeeDetailProjection` | `EmployeeDetail` |
 | (other contexts as needed — e.g., a picker dropdown) | `EmployeePickerItemProjection` | `EmployeePickerItem` |
 
-If a new UI context needs a projection, choose a UI-contextual name for the pair —
-not a generic `Summary`, `Info`, `View`, or `Data` suffix. A reader seeing
-`EmployeeListItem` and `EmployeeListItemProjection` in a class list immediately knows
-what they are and where they are used; the same names suffixed `Summary` would not.
+For new UI contexts, choose a UI-contextual name for the pair — not a generic
+`Summary`, `Info`, `View`, or `Data` suffix. `EmployeeListItem` /
+`EmployeeListItemProjection` are self-explaining; `EmployeeSummary` is not.
 
 ## Method Naming Conventions
 

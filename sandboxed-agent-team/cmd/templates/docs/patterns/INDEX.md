@@ -1,14 +1,9 @@
 # Patterns — Index
 
-Application-agnostic conventions, architecture patterns, recipes, and
-implementation guidelines for **Vaadin 24+ with Spring Boot 3+** and Spring
-Data JPA projects. Version-sensitive patterns (Signals,
-`@Layout`/`@AnonymousAllowed` access checker, `@Menu` annotation, etc.) carry
-inline "Vaadin ≥X / <X" notes. See [`README.md`](README.md) → "Version
-Compatibility" for the summary matrix.
-
-Zero project-specific content — these entries are designed to carry across
-projects on this stack.
+Application-agnostic conventions, architecture patterns, recipes, and implementation
+guidelines for **Vaadin 24+ with Spring Boot 3+** and Spring Data JPA. Version-
+sensitive patterns carry inline "Vaadin ≥X / <X" notes; see [`README.md`](README.md)
+→ "Version Compatibility" for the summary matrix. Zero project-specific content.
 
 | Path | Description |
 |------|-------------|

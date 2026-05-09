@@ -2,8 +2,8 @@
 
 Fat JAR packaging, Docker, Spring profiles, database migrations, logging, and health
 check patterns for Vaadin 24+ applications running on Spring Boot 3+. The deployment
-surface is identical across every supported Vaadin and Spring Boot line — only the base
-JRE image and Spring Boot Maven plugin versions vary by the line you target.
+surface is identical across Vaadin and Spring Boot lines — only the base JRE image
+and Spring Boot Maven plugin versions vary.
 
 ## Executable Fat JAR
 
@@ -15,15 +15,14 @@ mvn clean package
 java -jar {app}-app/target/{app}-app.jar
 ```
 
-No additional classpath configuration is required. All dependencies are bundled inside
-the JAR. This is the deployment unit for all environments.
+All dependencies are bundled inside the JAR. This is the deployment unit for all
+environments.
 
 ## Docker
 
 A `Dockerfile` in the project root builds a runnable image from the fat JAR. Pick the
-Temurin tag that matches your project's Java target — Spring Boot 3 supports Java 17+,
-Spring Boot 4 raises the minimum. The example below uses Java 25; substitute `21` or `17`
-for older Spring Boot lines:
+Temurin tag that matches your Java target — Spring Boot 3 supports Java 17+. The example
+uses Java 25; substitute `21` or `17` for older lines:
 
 ```dockerfile
 FROM eclipse-temurin:25-jre-alpine     # or :21-jre-alpine / :17-jre-alpine
@@ -80,8 +79,8 @@ Switch profiles: `--spring.profiles.active=prod`. No code changes required.
 
 ## Database Migration — Flyway
 
-Schema migrations are managed by Flyway, applied automatically on application startup
-before requests are accepted.
+Schema migrations are managed by Flyway, applied automatically on startup before
+requests are accepted.
 
 ### Versioned, Immutable Scripts
 
@@ -122,18 +121,17 @@ Re-running a migration on an already-migrated database produces no errors.
 spring.jpa.hibernate.ddl-auto=validate
 ```
 
-- `validate` in all profiles after the initial migration script exists
-- Hibernate validates the schema against entity mappings at startup
-- A schema mismatch causes startup failure with a descriptive error
+- `validate` in all profiles — Hibernate validates schema against entity mappings at
+  startup; a mismatch causes startup failure with a descriptive error
 
 ### Seed Data — Dev/Test Only
 
 Seed scripts live in `db/seed/` and are applied only when the active profile includes
-`dev` or `test`. Production startup never executes seed scripts.
+`dev` or `test`. Production startup never executes them.
 
 Seed data provides:
-- An initial admin user with a documented initial password (which that admin can change later via the application's own password-change flow)
-- Enough example data to demonstrate all views without manual data entry
+- An initial admin user with a documented initial password (changeable via the app)
+- Enough example data to demonstrate all views without manual entry
 
 ### Rollback Documentation
 
@@ -149,7 +147,7 @@ ALTER TABLE departments ADD COLUMN manager_key BIGINT REFERENCES employees(emplo
 CREATE INDEX idx_departments_manager ON departments (manager_key);
 ```
 
-Full automated rollback (Flyway undo) is not required, but the manual procedure must be
+Full automated rollback (Flyway undo) is not required; manual procedure must be
 documented for every migration.
 
 ## Test Data with @Transactional Rollback
@@ -180,31 +178,19 @@ All other Actuator endpoints are restricted or disabled in production.
 
 ## Logging
 
-Application code logs through **SLF4J** — the facade defined by `org.slf4j.Logger` and
-`org.slf4j.LoggerFactory`, declared in classes via the `@Slf4j` annotation (see
-`docs/patterns/conventions/lombok.md` → "for Logging"). The implementation that actually
-formats and writes log records is **Logback**, pulled in transitively by
-`spring-boot-starter-logging` (which every other `spring-boot-starter-*` depends on, so
-nothing else needs to be declared). The same starter includes bridges for
-`java.util.logging` and Log4j, so any third-party library using those APIs routes
-through the same pipeline.
+Application code logs through **SLF4J** — declared via `@Slf4j` (see
+`docs/patterns/conventions/lombok.md` → "for Logging"). The implementation is **Logback**,
+pulled in transitively by `spring-boot-starter-logging`. The same starter bridges
+`java.util.logging` and Log4j, so third-party libraries route through the same pipeline.
 
-Practical consequences of the facade/implementation split:
-
-- **Code imports** `org.slf4j.Logger`. Application code never imports from
-  `ch.qos.logback.*` or `java.util.logging.*`.
-- **Configuration uses Logback's native formats** — `logback-spring.xml` for structured
-  setup, `application.properties` `logging.level.*` for level tuning. The XML below and
-  the `LogstashEncoder` reference are Logback-specific.
-- **Swapping implementations is possible** — a project could replace Logback with Log4j2
-  or another SLF4J binding without changing a single line of application code. This kit
-  does not do that; the separation is noted so the relationship is explicit.
+- **Code imports** `org.slf4j.Logger` — never `ch.qos.logback.*` or `java.util.logging.*`.
+- **Configuration** uses `logback-spring.xml` for structured setup,
+  `application.properties` `logging.level.*` for level tuning.
 
 ### Structured Logging
 
-Use structured logging (JSON or key-value pairs) compatible with log aggregation tools
-(CloudWatch, Datadog, etc.). Each field is a distinct key in the log entry — not embedded
-in the message string.
+Use structured logging (JSON or key-value pairs) for log aggregation (CloudWatch,
+Datadog, etc.). Each field is a distinct key — not embedded in the message string.
 
 ```xml
 <!-- logback-spring.xml — JSON output in non-dev profiles -->
@@ -243,8 +229,7 @@ public void logStartupConfig() {
 }
 ```
 
-Log enough to diagnose configuration issues without exposing secrets. Mask or omit
-credential values from startup logs.
+Log enough to diagnose configuration issues; mask or omit credential values.
 
 ## HikariCP Connection Pool
 
@@ -258,10 +243,10 @@ spring.datasource.hikari.keepalive-time=600000
 spring.datasource.hikari.max-lifetime=1800000
 ```
 
-`keepalive-time` and `max-lifetime` detect and replace stale connections automatically.
-A database connection that drops and recovers does not require an application restart.
+`keepalive-time` and `max-lifetime` detect and replace stale connections; a connection
+that drops and recovers does not require an application restart.
 
 ## Java Runtime
 
-The application runs on any Java-spec-compliant JVM — no vendor-specific APIs. The
-recommended runtime is Eclipse Temurin (OpenJDK). Do not use Oracle-only or IBM J9-only APIs.
+The application runs on any Java-spec-compliant JVM. Recommended runtime: Eclipse
+Temurin (OpenJDK). Do not use Oracle-only or IBM J9-only APIs.

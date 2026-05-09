@@ -13,12 +13,11 @@ JPA). Recipes are different from the rest of `docs/patterns/`:
   `application.properties`." They guide the initial implementation
   of a feature.
 
-A recipe belongs here when the steps are largely fixed by the
-framework stack (Vaadin's passkey API, Spring Security's OIDC
-client) rather than by project-specific decisions. Project-specific
-configuration of a recipe (which IdP, which tenancy model, which
-entity layout) lives in `docs/architecture/`, referencing the
-recipe.
+A recipe belongs here when the steps are fixed by the framework
+stack (Vaadin's passkey API, Spring Security's OIDC client) rather
+than project-specific decisions. Project-specific configuration
+(which IdP, tenancy model, entity layout) lives in
+`docs/architecture/`, referencing the recipe.
 
 | Path | Description |
 |------|-------------|
@@ -40,9 +39,7 @@ recipe.
 - Cross-link to related conventions, architecture entries, or other
   recipes.
 
-When migrating an existing implementation into a recipe (e.g.,
-extracting a generic Vaadin passkey integration from a
-project-specific feature), keep only the steps that are
-framework-fixed. Move project-specific UX, error handling, and
-business rules to a `docs/architecture/` entry that references the
-recipe.
+When extracting a recipe from a project-specific feature, keep only
+framework-fixed steps. Move project-specific UX, error handling,
+and business rules to a `docs/architecture/` entry that references
+the recipe.

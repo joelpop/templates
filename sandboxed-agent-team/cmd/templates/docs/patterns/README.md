@@ -1,11 +1,8 @@
 # Patterns Kit
 
-This directory (`docs/patterns/`) contains application-agnostic conventions,
-architecture patterns, recipes, and implementation guidelines for **Vaadin 24+
-with Spring Boot 3+ and Spring Data JPA**.
-
-The content here contains **zero references** to any specific application, domain, or
-business entity. It is designed to be extracted and reused across projects.
+Application-agnostic conventions, architecture patterns, recipes, and implementation
+guidelines for **Vaadin 24+ with Spring Boot 3+ and Spring Data JPA**. Zero project-
+specific content — designed to carry across projects on this stack.
 
 ## What This Provides
 
@@ -61,6 +58,5 @@ the single side that applies to your project.
 
 ## Conventions vs. Requirements
 
-Documents in `patterns/` are written as **conventions and patterns** — descriptive guidance,
-not checkbox requirements. Application-specific docs carry the `[ ]` requirement checkboxes
-that reference these patterns.
+`patterns/` contains descriptive guidance, not checkbox requirements. Application-specific
+docs carry the `[ ]` checkboxes that reference these patterns.

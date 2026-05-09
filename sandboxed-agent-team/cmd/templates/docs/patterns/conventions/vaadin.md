@@ -16,9 +16,8 @@ scope-aware plumbing that Vaadin's Flow-Spring integration expects; using plain
 silently fails to integrate with session or UI lifecycle.
 
 **Project rule:** use `@SpringComponent` for every `@Component`-style bean in
-the application's Vaadin-facing modules (typically the `app` and `ui` modules).
-Non-Vaadin modules — service interfaces, service implementations, JPA model, JPA
-client, common utilities — continue to use regular `@Component`.
+the application's Vaadin-facing modules (typically `app` and `ui`). Non-Vaadin
+modules — services, JPA model, repositories, utilities — continue to use `@Component`.
 
 ```java
 // Preferred — in the app or ui module
@@ -27,20 +26,13 @@ import com.vaadin.flow.spring.annotation.SpringComponent;
 @SpringComponent
 public class AuthMethodCombinabilityValidator { ... }
 
-// Avoid — plain @Component in a Vaadin module, unless you know the bean will
-// never need a Vaadin scope
+// Avoid — plain @Component in a Vaadin module
 @Component
 public class AuthMethodCombinabilityValidator { ... }
 ```
 
-`@Configuration` is unchanged — it is a specialization of `@Component` used for
-`@Bean`-factory classes and does not need to be swapped to `@SpringComponent`. A
-`@Configuration` class that hosts `@Bean` methods remains `@Configuration`; the
-beans it returns are not subject to this convention unless they themselves are
-scanned components in a Vaadin module.
-
-`@Route`-annotated views are automatically scope-aware through Vaadin's router
-infrastructure and do not need `@SpringComponent` on top of `@Route`.
+`@Configuration` stays `@Configuration` — it doesn't need swapping. `@Route`-annotated
+views are already scope-aware and don't need `@SpringComponent` on top.
 
 ## Views Must Extend Composite<T>
 
@@ -59,8 +51,7 @@ public class ItemView extends Composite<VerticalLayout> {
 public class ItemView extends VerticalLayout { ... }
 ```
 
-`Composite<T>` provides better encapsulation: only the explicitly exposed API is accessible
-to callers, not the full component API of the root layout.
+`Composite<T>` encapsulates the root layout: callers see only what you explicitly expose.
 
 ## Per-View Package Layout
 
@@ -88,9 +79,8 @@ ui/
             └── TenantView.java              @Route("platform/tenant")
 ```
 
-This gives each view a clear home that grows naturally with its own helper classes,
-mirrors the side-nav grouping on disk, and prevents the single-flat-package
-anti-pattern flagged in architecture debt.
+Each view has a clear home that grows naturally with its helper classes and mirrors the
+side-nav grouping on disk.
 
 ## Custom Dialogs Use Delegation, Not Inheritance
 
@@ -397,10 +387,6 @@ MapStruct mappers) can access browser context without a Vaadin dependency.
 
 ### Version-Specific Notes
 
-The mechanism for obtaining extended browser/client details varies by Vaadin version.
-Always consult the `vaadin` MCP server or current Vaadin documentation for the
-correct API before implementing.
-
 > **Vaadin 24.x:** `UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> ...)`
 > — asynchronous callback pattern. The callback-based API makes caching in `VaadinSession`
 > essential, since the details are not synchronously available.
@@ -412,14 +398,11 @@ correct API before implementing.
 
 ### Why Not @SessionScope?
 
-`@SessionScope` beans are tied to the HTTP request's `HttpSession`. Vaadin's Push
-threads (used for Signals and server push) do not run within an HTTP request context,
-so `@SessionScope` beans are not accessible from Push threads. `VaadinSession`
-attributes are accessible from both HTTP request threads and Push threads, making
-them the correct storage mechanism for session-scoped data in a Vaadin application.
+`@SessionScope` beans are tied to `HttpSession`. Vaadin's Push threads don't run in
+an HTTP request context, so `@SessionScope` beans are inaccessible from them.
+`VaadinSession` attributes work on both HTTP request and Push threads.
 
 ### Fallback Behavior
 
-If browser details are not yet available (e.g., first request before client
-round-trip), the service should return a sensible default — typically the system
-default timezone (`ZoneId.systemDefault()`). The fallback is transparent to callers.
+Return a sensible default when details aren't yet available — typically
+`ZoneId.systemDefault()`.

@@ -5,9 +5,9 @@ protection in Vaadin 24+ applications. The Vaadin APIs named below
 (`RouteNotFoundError`, `HasErrorParameter`, `ErrorHandler`) are stable across
 every supported Vaadin line.
 
-This document describes the *shape* each error view must conform to. The
-project applying this pattern picks its own copy, layout primitives, icons,
-class names, and home-view target — the pattern doesn't dictate them.
+This document describes the *shape* each error view must conform to; the
+project picks its own copy, layout primitives, icons, class names, and
+home-view target.
 
 ## Error View Types
 
@@ -55,17 +55,14 @@ which is lighter on inheritance but loses the type-level guarantee.
 Every error view renders the same action row, with **Go Back** to the left of
 **Go Home**. The 500 view additionally appends **Retry** to the right of Go Home.
 
-- **Go Back** invokes browser history back via
-  `UI.getCurrent().getPage().getHistory().back()`. Returns the user to the page
-  they came from — the most recoverable option when the error was incidental
-  to navigation rather than to a destination the user actually wanted.
-- **Go Home** navigates to the application's home view. The home view itself
-  decides where to forward (dashboard for authenticated users, login page for
-  unauthenticated ones), so a single target works in both states.
-- **Retry** (500 only) reloads the current page via
-  `UI.getCurrent().getPage().reload()`. A repeated failure renders the 500
-  view again — intentional, since pretending the failure went away would be
-  worse than honesty.
+- **Go Back** invokes `UI.getCurrent().getPage().getHistory().back()`. Returns
+  the user to the previous page — the most recoverable option when the error
+  was incidental to navigation.
+- **Go Home** navigates to the application's home view, which forwards
+  appropriately (dashboard for authenticated users, login for unauthenticated),
+  so a single target works in both states.
+- **Retry** (500 only) reloads via `UI.getCurrent().getPage().reload()`. A
+  repeated failure renders the 500 view again — intentional.
 
 ## Not Found View (404)
 
@@ -80,25 +77,22 @@ Behavior contract:
 
 ## Access Denied View (403 Disguised as 404)
 
-The disguise is application-security policy, not a Vaadin-mechanics quirk.
-Same principle as why a failed login says "incorrect email or password"
-rather than "incorrect password" — distinguishing a forbidden resource from
-a non-existent one would let a probe enumerate which routes exist and which
-only require a higher role. The 403-as-404 response must be indistinguishable
-from a real 404 in everything the user (or an attacker) can observe: status
-code, rendered content, headers, and timing characteristics.
+The disguise is security policy, not a Vaadin quirk — same principle as
+"incorrect email or password" rather than "incorrect password." Distinguishing
+a forbidden resource from a non-existent one lets a probe enumerate which
+routes require higher roles. The 403-as-404 response must be indistinguishable
+from a real 404 in everything observable: status code, content, headers, and
+timing.
 
 Implement `HasErrorParameter<AccessDeniedException>`, mark `@AnonymousAllowed`.
 
 Behavior contract:
-- The rendered content matches the 404 view's content exactly. Enforce this
-  via the shared base / chrome (see "Common Base / Shared Chrome" above) so
-  the two views cannot drift.
+- Rendered content matches the 404 view exactly. Enforce via the shared base
+  (see "Common Base / Shared Chrome" above) so the two views cannot drift.
 - `setErrorParameter` returns `HttpStatusCode.NOT_FOUND.value()` (404), never
   `403`.
-- The event is logged at WARN with the actor-context fields (see "Logging
-  Standards" below) so support and security can investigate, but those
-  details are never visible in the user-facing response.
+- Logged at WARN with actor-context fields (see "Logging Standards" below);
+  never visible in the user-facing response.
 
 ## System Error View (500)
 
@@ -130,11 +124,9 @@ Behavior contract:
   code's responsibility to keep safe — never internal field names, database
   schema, or stack traces.
 - `setErrorParameter` returns `HttpStatusCode.BAD_REQUEST.value()` (400).
-- Only shown when a 403 error is *not* implicated. If a request could be
-  both 400 and 403 (e.g., invalid ID format on a restricted resource), the
-  403-as-404 view takes precedence — see the security rationale above.
-  Otherwise a probe would learn the resource exists and only the role was
-  missing.
+- Only shown when a 403 is *not* implicated. If a request could be both 400
+  and 403 (e.g., invalid ID on a restricted resource), the 403-as-404 view
+  takes precedence — otherwise a probe learns the resource exists.
 
 ## Sensitive Information Protection
 
@@ -159,9 +151,8 @@ propagating to the UI.
 
 ## Logging Standards
 
-Every error-view log entry carries the **actor-context fields** — the
-who/where/when of the request — so logs from different error types are
-correlatable and analyzable by the same set of dimensions:
+Every error-view log entry carries the **actor-context fields** so logs from
+different error types are correlatable by the same dimensions:
 
 - Actor identifier (the user)
 - Actor role
@@ -182,8 +173,8 @@ Per-error-type extras on top of the actor-context fields:
 | 500 System Error | ERROR | UUID correlation reference, exception class, message, stack trace |
 | 400 Invalid Request | WARN | Safe exception message (no stack trace) |
 
-Log message format follows the project's logging convention — typically
-SLF4J's parameterized format with `key:value` pairs separated by commas:
+Log format follows the project's logging convention — typically SLF4J
+parameterized format with `key:value` pairs:
 
 ```java
 log.warn("Access denied - path:{}, email:{}, role:{}, tenant:\"{}\"",

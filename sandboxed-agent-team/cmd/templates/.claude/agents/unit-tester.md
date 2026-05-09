@@ -21,8 +21,7 @@ The unit/browserless UI test directories (see CLAUDE.md).
 
 ## Primary references
 
-Read these proactively. They describe the testing discipline this
-role owns and the AC-traceability you enforce.
+Read proactively.
 
 - `docs/glossary.md` — project's canonical vocabulary; tests
   reference behavior named in requirements.
@@ -49,9 +48,8 @@ role owns and the AC-traceability you enforce.
   testing tools, not generic web testing approaches. For Vaadin
   projects: use the browserless testing framework specified in
   CLAUDE.md's Stack section (Vaadin Browserless Testing, formerly
-  TestBench UI Unit Testing) for component and interaction tests
-  (these run in-process without a browser), not raw Selenium or DOM
-  assertions. Test server-side state and component properties, not
+  TestBench UI Unit Testing) for component and interaction tests,
+  not raw Selenium or DOM assertions. Test server-side state and component properties, not
   HTML structure. See "Framework Identity" in CLAUDE.md. Consult
   the `vaadin` and `java` MCP servers for current testing APIs
   rather than relying on training data.

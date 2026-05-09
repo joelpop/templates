@@ -6,7 +6,10 @@ description: Translate Figma designs to well-structured Vaadin Flow code using F
 # Figma to Vaadin Implementation Guidelines
 
 ## Overview
-This document provides comprehensive guidelines for accurately translating Figma designs to well-structured Vaadin Flow code, emphasizing proper component usage and semantic correctness over implementation speed. Accurate, maintainable code is more valuable than quick implementation. The generated UI should utilize services and data classes that exists in the project or mock new if needed. Generated UI is not expected to be functional. Avoid creating logic and focus on accuracy of generating the user interface design provided via Figma MCP.
+Guidelines for translating Figma designs to well-structured Vaadin Flow code. Semantic
+correctness and maintainability over speed. Use existing project services and data
+classes (or mock new ones); generated UI is not expected to be functional — focus on
+accuracy of the interface design, not logic.
 
 
 ## Figma ↔ Requirements: Resolving Discrepancies
@@ -89,7 +92,7 @@ When you receive design context from Figma MCP that contains a component instanc
    - Documentation links
    - Usage guidelines
 
-**Important**: Both instance and master component annotations are critical for accurate implementation. Always check both sources, giving priority to instance-level annotations for the most accurate implementation guidance.
+Always check both sources; instance annotations take priority.
 
 
 ### Step 3. Use `get_metadata` tool for Structure and identification of components
@@ -107,7 +110,7 @@ When you receive design context from Figma MCP that contains a component instanc
 - Search results are previews only
 
 #### 4.2 Complete Documentation Review (MANDATORY)
-**For each component, call `get_full_document` tool with the file_path:** - REQUIRED before implementation
+**For each component, call `get_full_document` with the file_path** before implementation:
 - TextField → `get_full_document("components/text-field/index-flow.md")`
 - DatePicker → `get_full_document("components/date-picker/index-flow.md")`
 - Button → `get_full_document("components/button/index-flow.md")`
@@ -124,18 +127,17 @@ When you receive design context from Figma MCP that contains a component instanc
 ⚠️ Search results are previews only - not sufficient for implementation
 
 ### Step 5: Implement user interface
-- Implement using proper Vaadin components and custom elements already available in the project, not generic HTML
+- Use proper Vaadin components (and project-specific custom elements), not generic HTML
 - Apply correct themes and variants
 - Ignore visual styling of elements
-- Use Lumo Utilities to configure layouts, paddings, borders, background colors etc.
+- Use Lumo Utilities for layouts, padding, borders, background colors
 - Don't add spacing or gap to layouts with input fields
-- Ensure semantic correctness
-- Determine correct heading levels based on text styles
-- Accessibility attributes should be included where needed
+- Ensure semantic correctness and correct heading levels based on text styles
+- Include accessibility attributes where needed
 
 ### Step 6: Don't run tests
-- Do not run any commands in terminal
-- Do not open browser or take screenshots
+- No terminal commands
+- No browser or screenshots
 
 
 ## Lumo Theme Mapping Guidelines
@@ -185,19 +187,17 @@ span.addClassName("secondary-text");
 ## Quality Standards
 
 ### Accuracy Over Speed
-- Take time to understand the design properly
-- Read ALL metadata available through Figma MCP before implementing
+- Read all metadata through Figma MCP before implementing
 - Verify component choice against documentation
 
 ### Semantic Correctness
-- Ensure semantic correctness
 - Use proper Vaadin components, not generic HTML
 - Follow Vaadin component APIs and patterns
 - Preserve component semantics and accessibility
 
-### Code style quidelines
-- Avoid creating tiny wrapper methods that only delegate to another method without adding logic
-- Inline the call or generalize into one reusable method with parameters.
+### Code style
+- Avoid tiny wrapper methods that only delegate without adding logic — inline or
+  generalize with parameters.
 
 ### Follow Vaadin Patterns
 ```java
@@ -253,13 +253,11 @@ layout.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
 
 ### When to Ask for Clarification
 
-Ask when:
-- Multiple Vaadin components could fit the visual design
-- Figma component name doesn't clearly map to a Vaadin component
-- Uncertain about theme variants or styling approach
-- Need clarification on interaction patterns or data binding
+Ask when multiple Vaadin components could fit the design, the Figma name doesn't
+clearly map to a Vaadin component, or you're uncertain about variants, styling, or
+interaction patterns.
 
-**Always ask**: "Should this be a [ComponentA] or [ComponentB]? The Figma shows [description]"
+**Form**: "Should this be a [ComponentA] or [ComponentB]? The Figma shows [description]"
 
 
 ## Examples of common Figma → Vaadin Mappings

@@ -22,8 +22,7 @@ The E2E test directory (see CLAUDE.md).
 
 ## Primary references
 
-Read these proactively. They describe the E2E testing discipline
-and the role boundary with the Unit Tester.
+Read proactively.
 
 - `docs/glossary.md` — project's canonical vocabulary.
 - `docs/patterns/testing/patterns.md` — especially the
@@ -55,9 +54,8 @@ and the role boundary with the Unit Tester.
   content) over CSS selectors tied to Vaadin's internal element
   structure.
 - **SCOPE.** The Unit Tester is the primary test owner. You write
-  new E2E tests ONLY for scenarios the Unit Tester delegates to
-  you — cases that genuinely require a real browser and cannot be
-  covered by browserless UI tests.
+  E2E tests ONLY for scenarios the Unit Tester delegates — cases
+  requiring a real browser.
 - **WHEN TO RUN.** E2E tests run ONLY at the pre-PR gate — not
   per-commit. You are activated when ALL of the following are
   true:
@@ -69,8 +67,7 @@ and the role boundary with the Unit Tester.
   d) The Architect or Lead has messaged you to run the full E2E
      suite.
 
-  Do not run E2E tests at any other point in the workflow unless
-  explicitly asked by the Lead.
+  Don't run E2E tests at any other point unless the Lead asks.
 - **TASK KICKOFF.** When the Lead drafts a task file, read it
   alongside the relevant requirement docs. Raise any environment
   concerns (e.g., test data setup, external service dependencies,
@@ -128,12 +125,9 @@ outside the browser's control. When a test reaches such a step:
 If a test has multiple human-in-the-loop steps, repeat the
 pause/request/wait/resume cycle for each one.
 
-When writing E2E tests, clearly mark human-in-the-loop steps in
-the test code with comments so they are identifiable during
-review. If a test is entirely automatable except for one human
-step, structure it so the automated portions run first and the
-human step is as late as possible — this minimizes human wait
-time.
+Mark human-in-the-loop steps in test code with comments. If a
+test is otherwise automatable, put the human step as late as
+possible to minimize wait time.
 
 ### ENVIRONMENT
 

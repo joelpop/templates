@@ -19,84 +19,71 @@ spawnable teammate; you *are* the session. The other seven
 teammates (defined under `.claude/agents/`) are spawned by you
 via `TeamCreate`.
 
-**On addressing the human:** Your response output in this session is
-visible directly to the human who invoked Claude Code. Throughout this
-document, "Tell the human: ..." means "include that text verbatim in
-your response"; "Ask the human ..." or "Wait for confirmation" means
-"end your response with the question and wait for the next user
-message before continuing." There is no relay or messaging channel —
-the human sees your response as you write it.
+**On addressing the human:** Your response output is visible
+directly to the human who invoked Claude Code. "Tell the human:
+..." means include that text verbatim in your response; "Ask the
+human ..." or "Wait for confirmation" means end your response with
+the question and wait for the next user message. There is no
+relay channel — the human sees your response as you write it.
 
 ## Pre-Start Check
 
-Before spawning any teammates, verify that this developer's local
-setup is current:
+Before spawning any teammates, verify the developer's local setup
+is current:
 
 1. The SessionStart hook (`.claude/hooks/session-start-fetch-docs.sh`)
    has already cleared any stale activation sentinel
-   (`.claude/.team-active`) at the start of this session. You do
-   not need to do this yourself. The statusline ("Agent Team
-   Mode") lights up only after the Integrator writes the sentinel
-   at the end of Team Initialization (below).
-2. Read the top banner of `ONBOARDING.md` in the project root,
-   locate the `Generated:` marker, and leniently parse its value
-   into a normalized timestamp. "Leniently parse and expand" means:
-   accept minor format variations — different ISO 8601 precisions
-   (date only → expand to midnight UTC; date + time without seconds
-   → add `:00`), UTC offset notation (`Z`, `+00:00`, `+0000` →
-   normalize to `Z`), and surrounding whitespace — and reduce to
-   canonical `YYYY-MM-DDTHH:MM:SSZ`. If the attempt does not
-   result in a valid timestamp (file missing, banner absent,
-   `Generated:` marker missing, or value unparseable): **STOP.**
-   This is a project-level issue, not a developer issue. Tell the
-   human: "The `Generated:` banner in `ONBOARDING.md` is missing
-   or malformed. Ask the Lead to regenerate `ONBOARDING.md` before
-   starting the team." Do not proceed until the human confirms.
-   Call the successfully-parsed result `T_setup`.
+   (`.claude/.team-active`). The statusline ("Agent Team Mode")
+   lights up only after the Integrator writes the sentinel at the
+   end of Team Initialization.
+2. Read the top banner of `ONBOARDING.md`, locate the `Generated:`
+   marker, and leniently parse its value into a canonical
+   `YYYY-MM-DDTHH:MM:SSZ` timestamp. Lenient parsing accepts ISO
+   8601 precision variants (date-only → expand to midnight UTC;
+   missing seconds → add `:00`), UTC offsets (`Z`, `+00:00`,
+   `+0000` → normalize to `Z`), and surrounding whitespace. If
+   parsing fails (file missing, banner absent, `Generated:` marker
+   missing, value unparseable): **STOP.** Tell the human: *"The
+   `Generated:` banner in `ONBOARDING.md` is missing or malformed.
+   Ask the Lead to regenerate `ONBOARDING.md` before starting the
+   team."* Don't proceed until they confirm. Call the parsed
+   result `T_setup`.
 
-3. Read `.claude/.last-onboarded` and leniently parse the value
-   after the `Last onboarded:` label using the same rules as
-   step 2. Call the result `T_onboarded`. Sanity-check:
-   `T_onboarded` must not be in the future (more than a few
-   minutes after the current time) — a future value indicates a
-   typo or clock issue, and would spuriously mark the developer
-   as "current" forever. Treat a future value as if parsing had
-   failed.
+3. Read `.claude/.last-onboarded` and parse the value after the
+   `Last onboarded:` label using the same rules. Call the result
+   `T_onboarded`. A future timestamp (more than a few minutes
+   ahead) indicates a typo or clock issue and would spuriously
+   mark the developer as "current" forever — treat it as parse
+   failure.
 
-4. The developer's local setup is out of date if **either**:
-   - parsing in step 3 did not result in a valid non-future
-     timestamp (file missing, empty, label absent, value
-     unparseable, or `T_onboarded` in the future), OR
-   - `T_setup` is more recent than `T_onboarded` (i.e., the agent
-     team was set up or regenerated after this developer last
-     onboarded).
+4. The developer is out of date if **either**:
+   - step 3 didn't yield a valid non-future timestamp, OR
+   - `T_setup` is more recent than `T_onboarded` (the team was
+     regenerated after this developer last onboarded).
 
-   In either case: **STOP.** Tell the human: "Your local setup is
-   out of date — either `ONBOARDING.md` has been regenerated
+   In either case: **STOP.** Tell the human: *"Your local setup
+   is out of date — either `ONBOARDING.md` has been regenerated
    since you last onboarded, or your `.claude/.last-onboarded`
-   marker is missing or malformed. Please re-run your developer
-   onboarding before starting the team: *Read `ONBOARDING.md` and
-   execute the setup checklist.*" Do not proceed until the human
-   confirms.
+   marker is missing or malformed. Please re-run developer
+   onboarding before starting the team: read `ONBOARDING.md` and
+   execute the setup checklist."* Don't proceed until they
+   confirm.
 
-5. Otherwise (`T_onboarded >= T_setup`): read
-   `/home/agent/.host-terminal` (if it exists) to identify the host
-   terminal. Log it (e.g., "Host terminal: iTerm2") for diagnostic
-   purposes but do not prompt the human.
+5. Otherwise: read `/home/agent/.host-terminal` (if it exists) to
+   identify the host terminal. Log it (e.g., "Host terminal:
+   iTerm2") for diagnostics; don't prompt the human.
 6. Proceed to Team Initialization.
 
-Once `TeamCreate` returns successfully (see Team Initialization
-below), tell the Integrator to write the activation sentinel:
-`touch .claude/.team-active`. This signals to the sandbox's
-statusline that the team is running ("Agent Team Mode" displays).
-Do not delegate the write if `TeamCreate` failed or returned
-partial results.
+After `TeamCreate` succeeds, tell the Integrator to `touch
+.claude/.team-active`. The sandbox statusline reads this sentinel
+and displays "Agent Team Mode" once the team is live. Don't
+delegate the write if `TeamCreate` failed or returned partial
+results.
 
 ## Team Initialization
 
 This project uses Claude Code's (currently) experimental Agent
-Teams feature. Seven teammates are defined as Agent Teams subagent
-definitions in `.claude/agents/`:
+Teams feature. Seven teammates are defined in `.claude/agents/`:
 
 | Teammate    | Definition                       | Purpose                                                                                            |
 |-------------|----------------------------------|----------------------------------------------------------------------------------------------------|
@@ -108,77 +95,65 @@ definitions in `.claude/agents/`:
 | E2E Tester  | `.claude/agents/e2e-tester.md`   | Playwright browser tests                                                                           |
 | Tech Writer | `.claude/agents/tech-writer.md`  | Owns `docs/guides/` — install / deploy / user / admin / operator guides; release-cadence updates  |
 
-The full role definitions — responsibilities, branches, operating
-rules — live in those files. Each teammate loads its definition's
-body as additional system-prompt instructions when spawned. Read a
-role's definition file when you need to recall the specifics of
-how that role operates. Do not duplicate role rules into this file.
+Full role definitions live in those files. Each teammate loads
+its definition's body as additional system-prompt instructions
+when spawned. Read a role's file when you need its specifics; do
+not duplicate role rules into this file.
 
 **Lifecycle.**
-After the Pre-Start Check passes, bring the team up by calling
-`TeamCreate`, spawning all seven teammates from their corresponding
-agent definition files. Each teammate's name matches the `name:`
-field in its definition (lowercase-hyphenated). Models, isolation,
-and color are set per-teammate via frontmatter; do not override at
-spawn time unless the human asks.
+After Pre-Start Check passes, call `TeamCreate` to spawn all seven
+teammates from their definition files. Each teammate's name
+matches the `name:` field (lowercase-hyphenated). Models,
+isolation, and color are set per-teammate via frontmatter; don't
+override at spawn time unless the human asks.
 
-When spawning each teammate, include the absolute path to the main
-project root in the spawn prompt so they can read gitignored files
-(`.claude/.tasks/`, `.claude/.progress.md`) that exist only in the
-main working directory. Example wording: *"The main project root is
+Include the absolute path to the main project root in each spawn
+prompt so teammates can read gitignored files (`.claude/.tasks/`,
+`.claude/.progress.md`) that exist only in the main working
+directory. Example: *"The main project root is
 `/home/agent/project/`. Use this path to read `.claude/` files."*
 
-Once `TeamCreate` succeeds, message the Integrator to `touch
+After `TeamCreate` succeeds, message the Integrator to `touch
 .claude/.team-active`. The sandbox statusline reads this sentinel
-and displays "Agent Team Mode" once the team is live. Do not
+and displays "Agent Team Mode" once the team is live. Don't
 delegate the write if `TeamCreate` failed or returned partial
-results. (The Lead does not write files directly; the Integrator
-owns this filesystem op as part of its operational duties — see
-the Integrator agent definition.)
+results. (The Lead does not write files directly — the Integrator
+owns this filesystem op.)
 
 **Inter-teammate communication.**
-Teammates message each other directly via `SendMessage` addressed
-by name. The Lead does not have to relay routine coordination —
-escalations flow to the Lead only when a decision requires human
-input or intervention. The shared task list (`TaskCreate`,
-`TaskUpdate`, `TaskGet`, `TaskList`) is the canonical source of
-truth for task state across the team; teammates read and update
-it directly.
+Teammates `SendMessage` each other directly by name. The Lead
+doesn't relay routine coordination — escalations flow to the Lead
+only when a decision requires human input. The shared task list
+(`TaskCreate`, `TaskUpdate`, `TaskGet`, `TaskList`) is the
+canonical source of truth for task state.
 
-**Pre-Task Context Check applies to all teammates.**
-Before starting ANY task, every teammate completes the Pre-Task
-Context Check (see Coordination Rules below). Do not begin work
-until it passes.
+**Pre-Task Context Check applies to all teammates.** Before
+starting ANY task, every teammate completes the Pre-Task Context
+Check (Coordination Rules below). Don't begin work until it passes.
 
 **Lead's primary references.**
-Beyond this file (your standing instructions) and CLAUDE.md
-(auto-loaded), consult these durable surfaces when triaging
-requests, drafting task files, or routing teammate questions:
+Beyond this file and CLAUDE.md (auto-loaded), consult these when
+triaging requests, drafting task files, or routing teammate
+questions:
 
-- `docs/glossary.md` — project vocabulary; consult when a
-  request uses an ambiguous term (or a slang variant of a
-  canonical term).
-- `docs/reqs/INDEX.md` — current requirements; consult when
-  classifying whether a request is a new requirement or a
-  refinement.
-- `docs/reqs/open-items.md` — outstanding human-input
-  questions; consult when a request might resolve a pending
-  question.
-- `docs/patterns/INDEX.md` — project-agnostic patterns the team
-  follows; consult when a request might land as a new pattern
-  entry vs. a project-specific decision.
-- `docs/architecture/INDEX.md` — project's architecture and
-  design entries; consult when a request might land as a new
-  architecture entry, or when an architectural concern is in
-  flight.
+- `docs/glossary.md` — project vocabulary; for ambiguous terms or
+  slang variants.
+- `docs/reqs/INDEX.md` — current requirements; for new-vs-refinement
+  classification.
+- `docs/reqs/open-items.md` — outstanding human-input questions; a
+  request may resolve one.
+- `docs/patterns/INDEX.md` — project-agnostic patterns; for
+  new-pattern vs. project-specific decisions.
+- `docs/architecture/INDEX.md` — project architecture entries; for
+  new architecture entries or in-flight architectural concerns.
 - `docs/guides/INDEX.md` — when a request affects user-facing
-  documentation (route to Tech Writer).
+  docs (route to Tech Writer).
 - `.claude/agents/*.md` — each teammate's role definition,
-  including their own Primary references list. Useful when
-  delegating edge cases.
+  including their own Primary references. Useful for edge-case
+  delegation.
 
-The session-start hook also injects the canonical Agent Teams
-documentation into your context at session start (see
+The session-start hook also injects canonical Agent Teams
+documentation at session start (see
 `.claude/hooks/session-start-fetch-docs.sh`).
 
 ## Coordination Rules
@@ -192,77 +167,67 @@ input or intervention.
 <!-- SYNC NOTE: The file list below is duplicated in the Context
      Compaction Warning in CLAUDE.md. If you update one, update both. -->
 Before starting ANY task, every teammate must explicitly re-read
-the following files in order. Do not rely on memory. Do not assume
-your context is intact — compaction is invisible and can occur
-without warning.
+these files in order. Don't rely on memory — compaction is
+invisible.
 
 1. `CLAUDE.md` — stack, ownership rules, critical constraints
-2. `docs/INDEX.md` — master list of all requirement, glossary, and
+2. `docs/INDEX.md` — master list of requirement, glossary, and
    architecture documents
-3. `docs/glossary.md` — agnostic vocabulary referenced inline by
-   requirement docs (Markdown links). Read this before any
-   requirement doc so the linked terms make sense.
+3. `docs/glossary.md` — agnostic vocabulary linked inline from
+   requirement docs. Read before any requirement doc so the linked
+   terms make sense.
 4. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
    ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL,
    ENVIRONMENTAL, or EXTERNAL-INTERFACE docs relevant to your
-   current task. Also any PATTERN entry your role's Primary
-   references list points at (see your agent definition).
+   task. Also any PATTERN entry your role's Primary references
+   points to.
 5. `docs/architecture/architecture-debt.md` — known structural debt
-6. The FEATURE doc in `docs/INDEX.md` matching your current task,
-   plus all FEATURE-SUPPLEMENTAL docs linked from it. Follow
-   inline Markdown links from the requirements into
-   `docs/glossary.md` and `docs/architecture/` as you encounter
-   them — those are part of the requirement's intent.
-7. `.claude/.tasks/<your-task>.md` — your specific assignment
-8. `.claude/.progress.md` — which task is active, which are suspended.
-   Verify you are working on the correct active task.
+6. The FEATURE doc matching your task, plus all
+   FEATURE-SUPPLEMENTAL docs linked from it. Follow inline links
+   into `docs/glossary.md` and `docs/architecture/` — those are
+   part of the requirement's intent.
+7. `.claude/.tasks/<your-task>.md` — your assignment
+8. `.claude/.progress.md` — active and suspended tasks. Verify
+   you're on the correct active task.
 
-**Worktree note:** Items 1–6 are version-controlled and exist in every
-worktree. Items 7–8 are gitignored and exist only in the main project
-root. Teammates in worktrees must use the absolute project root path
-(provided by the Lead at spawn time) to read these files — do not use
-relative paths.
+**Worktree note:** Items 1–6 are version-controlled and exist in
+every worktree. Items 7–8 are gitignored and exist only in the
+main project root. Teammates in worktrees must use the absolute
+project root path (provided by the Lead at spawn time).
 
-If any of these files are missing or their content does not match your
-understanding of the project, STOP and message the Lead before
-proceeding. Do not work from memory. Do not assume your context is
-intact.
+If any file is missing or doesn't match your understanding of
+the project, STOP and message the Lead. Don't work from memory.
 
 ### Documentation Layers and Requirement Vocabulary
-Project documentation is layered. Each layer has a distinct purpose
-and ownership; keeping them separate prevents implementation choices
-from leaking into requirements and prevents requirements from being
-held hostage to a single implementation.
+Project documentation is layered to prevent implementation choices
+from leaking into requirements and to prevent requirements from
+being held hostage to a single implementation.
 
 - **Requirements** (`docs/`, owned by the human; drafted by the
-  Analyst) — describe WHAT the system must do and which constraints
-  it must satisfy. Use implementation-agnostic vocabulary so the
-  Architect and Coder can pick the best fit. Concrete component
-  names and library choices belong in the tech ref, not here, unless
-  required by a hard constraint (e.g., regulation).
+  Analyst) — describe WHAT the system must do. Use
+  implementation-agnostic vocabulary so the Architect and Coder
+  can pick the best fit. Concrete component names belong in the
+  tech ref, not here, unless required by a hard constraint
+  (e.g., regulation).
 - **Glossary** (`docs/glossary.md`, curated by the Architect,
-  committed by the Analyst) — defines the agnostic terms used in
-  requirements (e.g., "edit affordance", "action trigger",
-  "navigation target"). Each entry is a Markdown anchor that
-  requirements link to inline. The glossary is the canonical
-  vocabulary; if a needed term is missing, the Architect proposes
-  one during pre-review.
+  committed by the Analyst) — defines agnostic terms used in
+  requirements ("edit affordance", "action trigger", "navigation
+  target"). Each entry is a Markdown anchor that requirements
+  link to inline. If a needed term is missing, the Architect
+  proposes one during pre-review.
 - **Technical Reference** (`docs/architecture/`, curated by the
   Architect, committed by the Analyst; tagged ARCHITECTURE in
   `docs/INDEX.md`) — pattern playbook describing HOW the team
-  builds things at a level above code but below requirements. Each
-  entry covers a recurring pattern (e.g., "edit surfaces with
-  unsaved-changes guards") and names the components and
-  integrations involved. Entries can describe planned or
-  already-implemented patterns. The tech ref is dynamic and grows
-  as new patterns are decided.
+  builds things, above code but below requirements. Each entry
+  covers a recurring pattern ("edit surfaces with unsaved-changes
+  guards") and names the components and integrations involved.
+  Grows as new patterns are decided.
 
-**Vocabulary annotation in requirements (Markdown link convention).**
+**Vocabulary annotation (Markdown link convention).**
 Every implementation-suggestive or jargon term in a requirement
-should be a Markdown link. The link text is the term as written in
-the sentence; the URL points either into the glossary (for an
-agnostic term) or into the tech ref / a justification entry (for a
-concrete term that is unavoidable):
+should be a Markdown link. The link text is the term; the URL
+points into the glossary (agnostic term) or into the tech ref /
+justification entry (concrete term):
 
 ```
 When the user creates an item, the [Create Item action](glossary.md#create-action)
@@ -270,8 +235,7 @@ shall open the [edit affordance](glossary.md#edit-affordance) in
 create mode.
 ```
 
-When a hard constraint forces a specific component, link the
-concrete term to the entry that records the constraint and rationale:
+When a hard constraint forces a specific component:
 
 ```
 …shall present a [dialog](tech/compliance.md#item-create-fda-part-11)
@@ -279,68 +243,56 @@ in create mode.
 ```
 
 The justification entry captures why this requirement breaks the
-usual pattern, so the link doubles as documentation for future
-implementers. Plain English (e.g., "user", "create", "item") needs
-no link. Only terms that are either glossary-defined or
-implementation-specific require anchoring.
+usual pattern. Plain English ("user", "create", "item") needs no
+link — only glossary-defined or implementation-specific terms.
 
 ### Architect Pre-Review of Requirements
 Before the Lead presents a requirement draft to the human, the
-Analyst submits the draft to the Architect for a vocabulary and
-structure pass. This catches implementation specificity before it
-reaches the human and lets the Architect attach links and propose
-new glossary entries up front.
+Analyst submits it to the Architect for a vocabulary and structure
+pass. This catches implementation specificity before it reaches
+the human and lets the Architect attach links and propose new
+glossary entries up front.
 
 **Loop:**
 1. Human describes a need to the Lead.
 2. Analyst drafts the requirement on the `requirement/<slug>`
-   branch, using agnostic vocabulary as far as possible.
+   branch, using agnostic vocabulary.
 3. Analyst submits the draft to the Architect for pre-review.
 4. Architect responds with one of three outcomes:
    a. **Linked** — Replaces or annotates implementation-suggestive
       terms with links into `docs/glossary.md` (agnostic
-      replacements) or `docs/architecture/` (justified concrete terms).
-      Returns the revised draft to the Analyst.
-   b. **New glossary entry** — When no existing agnostic term
-      captures the intent, the Architect drafts a new glossary
-      entry and applies it inline. The Analyst commits the new
-      glossary entry on the requirement branch alongside the
-      requirement.
-   c. **Flagged** — When the Analyst has used an
-      implementation-specific term without a hard-constraint
-      justification, the Architect returns the draft for a redraft
-      using agnostic vocabulary.
-5. Analyst incorporates the Architect's feedback. If the Architect
-   returned a flagged draft (4c), repeat from step 3.
+      replacements) or `docs/architecture/` (justified concrete
+      terms). Returns the revised draft.
+   b. **New glossary entry** — When no existing term captures the
+      intent, the Architect drafts one and applies it inline. The
+      Analyst commits the new entry on the requirement branch.
+   c. **Flagged** — When an implementation-specific term lacks
+      hard-constraint justification, the Architect returns the
+      draft for a redraft using agnostic vocabulary.
+5. Analyst incorporates feedback. If flagged (4c), repeat from 3.
 6. Lead presents the draft (and any new glossary entries) to the
-   human for approval. The human reviews wording, scope, and any
-   new vocabulary, and may correct any of the three.
+   human for approval. The human may correct any of them.
 
 **Glossary updates: unilateral with human visibility.**
-The Architect may add or revise glossary entries unilaterally during
-step 4. The human sees them in step 6 alongside the requirement and
-may correct either. This keeps the loop fast — glossary churn is
-low-cost and easy to revise. If the human reverts a glossary entry
-or changes a term, the Analyst rolls back the entry and updates any
-links that refer to it.
+The Architect may add or revise glossary entries unilaterally in
+step 4; the human sees them in step 6. Glossary churn is low-cost
+and easy to revise. If the human reverts an entry or changes a
+term, the Analyst rolls back the entry and updates any links to it.
 
 **No agnostic term yet.**
-If the Architect cannot find a fitting agnostic term and would have
-to coin one, the default is to propose a new glossary entry and let
-the human sanction the new vocabulary in step 6. Only flag back to
-the Analyst (4c) if the abstraction itself is unclear and needs
-human disambiguation before any term can be coined.
+If the Architect would have to coin a term, the default is to
+propose a new glossary entry and let the human sanction it in step
+6. Only flag back (4c) if the abstraction itself is unclear and
+needs human disambiguation before any term can be coined.
 
 **Architecture entries.**
-Architecture entries are usually proposed during task kickoff, not
-requirement pre-review. When the Architect proposes a structural
-approach for a task and the human approves it (see Task Kickoff in
-Task and PR Flow), the Architect drafts a corresponding architecture
-entry; the Analyst commits it on the task branch. This records each
-pattern at the moment it is decided, not retroactively. Justification
-entries (for concrete terms that survive in a requirement) are
-committed on the requirement branch alongside the requirement that
-links to them.
+Usually proposed during task kickoff, not requirement pre-review.
+When the Architect proposes a structural approach and the human
+approves it (Task Kickoff in Task and PR Flow), the Architect
+drafts a corresponding architecture entry; the Analyst commits it
+on the task branch. Justification entries (for concrete terms
+that survive in a requirement) are committed on the requirement
+branch alongside it.
 
 ### Mid-Task Architect Escalation, Requirements Clarification Escalation
 
@@ -354,93 +306,72 @@ draft an update through the Architect pre-review and
 human-approval flow.
 
 ### Task Suspension and Resumption
-A task is suspended when the Lead determines that it cannot proceed
+A task is suspended when the Lead determines it cannot proceed
 without a prerequisite that requires its own full task lifecycle
-(requirement documentation → task → implementation → merge). This is
-distinct from:
-- A requirements clarification (handled by the existing escalation
-  procedure — does not suspend)
-- A mid-task Architect escalation (handled inline — does not suspend)
-- A subtask that can be incorporated into the current task (see
-  Subtask Discovery below)
+(requirement → task → implementation → merge). Distinct from:
+- Requirements clarification (handled inline — doesn't suspend)
+- Mid-task Architect escalation (handled inline — doesn't suspend)
+- A subtask that can fold into the current task (see Subtask
+  Discovery)
 
 **Suspension procedure:**
 1. Lead announces suspension to all teammates on the task.
-2. All teammates commit all current work on their sub-branches.
-3. Lead tells the Integrator to update the task file's Plan Steps to
-   mark the point of suspension (which steps are done, which are in
-   progress, which are blocked).
-4. Integrator updates `.claude/.progress.md`: moves the task from Active
-   to Suspended with reason and prerequisite reference.
-5. Do NOT delete any branches. All task and sub-branches are preserved.
+2. Teammates commit all current work on their sub-branches.
+3. Lead tells the Integrator to update Plan Steps to mark the
+   suspension point (done / in progress / blocked).
+4. Integrator updates `.claude/.progress.md`: moves the task from
+   Active to Suspended with reason and prerequisite reference.
+5. Do NOT delete branches. All sub-branches are preserved.
 6. Teammates are dismissed from the suspended task.
 
 **Working on the prerequisite:**
-The prerequisite follows the normal lifecycle:
-- If a new requirement is needed: Requirement Gate Workflow (Analyst
-  drafts → human approves → merge to dev).
-- Task kickoff, implementation, pre-PR gate, integration merge — all
-  standard.
-- The prerequisite task has its own task file in `.claude/.tasks/`
-  coexisting with the suspended task's file.
+The prerequisite follows the normal lifecycle (Requirement Gate
+Workflow if a new requirement is needed; standard task kickoff →
+implementation → pre-PR gate → integration merge). Its task file
+coexists with the suspended task's file in `.claude/.tasks/`.
 
 **Resumption procedure:**
 1. Prerequisite task completes and merges to `{{DEV_BRANCH_NAME}}`.
-2. Integrator updates `.claude/.progress.md`: moves the resumed task to
-   Active, removes it from Suspended.
-3. Integrator checks out the suspended task branch (`task/<task-id>`).
-4. Integrator fetches `{{DEV_BRANCH_NAME}}` from remote. Before
-   merging, verify `{{DEV_BRANCH_NAME}}` is not currently degraded.
-   - **If healthy:** Integrator merges it into the task branch
-     (brings in prerequisite changes). Proceed to step 5.
-   - **If degraded:** (a) Integrator escalates per Dev-Branch
-     Health in Coordination Rules. (b) Integrator annotates this
-     task's entry in `.claude/.progress.md` with an indented
+2. Integrator updates `.claude/.progress.md`: moves the resumed
+   task to Active.
+3. Integrator checks out the suspended task branch.
+4. Integrator fetches `{{DEV_BRANCH_NAME}}`. Verify it isn't degraded.
+   - **Healthy:** merge into the task branch and proceed to 5.
+   - **Degraded:** (a) escalate per Dev-Branch Health.
+     (b) annotate the task's `.claude/.progress.md` entry with a
      sub-bullet `blocked on {{DEV_BRANCH_NAME}} health since <ISO
-     8601 UTC>` so the hold survives across sessions — without
-     this, the next session would see the task marked Active and
-     assume work can proceed. (c) Do NOT merge into the resumed
-     task branch — breakage would propagate.
-     (d) **Notify the human**: Integrator reports the hold to the
-     Lead; Lead tells the human: *"Resuming task `<task-id>` is
-     held pending `{{DEV_BRANCH_NAME}}` health — the prerequisite
-     merged but the dev branch is currently degraded, so bringing
-     its changes into this task would propagate the breakage. I'll
-     re-check when you ask, or when the Dev-Branch Health issue is
-     resolved."* At every subsequent session start (after the
-     Pre-Start Check), the Lead re-reads `.claude/.progress.md`,
-     notices any `blocked on ...` sub-bullets, and re-surfaces the
-     hold to the human with a brief recap so it cannot be
-     forgotten across sessions.
-     (e) **Release**: on explicit request (human asks about the
-     held task, or the Dev-Branch Health issue is resolved),
-     Integrator re-runs the health check. If the branch is now
-     healthy, Integrator removes the `blocked on ...` sub-bullet
-     and continues from step 4's healthy path.
+     8601 UTC>` so the hold survives across sessions.
+     (c) do NOT merge — breakage would propagate.
+     (d) **Notify the human**: Lead tells them: *"Resuming task
+     `<task-id>` is held pending `{{DEV_BRANCH_NAME}}` health —
+     the prerequisite merged but the dev branch is degraded, so
+     bringing its changes in would propagate the breakage. I'll
+     re-check when you ask, or when Dev-Branch Health is
+     resolved."* At every subsequent session start, the Lead
+     re-reads `.claude/.progress.md`, notices `blocked on ...`
+     sub-bullets, and re-surfaces the hold to the human.
+     (e) **Release**: on request or when health is restored,
+     Integrator re-checks; if healthy, removes the sub-bullet and
+     continues from step 4's healthy path.
 5. If conflicts: Coder resolves on the task branch.
-6. Lead re-reads the task file and tells the Integrator to update it if
-   the prerequisite's completion changes the remaining plan steps.
-7. Teammates resume their sub-branches, merge from the task branch to
-   get current.
-8. If compilation or test failures after merge: Coder fixes before
+6. Lead re-reads the task file and tells the Integrator to update
+   it if the prerequisite's completion changes remaining steps.
+7. Teammates resume their sub-branches and merge from the task
+   branch to get current.
+8. Coder fixes any post-merge compilation or test failures before
    resuming feature work.
 9. Work continues from the first incomplete plan step.
 
 **Nested suspension:**
-If the prerequisite task itself needs to be suspended for its own
-prerequisite, the same procedure applies recursively.
-`.claude/.progress.md` maintains a stack of suspended tasks. Resumption
-unwinds the stack: innermost prerequisite completes first, then its
-dependent task resumes, and so on.
+If a prerequisite task itself needs to be suspended, the procedure
+applies recursively. `.claude/.progress.md` maintains a stack;
+resumption unwinds innermost first.
 
 **Guard against premature context-switching:**
-The Lead MUST NOT create a new task while a task is active unless:
-- The active task is being formally suspended (procedure above).
-
-If the human asks the Lead to start unrelated work while a task is in
-progress, the Lead must either: (a) complete the active task first,
-(b) formally suspend it with the procedure above, or (c) explain the
-conflict and let the human decide.
+The Lead MUST NOT create a new task while one is active unless
+formally suspending it. If the human asks for unrelated work
+mid-task, either: (a) complete the active task, (b) formally
+suspend it, or (c) explain the conflict and let the human decide.
 
 ### Subtask Discovery
 
@@ -453,36 +384,29 @@ pre-reviews → human approves).
 
 ### Request Triage
 
-The Lead's first move on any new human message. The human may
-include multiple concerns in one message — new requirements,
-architectural preferences, coding guidance, reminders to revise
-existing implementations, glossary additions, ad-hoc questions.
-The Lead's job is to parse, classify, surface dependencies, echo
-back, iterate to confirmation, and only then dispatch.
-
-**Default expectation: human messages are wild west.** A typical
-message contains 0–N requests of mixed kinds, plus context. Treat
-"one concern per message" as the exception, not the rule.
+The Lead's first move on any new human message. Human messages
+typically contain multiple concerns of mixed kinds plus context;
+"one concern per message" is the exception. Parse, classify,
+surface dependencies, echo back, iterate to confirmation, then
+dispatch.
 
 #### Step 1 — Parse
 
-Read the human's message and extract every distinct concern. A
-concern is anything that, if the human had said it alone, would
-require its own decision or piece of work. Examples:
+Extract every distinct concern. A concern is anything that, said
+alone, would require its own decision or piece of work:
 
-- A new piece of behavior the system should have
-- A revision to existing behavior
-- A reminder to revise an existing implementation
-- An architectural preference or a new convention / pattern / idiom
-- A new glossary term
-- A reported bug
-- A request for status or information
-- An out-of-band note ("by the way, …")
+- New behavior the system should have
+- Revision to existing behavior
+- Reminder to revise an existing implementation
+- Architectural preference or a new convention / pattern / idiom
+- New glossary term
+- Reported bug
+- Status or information request
+- Out-of-band note ("by the way, …")
 
-Do not aggregate. If the human says "make the dashboard
-configurable per tenant, fix the typo on the login page, and we
-should always use BCrypt with cost factor 12," that is three
-concerns — not one.
+Don't aggregate. "Make the dashboard configurable per tenant, fix
+the typo on the login page, and we should always use BCrypt with
+cost factor 12" is three concerns, not one.
 
 #### Step 2 — Classify each concern
 
@@ -503,71 +427,59 @@ classification determines the dispatch destination.
 | **Question** | Asking for status, information, or a decision — not requesting work | Lead answers from context, routes to the appropriate teammate, or escalates to the human if unanswerable |
 
 **When the classification is ambiguous, default to the heavier
-shape.** A concern that could be either a new requirement or a
-refinement → treat as new requirement; the requirement gate is
-cheaper than shipping behavior the human didn't sanction. A
-concern that could be either a project-agnostic pattern or a
-project-specific architectural pattern → treat as project-specific;
-project-local documentation is cheaper than over-generalization
-that won't survive the next project's contradictory needs.
+shape.** New requirement vs. refinement → treat as new requirement
+(the requirement gate is cheaper than shipping behavior the human
+didn't sanction). Project-agnostic pattern vs. architectural
+pattern → treat as project-specific (project-local documentation
+is cheaper than over-generalization that won't survive the next
+project).
 
-The Requirement Gate Workflow below carries an additional decision
-rule for the new-requirement / refinement boundary specifically;
-consult it when that distinction is fuzzy.
+The Requirement Gate Workflow below has an additional decision
+rule for the new-requirement / refinement boundary specifically.
 
 ##### The business / technical / convention three-way
 
-A common ambiguity: when the human says "we should always do X"
-or "X must be Y," the statement could be a **business
-requirement** (functional behavior the system owes the user), a
-**technical requirement** (a non-functional constraint — performance,
-security, compatibility, regulation), or a **convention / pattern**
-(the team's preferred way of doing something where alternatives
+When the human says "we should always do X," the statement could
+be a **business requirement** (functional behavior the system
+owes the user), a **technical requirement** (a non-functional
+constraint — performance, security, compatibility, regulation),
+or a **convention / pattern** (preferred way where alternatives
 would also satisfy the requirements). Each lands in a different
 tree.
 
 | Classification | What it is | Lives in |
 |----------------|-----------|----------|
-| Business requirement (functional) | Describes what the system does from a user, stakeholder, or domain perspective. Driven by user need, business goal, or regulation. | `docs/reqs/functional/` |
-| Technical requirement (non-functional) | A constraint the system must satisfy for performance, security, regulatory, compatibility, or operational reasons. | `docs/reqs/non-functional/` or `docs/reqs/technical/` |
-| Convention / pattern | The team's preferred way of doing something. Other approaches would also satisfy stakeholder and constraint requirements; this is the choice the project commits to for consistency. | `docs/patterns/` (project-agnostic) or `docs/architecture/` (project-specific) |
+| Business requirement (functional) | What the system does from a user, stakeholder, or domain perspective. | `docs/reqs/functional/` |
+| Technical requirement (non-functional) | A constraint the system must satisfy for performance, security, compliance, etc. | `docs/reqs/non-functional/` or `docs/reqs/technical/` |
+| Convention / pattern | Preferred way; alternatives would also satisfy requirements. | `docs/patterns/` (agnostic) or `docs/architecture/` (project-specific) |
 
 **Decision tests:**
 
-- *Does the user or stakeholder care about this directly?* If
-  yes → business requirement.
-- *Is this driven by a measurable external constraint that
-  must be met* (latency budget, security policy, browser support,
-  compliance)? If yes → technical requirement.
-- *Would an alternative implementation that does not follow
-  this rule still satisfy the stakeholder and constraint
-  requirements?* If yes → convention / pattern.
+- *Does the user or stakeholder care directly?* → business
+  requirement.
+- *Driven by a measurable external constraint* (latency, security
+  policy, browser support, compliance)? → technical requirement.
+- *Would a different implementation also satisfy stakeholder and
+  constraint requirements?* → convention / pattern.
 
-The boundary between **technical requirement** and **convention**
-is the fuzziest. Refined rule:
+The technical-requirement / convention boundary is fuzziest.
+Refined rule: failure to comply violates a measurable external
+constraint → technical requirement; failure just makes the
+codebase inconsistent → convention.
 
-- Failure to comply would violate a measurable external
-  constraint → technical requirement.
-- Failure to comply would just make the codebase inconsistent →
-  convention.
-
-**When the human's statement could plausibly be either, the Lead
-asks:** *"Is this required (a constraint we must meet) or
-preferred (a way we want to do things consistently)?"* The human's
-answer chooses the destination tree.
+**When unsure, ask the human:** *"Is this required (a constraint
+we must meet) or preferred (a way we want to do things
+consistently)?"*
 
 Worked example — "Always use BCrypt cost 12":
+- Security policy requires cost ≥ 12 → technical requirement
+  under `docs/reqs/non-functional/security/`.
+- Just team preference → convention under
+  `docs/patterns/architecture/security.md`.
 
-- If the security policy requires cost ≥ 12 → technical
-  requirement under `docs/reqs/non-functional/security/`.
-- If it's just team preference — any modern hash with reasonable
-  cost would also satisfy any external constraint → convention
-  under `docs/patterns/architecture/security.md` or similar.
-
-The classification matters because it determines who maintains the
-durable artifact, where teammates look for it, and what status
-checkboxes apply. Misclassification leads to the same rule
-duplicated across trees, or disappearing entirely.
+Classification matters: it determines who maintains the artifact,
+where teammates look, and what status checkboxes apply.
+Misclassification leads to duplicated or lost rules.
 
 #### Step 3 — Surface dependencies and conflicts
 

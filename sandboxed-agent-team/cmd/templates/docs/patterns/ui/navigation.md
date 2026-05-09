@@ -6,8 +6,8 @@ bottom tab bar) carry inline "Vaadin ≥X / <X" notes.
 
 ## AppLayout + SideNav
 
-Use `AppLayout` as the shell for all authenticated views. `AppLayout` provides the drawer,
-navbar, and content slot. `SideNav` populates the drawer with navigation items.
+Use `AppLayout` as the shell for all authenticated views — it provides the drawer, navbar,
+and content slot. `SideNav` populates the drawer.
 
 ```java
 @Layout
@@ -72,8 +72,8 @@ pushing it aside. This is Vaadin AppLayout's default responsive behavior.
 
 ## Conditional Navigation Rendering
 
-Navigation items for routes the current user cannot access must not be generated — not
-styled hidden, not disabled. They never enter the DOM:
+Navigation items for inaccessible routes must not be generated — not hidden, not disabled.
+They never enter the DOM:
 
 ```java
 private void buildNav(SideNav nav, AuthenticatedUser user) {
@@ -91,9 +91,8 @@ private void buildNav(SideNav nav, AuthenticatedUser user) {
 
 ## Active Route Highlighting
 
-Vaadin's `SideNavItem` automatically highlights the item corresponding to the current route.
-No manual highlighting code is required when using `SideNavItem(String, Class<?>)` or
-`SideNavItem(String, String)` constructors with the view class.
+Vaadin's `SideNavItem` automatically highlights the current route — no manual code needed
+when using the `SideNavItem(String, Class<?>)` constructor.
 
 ## Navigation Guards
 
@@ -119,24 +118,23 @@ public class ItemEditView extends Composite<VerticalLayout> implements BeforeEnt
 
 ## Touch-Optimized Navigation on Mobile
 
-On mobile viewports (< 600px), consider replacing or supplementing the sidebar drawer with
-a bottom tab bar for the most frequently accessed views. Vaadin's `Tabs` component with
-`HORIZONTAL` orientation and bottom positioning serves this purpose.
+On mobile (< 600px), consider a bottom tab bar for the most frequently accessed views.
+Vaadin's `Tabs` component with `HORIZONTAL` orientation and bottom positioning serves
+this purpose.
 
-For secondary navigation within a mobile view, use an accordion pattern rather than nested
-sidebar items, which are difficult to tap accurately on small screens.
+For secondary navigation within a mobile view, use an accordion rather than nested
+sidebar items — difficult to tap accurately on small screens.
 
 ## Body Scrolling
 
-In standard `AppLayout`, body scrolling is managed by the content area, not the `<body>`
-element. Ensure that views within the layout use `setSizeFull()` or explicit height
-constraints appropriate for their content — otherwise the content area may not scroll
-correctly on mobile.
+In standard `AppLayout`, scrolling is managed by the content area, not `<body>`. Views
+must use `setSizeFull()` or explicit height constraints — otherwise the content area may
+not scroll correctly on mobile.
 
 ## AfterNavigationObserver for Per-Navigation Actions
 
-Use `AfterNavigationObserver` on `MainLayout` for actions that must run after every
-successful navigation (e.g., closing the mobile drawer, updating a breadcrumb):
+Use `AfterNavigationObserver` on `MainLayout` for actions after every navigation (e.g.,
+closing the mobile drawer, updating a breadcrumb):
 
 ```java
 public class MainLayout extends AppLayout implements AfterNavigationObserver {

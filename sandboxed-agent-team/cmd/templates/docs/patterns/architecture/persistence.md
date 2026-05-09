@@ -5,9 +5,10 @@ to your root Java package.
 
 ## Entity Base Class Hierarchy
 
-All JPA entities extend a layered `@MappedSuperclass` hierarchy. Each layer adds concerns
-incrementally. Most principal entities extend `BaseEntity`; reference tables that need no
-audit trail may extend `RootEntity` or `VersionedEntity` directly.
+All JPA entities extend a layered `@MappedSuperclass` hierarchy. Each
+layer adds one concern. Most principal entities extend `BaseEntity`;
+reference tables that need no audit trail may extend `RootEntity` or
+`VersionedEntity` directly.
 
 ```
 RootEntity<KEY>              @MappedSuperclass
@@ -78,9 +79,10 @@ public abstract class VersionedEntity<KEY> extends RootEntity<KEY> {
 }
 ```
 
-`@Version` provides optimistic locking. Hibernate increments the version column on every
-UPDATE. If the stored version does not match at flush time, Spring raises
-`ObjectOptimisticLockingFailureException`. No manual version-checking code is needed.
+`@Version` provides optimistic locking. Hibernate increments the version
+column on every UPDATE; on a version mismatch at flush time, Spring
+raises `ObjectOptimisticLockingFailureException`. No manual
+version-checking code needed.
 
 ### AuditedEntity
 
@@ -110,11 +112,12 @@ public abstract class AuditedEntity<KEY> extends VersionedEntity<KEY> {
 `AuditorAware<UserEntity>` bean must be registered (see
 `docs/patterns/architecture/modules.md`).
 
-`created_by` and `updated_by` are `@ManyToOne` references to the users table. The
-`AuditorAware` bean reads the surrogate key off the authenticated principal (which carries
-it from login-time validation) and resolves it via `EntityManager.getReference` — a
-Hibernate proxy holding just the key, persisted as the FK with no `SELECT` issued. The
-audit columns (`created_by_key`, `updated_by_key`) are nullable so system-originated
+`created_by` and `updated_by` are `@ManyToOne` references to the users
+table. The `AuditorAware` bean reads the surrogate key off the
+authenticated principal (carried from login-time validation) and
+resolves it via `EntityManager.getReference` — a Hibernate proxy holding
+just the key, persisted as the FK with no `SELECT`. The audit columns
+(`created_by_key`, `updated_by_key`) are nullable so system-originated
 writes (no authenticated principal) leave them NULL.
 
 ### Temporal Types — Instant for Storage, LocalDateTime for Display

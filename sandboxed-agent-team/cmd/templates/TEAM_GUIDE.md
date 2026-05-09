@@ -6,9 +6,8 @@
 > its template in the kit template source and
 > re-run `agent-team-install`.
 
-This document describes how to work with the Claude Code agent team
-on this project. It is your day-to-day reference — not a setup guide
-(see [`ONBOARDING.md`](ONBOARDING.md) for setup).
+Day-to-day reference for working with the Claude Code agent team
+on this project. For setup, see [`ONBOARDING.md`](ONBOARDING.md).
 
 ## Team Structure
 
@@ -43,134 +42,121 @@ You only talk to the Lead. The Lead coordinates everything else.
 with its own context window. From the Lead's terminal you can
 cycle through teammates with `Shift+Down` and message any of them
 directly, but you typically don't need to — the Lead coordinates
-the team for you.
+for you.
 
-1. At your host terminal (in the project directory), reattach to
-   your sandbox: `./team/attach.sh`. This drops you into a Claude
-   Code session running inside the sandbox. The session's system
-   prompt auto-loads the Lead role, so the team comes up
-   automatically on your first message — the Lead bootstraps and
-   brings up the teammates for you. No slash command required.
-   Once setup completes, the statusline shows "Agent Team Mode" as
-   a visible confirmation that you're talking to the team.
-   (If `attach.sh` reports no sandbox exists, run
-   `./team/create.sh` to rebuild one.)
-2. Describe what you want to the Lead. The Lead coordinates the team
-   and drives the work — it does not implement directly.
-3. You can switch between requirements and implementation freely.
-   Requirements can be drafted for future tasks while a current task
-   is being implemented. You can switch requirements topics at any
-   time — just tell the Lead.
-4. You review and approve requirement drafts and PRs when the Lead
-   presents them. You may also provide feedback, answer questions the
-   team surfaces, and perform any human-in-the-loop actions (e.g.,
-   hardware passkey prompts during E2E testing). You may see multiple
-   Coders and Unit Testers working simultaneously — this is by design
-   when the Lead splits a task into parallel subtasks.
-5. The Lead reports approximate cost per task (token usage and USD
-   estimate per model, plus totals) at task wrap-up. You can also
-   ask the Lead for the current cost at any time. Whether the
-   cost report is also recorded in the final squash-merge commit
-   message (for a persistent audit trail in git history) is a
+1. At your host terminal (in the project directory), reattach:
+   `./team/attach.sh`. The sandbox's Claude Code auto-loads the
+   Lead role, so the team comes up on your first message — no
+   slash command required. The statusline shows "Agent Team Mode"
+   as visible confirmation. (If `attach.sh` reports no sandbox
+   exists, run `./team/create.sh` to rebuild one.)
+2. Describe what you want to the Lead. The Lead coordinates the
+   team and drives the work; it does not implement directly.
+3. Switch between requirements and implementation freely.
+   Requirements can be drafted for future tasks while a current
+   task is being implemented; you can switch requirement topics
+   any time — just tell the Lead.
+4. Review and approve requirement drafts and PRs when the Lead
+   presents them. You may also provide feedback, answer questions
+   the team surfaces, and perform human-in-the-loop actions (e.g.,
+   hardware passkey prompts during E2E testing). You may see
+   multiple Coders and Unit Testers working simultaneously — by
+   design when the Lead splits a task into parallel subtasks.
+5. The Lead reports approximate cost per task (per-model token
+   usage and USD estimate, plus totals) at wrap-up; ask any time
+   for current cost. Whether the report is also recorded in the
+   squash-merge commit message (persistent audit trail) is a
    per-project setting (`Include cost report in commit message:
-   yes|no` in `CLAUDE.md`'s Branching section). Ask the Lead to
-   change it if you want a different default.
-6. You can ask the team to take screenshots of the running
-   application for visual verification — tell the Lead what you
-   want to see.
+   yes|no` in `CLAUDE.md`'s Branching section) — ask the Lead to
+   flip it if needed.
+6. Ask the team to take screenshots of the running app for visual
+   verification — tell the Lead what you want to see.
 
 ## How Requirements Work
 
-- Requirements are documented by the Analyst in `docs/`. All
-  requirements originate from you — the Analyst formalizes them.
+- All requirements originate from you; the Analyst formalizes them
+  in `docs/`.
 - Requirement branches are per-topic or related group (e.g.,
   `requirement/authentication`), not per individual requirement.
-- New capabilities or constraints go through a requirement gate: the
-  Analyst drafts, you approve. Refinements and preferences go directly
-  to the Coder — no gate needed.
-- You can switch topics at any time. The team tracks all in-flight
+- New capabilities or constraints go through a requirement gate
+  (Analyst drafts, you approve). Refinements and preferences go
+  directly to the Coder — no gate.
+- Switch topics any time. The team tracks all in-flight
   requirement branches in `progress.md` so nothing gets lost.
 
 ## How Implementation Works
 
-- Each task has a task branch, and each teammate gets a sub-branch
-  for their work. Teammates merge into the task branch; the
-  Integrator merges the task branch to `{{DEV_BRANCH_NAME}}`.
-- Within a task, the Lead may split file-disjoint work across multiple
-  Coders, each with a paired Unit Tester. Dependencies between
-  subtasks are handled in phases.
-- After each Coder commit: the Unit Tester and Architect review in
-  parallel. After all work is merged: full test suites run at the
+- Each task has a task branch, with a sub-branch per teammate.
+  Teammates merge into the task branch; the Integrator merges the
+  task branch to `{{DEV_BRANCH_NAME}}`.
+- Within a task, the Lead may split file-disjoint work across
+  multiple Coders, each with a paired Unit Tester. Subtask
+  dependencies run in phases.
+- After each Coder commit: Unit Tester and Architect review in
+  parallel. After all work is merged: full test suites at the
   pre-PR gate.
-- The Lead may suspend a task to work on a prerequisite it discovered.
-  This is normal — it will resume the original task after the
-  prerequisite is complete.
+- The Lead may suspend a task to work on a prerequisite it
+  discovered, then resume after the prerequisite lands. Normal.
 
 ## Visual Debugging
 
-Agents can use the Playwright MCP server to interact with the running
-application — navigate to pages, take screenshots, click elements,
-and inspect visual state. This requires the dev server to be running.
-Ask the Lead to "take a screenshot of [page]" to verify progress
-without running the app yourself.
+Agents can use the Playwright MCP server to interact with the
+running app — navigate, screenshot, click, inspect visual state.
+Requires the dev server running. Ask the Lead to "take a screenshot
+of [page]" to verify progress without running the app yourself.
 
 ## If Something Goes Wrong
 
 - **Teammate seems stuck or unresponsive:** Tell the Lead. The
-  Lead will recover the teammate — resume first; spawn a
-  replacement from the same agent definition if resume fails (see
-  Teammate Recovery in `.claude/agents/lead.md`).
+  Lead will recover — resume first; spawn a replacement from the
+  same agent definition if resume fails (see Teammate Recovery in
+  `.claude/agents/lead.md`).
 - **The Lead itself loses context mid-session:** Run
-  `/project:lead-reload` at the sandbox's Claude Code prompt to
-  re-invoke the Lead. The auto-load fires only at session start, so
-  mid-session recovery uses the slash command. The Lead reads
-  `progress.md` to recover state.
-- **Sandbox crashes:** Back at your host terminal, run
-  `./team/attach.sh` to reconnect (which reopens Claude Code
-  inside the sandbox). The new session auto-loads the Lead. If the
-  sandbox itself is gone, run `./team/create.sh` to rebuild it.
-- **Sandbox authentication fails:** Refresh the token by running
-  `claude` on the host and `/login` if needed, then re-run
-  `./team/attach.sh`. This picks up fresh credentials on every
-  attach. On macOS the new token is read automatically from the
-  Keychain; on other systems update `CLAUDE_CODE_OAUTH_TOKEN` in
-  your shell config first.
+  `/project:lead-reload` at the sandbox's Claude Code prompt. The
+  auto-load fires only at session start, so mid-session recovery
+  uses the slash command. The Lead reads `progress.md` to recover
+  state.
+- **Sandbox crashes:** Run `./team/attach.sh` from your host
+  terminal to reconnect; the new session auto-loads the Lead. If
+  the sandbox itself is gone, run `./team/create.sh` to rebuild.
+- **Sandbox authentication fails:** Run `claude` on the host and
+  `/login` if needed, then re-run `./team/attach.sh` — credentials
+  are picked up fresh on every attach. On macOS the new token is
+  read automatically from the Keychain; on other systems update
+  `CLAUDE_CODE_OAUTH_TOKEN` in your shell config first.
 - **Sandbox git push/pull/fetch fails with 401 or 403:** The
   sandbox reaches the repo over HTTPS with a repo-platform API
-  token. Most common causes: the token expired or was revoked, or
-  its scopes are insufficient (Bitbucket needs Repositories R+W
-  and Pull requests R+W; GitHub fine-grained PAT needs Contents
-  R+W and Pull requests R+W; GitLab needs `api`). Re-run
-  `./team/join.sh` to re-prompt for a fresh token.
-- **Dev branch is broken:** The Lead will escalate to you. The
-  breakage may be from the team's own merge or from external changes.
-  You decide: wait (another team may already be fixing it), fix it
-  with this team, or work on something else.
+  token. Most common causes: token expired/revoked, or scopes
+  insufficient (Bitbucket: Repositories R+W and Pull requests R+W;
+  GitHub fine-grained PAT: Contents R+W and Pull requests R+W;
+  GitLab: `api`). Re-run `./team/join.sh` to re-prompt.
+- **Dev branch is broken:** The Lead escalates. The breakage may
+  be from the team's own merge or from external changes. You
+  decide: wait (another team may be fixing it), fix it with this
+  team, or work on something else.
 
 ## Pausing and Resuming
 
-Exiting Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice) ends your Claude Code
-session and drops you back to the host shell, but the sandbox VM keeps
-running in the background. To resume:
-1. At your host terminal: `./team/attach.sh` — it reattaches to
-   the running sandbox and starts a new Claude Code session inside
-   it.
-2. The Lead auto-loads and reads `progress.md` to pick up where you
-   left off.
+Exit Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice) — the
+session ends and you're back at the host shell, but the sandbox
+VM keeps running. To resume:
+
+1. `./team/attach.sh` from your host terminal — reattaches to the
+   running sandbox and starts a new Claude Code session inside it.
+2. The Lead auto-loads and reads `progress.md` to pick up where
+   you left off.
 
 ## Session End
 
-To end a Claude Code session cleanly, tell the Lead you're wrapping
-up the session. The Lead confirms all work is merged and flags
-anything unresolved for your next Claude Code session. Then exit
-Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice) — the sandbox VM keeps running so
-you can reconnect later (see [Pausing and
-Resuming](#pausing-and-resuming)).
+Tell the Lead you're wrapping up. The Lead confirms all work is
+merged and flags anything unresolved for next session. Then exit
+Claude Code (`/exit`, `exit`, or Ctrl-D quickly twice) — the
+sandbox VM keeps running so you can reconnect later (see
+[Pausing and Resuming](#pausing-and-resuming)).
 
 ## Engagement End
 
-To end the engagement (i.e., destroy the sandbox), after ending
-your final Claude Code session, at your host terminal run
-`./team/destroy.sh` to destroy the sandbox VM. Host files remain.
-Delete the project directory manually per your data retention
-policy.
+To end the engagement, after your final Claude Code session run
+`./team/destroy.sh` from the host terminal to destroy the sandbox
+VM. Host files remain. Delete the project directory manually per
+your data retention policy.

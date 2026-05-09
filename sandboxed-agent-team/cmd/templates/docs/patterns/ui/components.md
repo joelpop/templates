@@ -1,8 +1,7 @@
 # Component Patterns
 
 Reusable UI component patterns for Vaadin 24+ applications: Quick Filter, Avatar, grids,
-forms, dialogs, notifications, and loading indicators. The patterns in this document work
-identically across every supported Vaadin line; the `_` unused-parameter syntax used in
+forms, dialogs, notifications, and loading indicators. The `_` unused-parameter syntax in
 code examples requires Java 21+ (see `docs/patterns/conventions/java.md` → "Unused Lambda
 Parameters" for the Java 17–20 alternative).
 
@@ -352,23 +351,19 @@ UI.getCurrent().access(() -> {
 
 ## Conditional Component Rendering — Do Not Generate vs. Hide vs. Disable
 
-When a component should be absent or inert, three modes are available, distinguished by
-*why*. Pick the one that matches the reason, not the visual effect.
+Three modes, distinguished by *why*:
 
-- **Do not generate** — used when the reason is **authorization** (the current user's
-  role does not permit the action) or any other "this user should never see this at all"
-  condition. The component is never constructed, never added to the layout, never present
-  in the DOM. Nothing for the user to discover via dev tools, no element to re-enable by
-  tampering with attributes, no stale reference from later code.
-- **Hide** (`setVisible(false)`) — used when the component is **not applicable to the
-  current situation** but *could* apply in another situation the same user encounters
-  (e.g., a Reactivate button hidden while viewing an active record, shown when viewing an
-  inactive record). The component is constructed and lives in the layout so it can be
-  revealed later without a rebuild.
-- **Disable** (`setEnabled(false)` + tooltip) — used when the component **is applicable
-  and the user is normally authorized, but the action is not possible right now** (e.g.,
-  cannot deactivate the last remaining admin, cannot submit while a save is in flight).
-  The tooltip must explain *why* so the user isn't left guessing.
+- **Do not generate** — **authorization** (the current user's role does not permit the
+  action) or any "this user should never see this at all" condition. Never constructed,
+  never in the DOM. Nothing to discover via dev tools, no attribute to re-enable by
+  tampering.
+- **Hide** (`setVisible(false)`) — **not applicable to the current situation** but could
+  apply in another state the same user encounters (e.g., a Reactivate button hidden on
+  an active record, shown on an inactive one). Component is constructed and lives in the
+  layout so it can be revealed without a rebuild.
+- **Disable** (`setEnabled(false)` + tooltip) — **applicable and authorized, but not
+  possible right now** (e.g., cannot deactivate the last remaining admin, cannot submit
+  while a save is in flight). Tooltip must explain *why*.
 
 ```java
 // Do not generate — e.g., security gating by role. The button is never constructed for
@@ -389,20 +384,18 @@ deactivateButton.setTooltipText(isLastAdmin
     ? "Cannot deactivate the only admin account" : null);
 ```
 
-**Do not** reach for `setVisible(false)` as the mechanism for authorization gating — that
-is the "do not generate" case. Likewise, `setEnabled(false)` is not a substitute for the
-other two: a permanently-disabled control communicates "try again later" and invites
-futile interaction.
+**Do not** use `setVisible(false)` for authorization gating — that is the "do not
+generate" case. `setEnabled(false)` is not a substitute for the other two: a
+permanently-disabled control communicates "try again later" and invites futile
+interaction.
 
 ### Layout Preservation — When a Placeholder Is Needed
 
-"Do not generate" and `setVisible(false)` both remove the component from layout flow —
-surrounding elements collapse to fill the space. "Disable" preserves the layout; the
-component renders at its normal size and position. When the absence of a component would
-cause jarring layout shift, misalignment of adjacent controls (e.g., a toolbar with
-positionally-dependent buttons), or a loss of visual predictability across states/roles,
-the absent component needs a **placeholder** that occupies the same space without being
-interactive.
+"Do not generate" and `setVisible(false)` both remove the component from layout flow;
+surrounding elements collapse to fill the space. "Disable" preserves layout at its
+normal size and position. When absence would cause jarring layout shift or misalignment
+(e.g., a toolbar with positionally-dependent buttons), the absent component needs a
+**placeholder** that occupies the same space without being interactive.
 
 > **Vaadin state lives on the server.** Interactivity is governed by the server-side
 > component state (`setEnabled(false)`, `setVisible(false)`), not by client-side CSS or
@@ -412,28 +405,23 @@ interactive.
 > component enabled and visible, the server will happily process clicks on the
 > "re-revealed" element. **Use server-side state, not CSS, to prevent interaction.**
 
-Options, in rough order of preference:
+Options, in preference order:
 
-1. **Rethink the mode.** If a missing control would disrupt layout, ask whether "disable
-   with tooltip" is actually the right mode — it preserves the slot by design, blocks
-   interaction on the server, and often communicates intent more clearly than an empty
-   placeholder.
-2. **A reserved slot filled by an inert placeholder component** the same size as the
-   intended control — e.g., a `Div` sized to match, an empty `Span`, or a subdued "—"
-   label. The placeholder is itself a separate component, not the real control styled
-   invisible, so there is no enabled control hiding in the DOM for a user to reveal.
-3. **A neutral affordance in the same slot** (e.g., "No action" label, subdued status
-   pill) when the absence itself is informative and worth surfacing to the user.
+1. **Rethink the mode.** If a missing control would disrupt layout, "disable with
+   tooltip" preserves the slot by design, blocks interaction on the server, and
+   communicates intent more clearly than an empty placeholder.
+2. **An inert placeholder** the same size as the control — a `Div`, empty `Span`, or
+   subdued "—" label. A separate component, not the real control styled invisible — no
+   enabled element hiding in the DOM.
+3. **A neutral affordance** ("No action" label, subdued status pill) when the absence
+   itself is informative.
 
-What **not** to do: construct the real interactive component and then try to "hide" it
-with CSS alone (e.g., `getStyle().set("visibility", "hidden")` on an enabled button).
-That leaves a fully-interactive server-side component reachable from the browser
-inspector. If, for some reason, the real component must be what occupies the slot rather
-than a placeholder, it must be `setEnabled(false)` on the server — which brings you back
-to the disable mode — at which point the visual treatment is a separate styling question
-and the slot is already preserved by virtue of the component rendering normally.
+Do not construct the real interactive component and hide it with CSS alone
+(`getStyle().set("visibility", "hidden")` on an enabled button). That leaves a
+fully-interactive server-side component reachable from the browser inspector. If the real
+component must occupy the slot, `setEnabled(false)` on the server brings you back to
+disable mode — the slot is already preserved.
 
-The three-mode rubric above answers *whether* the component exists or functions.
-Placeholder decisions answer *what occupies the space* — they compose with, rather than
-replace, the mode choice, and they must never weaken the server-enforced interactivity
-state.
+The three-mode rubric answers *whether* the component exists or functions. Placeholder
+decisions answer *what occupies the space* — they compose with the mode choice and must
+never weaken server-enforced interactivity state.

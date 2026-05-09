@@ -6,7 +6,8 @@ description: Map Figma design tokens to Lumo CSS variables by extracting tokens,
 # Figma to Lumo CSS Variables Mapping Template
 
 ## Overview
-This template provides a systematic approach for mapping Figma design tokens to Lumo CSS variables using the `get_variable_defs` tool. The goal is to customize Lumo Style Properties in your application's `styles.css` file to match the design system defined in Figma.
+Maps Figma design tokens to Lumo CSS variables using the `get_variable_defs` tool.
+Customizes Lumo Style Properties in `styles.css` to match the Figma design system.
 
 ## Styles.css Location by Vaadin Version
 
@@ -36,9 +37,7 @@ This approach ensures:
 - ✅ No validation/testing steps - pure value transfer process
 
 ### Step 1: Extract Figma Design Tokens
-**Always start with `get_variable_defs`**
-
-This returns design tokens like:
+**Always start with `get_variable_defs`** — returns tokens like:
 ```javascript
 {
   "lumo-primary-color": "#006af5",
@@ -87,12 +86,12 @@ Many component variables are directly available in Figma:
 - Use Vaadin MCP for additional component variables if needed
 
 ### Step 3: Extract Component Styles From Figma with `get_design_context`
-- Contains the most detailed component information
-- Check `className` attributes for any Tailwind classnames
+- Most detailed component information
+- Check `className` for Tailwind classnames
 - Identify theme/styling variable names and values
 
 ### Step 4: Review Component Styling Documentation
-Use Vaadin MCP to identify component specific CSS variables:
+Use Vaadin MCP to identify component-specific CSS variables:
 ```javascript
 // Search for additional component variables if needed
 search_vaadin_docs("button styling CSS variables")
@@ -108,9 +107,8 @@ get_full_document("styling/lumo/lumo-style-properties.md")
 
 
 ### Step 5: Generate CSS Variable Declarations (Only Non-Default Values)
-**IMPORTANT**: Only set CSS variables that differ from Lumo defaults. Do not override variables with their default values.
-
-Create CSS declarations in `styles.css`:
+**Only set variables that differ from Lumo defaults.** Create CSS declarations in
+`styles.css`:
 
 ```css
 /* Imported from Figma */
@@ -143,11 +141,11 @@ html {
 
 ## Value Conversion Guidelines
 
-### Size Conversion (Only Non-Default Values)
-- **Pixel to rem**: Divide by 16 (`36px` → `2.25rem`) - but only if different from Lumo default
+### Size Conversion
+- **Pixel to rem**: Divide by 16 (`36px` → `2.25rem`) — only if different from Lumo default
 - **Unitless numbers**: Treat as pixels for border-radius, spacing
-- **Font sizes**: Convert to rem, but skip if matches Lumo default (16px = 1rem for font-size-m)
-- **Line heights**: Use unitless values (`1.6`, `1.25`)
+- **Font sizes**: Convert to rem; skip if matches Lumo default (16px = 1rem for font-size-m)
+- **Line heights**: Unitless values (`1.6`, `1.25`)
 
 ### Typography Parsing
 Parse Figma Font() definitions:
@@ -160,12 +158,13 @@ Extract:
 - weight: 400 → font-weight (handled by components, not CSS variables)
 - lineHeight: 1.61 → --lumo-line-height-m: 1.6 (only if different from default)
 
-### Color values conversions
-Always avoid changing the color syntax. There will be a separate step outside of this task that takes care of color format conversions.
-Focus on mapping the colors to CSS variables.
+### Color values
+Preserve color syntax as-is — a separate step handles format conversions. Map colors to
+CSS variables only.
 
 ### Color configurations
-When assigning Lumo Primary, Error, Warning, Success or Contrast colors. Ensure all related color values are also assigned.
+When assigning Primary, Error, Warning, Success, or Contrast colors, assign all related
+values:
 ```css
 /* Proper way to set colors is to take all related values into account */
   --lumo-primary-color: hsl(214, 100%, 48%);
@@ -186,7 +185,7 @@ When assigning Lumo Primary, Error, Warning, Success or Contrast colors. Ensure 
 - If `--vaadin-input-field-border-color` is set, ensure `--vaadin-input-field-border-width` is also set at least 1px.
 - Use CSS variables for styling whenever possible. If writing custom styles of input fields do not target specific fields. Target `::part(input-field)`, `::part(label)` and `::part(value)` to keep styling of all inputs consistent.
 
-### Component-Specific Variables (Direct Mapping + Vaadin MCP)
+### Component-Specific Variables
 Many component variables are directly available in Figma with exact CSS variable names:
 
 ```javascript

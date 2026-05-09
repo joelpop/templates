@@ -100,17 +100,14 @@ share the same:
 - **Failure modes**
 - **Invariants** (what must be true before / after / during)
 
-If the duplicates are conceptually different — they happen to look the
-same today but represent different domain ideas — extracting will tie
-them together prematurely. The next change to one will be hampered by
-having to keep the other working. Better to leave the duplication and
-revisit when the third instance reveals which way it really wants to
-go.
+If the duplicates represent different domain ideas — they just look
+similar today — extraction ties them together prematurely. Leave the
+duplication and revisit when the third instance clarifies.
 
-A useful signal: can you give the abstraction a name that describes its
-*purpose*, not its mechanics? "ContentData", "PersonName", "Money",
-"DateRange" name purposes. "ProcessTwoFields" or "DoTheThing" don't —
-they describe mechanics, which is a sign the abstraction isn't ready.
+A useful signal: can you name the abstraction by *purpose*?
+"ContentData", "PersonName", "Money", "DateRange" name purposes.
+"ProcessTwoFields" or "DoTheThing" describe mechanics — the abstraction
+isn't ready.
 
 ## Where extracted abstractions live
 
@@ -156,7 +153,6 @@ Duplication is not always a flaw. Cases where it stays:
 - **Trying to extract revealed that the "duplicates" weren't really
   the same** — the differences are meaningful.
 
-In each of those cases, document *why* the duplication stays — a short
-note in the relevant `docs/architecture/` entry, or a comment at the
-duplication site if the reason is non-obvious. The next reviewer
-shouldn't have to relitigate the decision.
+In each case, document *why* in the relevant `docs/architecture/` entry
+or a comment at the duplication site — the next reviewer shouldn't have
+to relitigate.

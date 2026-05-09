@@ -1,9 +1,7 @@
 # Lombok Guidelines
 
-Lombok works well with JPA entities and with enums that carry properties, but each
-context has a short list of rules that must be observed. Most of the pitfalls below
-cause runtime failures, not compile errors — making them easy to miss in development
-and difficult to diagnose in production.
+Lombok works well with JPA entities and with enums that carry properties. Most pitfalls
+here cause runtime failures, not compile errors — easy to miss in development.
 
 ## for JPA Entities
 
@@ -24,23 +22,6 @@ and difficult to diagnose in production.
 | `@Data` | Bundles `@EqualsAndHashCode` and `@ToString`, so it brings every problem below at once. Also implies `@Setter` on every field, which is rarely what you want on an audited entity. |
 | `@EqualsAndHashCode` | Generates `equals`/`hashCode` from field values. Hibernate may return a proxy rather than the actual entity; uninitialized proxy fields compare as `null`, making two references to the same row appear unequal. On bidirectional relationships, field-based `equals`/`hashCode` also recurses into related entities. |
 | `@ToString` | Traverses all fields including lazy-loaded relationships — triggers `LazyInitializationException` outside a transaction and `StackOverflowError` on bidirectional relationships (A → B → A → …). |
-
-### Do Not Use @Data or @EqualsAndHashCode
-
-Both of these generate `equals()` and `hashCode()` based on field values (`@Data`
-generates them as part of its bundle; `@EqualsAndHashCode` generates them directly).
-This breaks with Hibernate for two reasons:
-
-1. Hibernate may return a proxy rather than the actual entity instance. Uninitialized proxy
-   fields compare as `null`, making two objects that represent the same row appear unequal.
-2. On bidirectional relationships, the generated `equals`/`hashCode` recurses into related
-   entities, causing `StackOverflowError`. `@Data` additionally generates a recursive
-   `toString` with the same problem.
-
-Use the key-based `equals`/`hashCode` pattern from `RootEntity` (see
-`docs/patterns/architecture/persistence.md`) instead. All entities inherit this via
-`BaseEntity`, so individual entity classes never declare `@EqualsAndHashCode`,
-`@Data`, or a manual override.
 
 ### Do Not Use @ToString on Entities with Relationships
 
@@ -163,16 +144,9 @@ has no place here.
 
 ## for Logging
 
-Use Lombok's `@Slf4j` annotation on any class that needs a logger. It generates:
-
-```java
-private static final Logger log = LoggerFactory.getLogger(ThisClass.class);
-```
-
-…giving you a ready-to-use `log` field with no boilerplate and no copy-paste hazard of
-accidentally declaring the logger against the wrong class. SLF4J is the logging facade
-used throughout the stack — Spring Boot's default Logback implementation picks it up
-automatically; no additional configuration is required for the annotation itself.
+Use Lombok's `@Slf4j` annotation on any class that needs a logger. It generates a
+ready-to-use `log` field with no boilerplate and no copy-paste hazard of declaring the
+logger against the wrong class:
 
 ```java
 @Service
@@ -188,15 +162,9 @@ public class JpaEmployeeService implements EmployeeService {
 }
 ```
 
-Use SLF4J's parameterized logging (`log.debug("loaded {} records", count)`), not string
-concatenation (`log.debug("loaded " + count + " records")`). Parameters are only
-stringified when the level is enabled, which matters for DEBUG/TRACE paths that
-otherwise pay to build messages that get discarded.
-
-`@Slf4j` generates only a static `log` field — it does not emit any of the unsafe
-members covered under "for JPA Entities" above (`equals`/`hashCode`/`toString`), so it
-composes safely with every other convention in this kit, including on entity classes
-where logging is needed.
+Use SLF4J parameterized logging (`log.debug("loaded {} records", count)`), not string
+concatenation. Parameters are stringified only when the level is enabled, which matters
+for DEBUG/TRACE paths.
 
 See `docs/patterns/architecture/security.md` → "PII Not in Logs" for the rule against
 logging user-identifying information at INFO level and below.

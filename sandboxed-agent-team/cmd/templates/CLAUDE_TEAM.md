@@ -6,22 +6,20 @@
 - Database: <DATABASE — e.g., PostgreSQL 16>
 - Testing:
   - Unit & Browserless UI (Unit Tester): JUnit <JUNIT_VERSION — e.g.,
-    5 or 6> for unit tests; Vaadin Browserless Testing
-    (Vaadin 25.1+: `browserless-test-junit{{JUNIT_VERSION}}`, free /
-    Apache 2.0, extends `SpringBrowserlessTest`; pre-25.1:
+    5 or 6>; Vaadin Browserless Testing (Vaadin 25.1+:
+    `browserless-test-junit{{JUNIT_VERSION}}`, free / Apache 2.0,
+    extends `SpringBrowserlessTest`; pre-25.1:
     `vaadin-testbench-junit{{JUNIT_VERSION}}`, commercial, extends
-    `SpringUIUnitTest`) for in-process UI component and interaction
-    tests (browser-less, container-less); Mockito for
-    mocking. One test class per production class. Browserless UI
-    tests live in the same package as the view they test (`*Test.java`
-    suffix, run by surefire). Class name suffix distinguishes test
-    type: `*Test.java` = surefire, `*IT.java` = failsafe.
-  - End-to-End (E2E Tester): Node.js Playwright (`@playwright/test`)
-    for browser-based end-to-end tests. E2E tests are written in
-    TypeScript and live in `<e2e-test-dir>/` (e.g., `e2e/`). This is
-    the Vaadin-recommended approach for E2E testing.
-  - Testing pyramid: unit tests → browserless UI tests → end-to-end
-    tests. E2E tests run only at the pre-PR gate, not per-commit.
+    `SpringUIUnitTest`) for in-process UI component tests
+    (browser-less, container-less); Mockito for mocking. One test
+    class per production class. Browserless UI tests live in the
+    same package as the view (`*Test.java` suffix). Class suffix:
+    `*Test.java` = surefire, `*IT.java` = failsafe.
+  - End-to-End (E2E Tester): Node.js Playwright
+    (`@playwright/test`), TypeScript, in `<e2e-test-dir>/` (e.g.,
+    `e2e/`). Vaadin-recommended for E2E.
+  - Testing pyramid: unit → browserless UI → E2E. E2E runs only
+    at the pre-PR gate, not per-commit.
 - CI: <CI_PLATFORM — e.g., GitHub Actions, GitLab CI>
 
 ## Documentation Sources (MCP Servers)
@@ -38,8 +36,9 @@ data — training data may be outdated or describe deprecated patterns.
 | `fetch` | Fetch arbitrary web pages for documentation | All roles |
 
 When in doubt about a framework API, query the relevant MCP server
-before writing code. The "Primary Users" column is guidance — all
-servers are available to all teammates.
+before writing code (Vaadin first; see "Framework Identity" below
+for why). The "Primary Users" column is guidance — all servers are
+available to all teammates.
 
 **Visual debugging with `playwright`:** Any teammate can use the
 `playwright` MCP server to interact with the running application
@@ -78,45 +77,50 @@ when answering any question about Agent Teams mechanics.
 
 ### Verify before asserting Claude Code mechanics
 
-Claude's training data describes earlier versions of Claude Code
-and is known to conflate distinct features (most notably Agent
-Teams and subagents). Before asserting how *anything* in Claude
-Code works — hooks, skills, slash commands, the `Agent` tool,
-Agent Teams, settings fields, file conventions — verify against
-`code.claude.com/docs/...` first. Use the `fetch` MCP server,
-`WebFetch`, or the `claude-code-guide` subagent if available. If
-you cannot verify, say "I don't know — let me look it up" rather
-than answering from recall.
+Training data describes earlier Claude Code versions and conflates
+distinct features (notably Agent Teams and subagents). Before
+asserting how *anything* in Claude Code works — hooks, skills,
+slash commands, the `Agent` tool, Agent Teams, settings fields,
+file conventions — verify against `code.claude.com/docs/...`
+first. Use the `fetch` MCP server, `WebFetch`, or the
+`claude-code-guide` subagent if available. If you cannot verify,
+say "I don't know — let me look it up" rather than answering from
+recall.
 
-This rule exists because past sessions on this kit spent many
-hours and significant tokens on designs built atop
-confidently-asserted mechanics that later turned out to be wrong.
-Verifying takes seconds. Drift compounds.
+Past sessions burned many hours on designs built atop
+confidently-asserted mechanics that turned out wrong. Verifying
+takes seconds; drift compounds.
+
+`docs/claude-code-facts.md` records facts that have been verified
+against the installed binary alongside the false beliefs they
+correct (e.g., `TeamCreate` is real even though the public docs
+describe team creation only by behavior; `isolation: worktree` is
+valid for spawned teammates; teammates *can* spawn synchronous
+subagents). Read it before "fixing" anything that looks wrong in
+agent frontmatter or team-related tool calls.
 
 ## Documentation Index
 
 See `docs/INDEX.md` for the master pointer to the four-tree
-structure. Briefly:
+structure:
 
 - `docs/reqs/` — project-specific requirements (Analyst owns).
   IEEE 830 / ISO 29148 (SRS structure) and ISO 25010 (quality
   model).
 - `docs/patterns/` — project-agnostic conventions, architecture
-  patterns, and recipes for the project's stack. Curated by the
-  Architect, committed by the Analyst. Designed to extract and
-  reuse across projects.
-- `docs/architecture/` — project-specific architecture and
-  design — *how this codebase realizes the requirements*.
-  Curated by the Architect, committed by the Analyst.
+  patterns, and recipes for the project's stack. Architect
+  curates; Analyst commits. Designed to extract across projects.
+- `docs/architecture/` — project-specific architecture —
+  *how this codebase realizes the requirements*. Architect
+  curates; Analyst commits.
 - `docs/guides/` — install / deploy / user / admin / operator
-  guides. Owned by the Tech Writer; release-cadence updates.
-- `docs/glossary.md` — the project's canonical vocabulary
+  guides. Tech Writer owns; release-cadence updates.
+- `docs/glossary.md` — canonical vocabulary
   (implementation-agnostic terms with optional slang variants).
-  Curated by the Architect, committed by the Analyst.
+  Architect curates; Analyst commits.
 
-`docs/INDEX.md` is a sample file seeded at setup time — setup
-does not overwrite it on re-runs, so edit it freely as the
-project's docs evolve.
+`docs/INDEX.md` is a sample file seeded at setup; setup doesn't
+overwrite it on re-runs, so edit freely as docs evolve.
 
 ### Tags and teammate reading rules
 
@@ -267,19 +271,20 @@ mvn spring-boot:run
 ```
 
 ## Implementation Philosophy
-Prefer elegant, idiomatic solutions over verbose ones, AS LONG AS the code
-remains readable to a mid-level developer without special explanation.
+Prefer elegant, idiomatic solutions over verbose ones, AS LONG AS
+the code remains readable to a mid-level developer without
+special explanation.
 
-Specifically:
-- Use enum properties (fields, methods, lambdas) instead of switch statements
-  or if/else chains on enum values. The behavior belongs on the enum, not
-  scattered across consumers.
-- Use polymorphism and strategy patterns over type-checking conditionals.
+- Use enum properties (fields, methods, lambdas) instead of switch
+  statements or if/else chains on enum values — behavior belongs
+  on the enum, not scattered across consumers.
+- Use polymorphism and strategy patterns over type-checking
+  conditionals.
 - Use composition over inheritance when extending behavior.
-- Use functional idioms (map, filter, Optional chaining, Stream pipelines)
-  when they make intent clearer than imperative loops.
-- If a "clever" solution requires a comment to explain it, it's too clever.
-  Refactor until the code explains itself.
+- Use functional idioms (map, filter, Optional chaining, Stream
+  pipelines) when they make intent clearer than imperative loops.
+- If a "clever" solution needs a comment to explain it, it's too
+  clever. Refactor until the code explains itself.
 
 ## Framework Identity: Vaadin Is Not Traditional Web Development
 Vaadin is a server-side UI framework. The UI is built in Java, runs on
@@ -314,13 +319,28 @@ their general web training data.
 - Servlet filters for auth — use Vaadin's view-level access control
   (`@RolesAllowed`, `@PermitAll`, `@AnonymousAllowed`)
 
-**Before starting any Vaadin-related task**, every teammate must consult
-the `vaadin` MCP server to get current information about modern Vaadin
-development. For Spring-related work, consult `spring-docs`. For Java
-API questions, consult `java`. Do not rely on training data —
-framework APIs evolve between versions and training data may describe
-deprecated patterns. See "Documentation Sources (MCP Servers)" above
-for the full list of available servers.
+**MCP server priority — Vaadin first.** Vaadin is a full-stack
+application framework, not just a UI library. It owns or wraps
+routing, security, server push, session handling, theming, and
+many other application concerns with SPA-aware integration glue
+around Spring. Defaulting to Spring directly for those concerns
+defeats Vaadin's plumbing and produces broken or insecure
+behavior. The canonical example is security: a Vaadin app is an
+SPA, and Spring Security has no native concept of SPA route
+transitions — Vaadin provides a helper that routes view/route
+transitions through Spring Security so authorization works as
+expected. Bypassing it (e.g., wiring servlet filters or
+`@PreAuthorize` directly against Vaadin views) silently disables
+view-level access control. Server push, theming, and session
+handling have similar story arcs.
+
+Therefore: every teammate consults the `vaadin` MCP server first
+for any concern Vaadin owns or wraps. Use `spring-docs` or `java`
+only when Vaadin doesn't cover the topic or its answer needs
+augmenting. Don't rely on training data — framework APIs evolve
+between versions and training data may describe deprecated
+patterns. See "Documentation Sources (MCP Servers)" above for the
+server list.
 
 **Note for Claude Code:** Customize this section for the project's
 framework. The principle — use the framework's idioms, not generic
@@ -332,29 +352,25 @@ documentation sources for the project's actual framework.
 **Teammates must NEVER change project requirements to match their implementation.**
 
 If a requirement specifies a version, library, framework, or approach:
-- Use that exact version/library/framework, even if you have limited
-  training data on it. Search documentation, read source code, experiment.
-- If you genuinely cannot make it work after a thorough attempt, MESSAGE
-  THE LEAD and explain what you tried and what failed. Do NOT silently
+- Use that exact version/library/framework, even with limited
+  training data on it. Search documentation, read source, experiment.
+- If you cannot make it work after a thorough attempt, MESSAGE THE
+  LEAD with what you tried and what failed. Do NOT silently
   downgrade, substitute, or rewrite the requirement.
-- If you encounter a conflict between your training data ("conventional
-  wisdom") and what the project's own documentation or code comments say,
-  THE PROJECT'S DOCUMENTATION WINS. Always. Your training data may be
-  outdated, inapplicable, or wrong for this context.
-- Before applying patterns from general knowledge, CHECK whether the
-  project's docs, README, or code comments explicitly warn against that
-  pattern. Grep for "do not", "don't", "avoid", "WARNING", "NOTE" in
-  relevant source files and documentation.
+- When training data ("conventional wisdom") conflicts with project
+  docs or code comments, THE PROJECT'S DOCS WIN. Always. Training
+  data may be outdated, inapplicable, or wrong for this context.
+- Before applying patterns from general knowledge, grep the
+  project's docs, README, and code comments for "do not", "don't",
+  "avoid", "WARNING", "NOTE" — patterns may be explicitly forbidden.
 
-Violations of this rule — silently changing requirements or ignoring
-in-project documentation in favor of general training — are treated as
-the highest-severity issue and must be escalated to the Lead immediately
-by any teammate that notices.
+Silently changing requirements or ignoring in-project docs in favor
+of general training is the highest-severity violation and must be
+escalated to the Lead immediately by any teammate that notices.
 
 ## Requirements Ambiguity — Do Not Guess
-Requirements will sometimes be unclear, ambiguous, conflicting, or
-insufficiently specified. When this happens, teammates must escalate —
-not guess.
+Requirements are sometimes unclear, ambiguous, conflicting, or
+insufficiently specified. Teammates must escalate, not guess.
 
 **Recognize these ambiguity signals:**
 - A requirement says WHAT but not HOW, and multiple valid approaches
@@ -373,30 +389,28 @@ not guess.
   cannot determine which one the human intended
 
 **What you MUST NOT do:**
-- Fill in gaps using your training data or "common sense" — your
+- Fill gaps from training data or "common sense" — your
   assumptions may contradict the human's intent
 - Pick the simplest interpretation because it's easier to implement
-- Treat documentation silence as permission OR prohibition — silence
-  on a requirement-level question (WHAT the system must do, WHAT
-  constraints it must satisfy) is ambiguity, and is neither "go
-  ahead" nor "don't". This rule covers only the WHAT; silence at
-  the HOW level (implementation details within the bounds an
-  existing requirement defines) is professional judgment, not
-  ambiguity — see the Requirement Gate Workflow's refinement rule
-  in `.claude/agents/lead.md`.
-- Implement both interpretations and "let the human choose later" —
-  this creates dead code and doubles the test surface
+- Treat documentation silence as permission OR prohibition —
+  silence on a requirement-level question (WHAT the system must
+  do, WHAT constraints it must satisfy) is ambiguity, neither "go
+  ahead" nor "don't". This covers only WHAT; silence at the HOW
+  level (implementation within an existing requirement's bounds)
+  is professional judgment, not ambiguity — see the Requirement
+  Gate Workflow's refinement rule in `.claude/agents/lead.md`.
+- Implement both interpretations and "let the human choose later"
+  — creates dead code and doubles the test surface
 
 **What you MUST do:**
-- STOP implementation of the ambiguous part (you may continue working
-  on unambiguous parts of the same task)
+- STOP implementation of the ambiguous part (continue with
+  unambiguous parts of the same task)
 - Escalate to the Architect with the specific ambiguity (see
-  Requirements Clarification Escalation in Team Coordination
-  Procedures below)
-- The Architect will attempt to resolve from existing docs; if not
-  possible, the Lead will escalate to the human
-- Do not proceed with the ambiguous part until a resolution is recorded
-  in the task file
+  Requirements Clarification Escalation below)
+- The Architect tries to resolve from existing docs; if not, the
+  Lead escalates to the human
+- Don't proceed with the ambiguous part until a resolution is in
+  the task file
 
 ## Conventions
 - Commit messages: conventional commits
@@ -412,49 +426,44 @@ not guess.
 ## Status Tracking
 
 ### Requirement Status
-Each requirement carries a parent status checkbox and three kinds of
-child checkboxes — one `implementation` child plus one per
-acceptance criterion. All checkboxes use the same notation:
+Each requirement carries a parent checkbox plus child checkboxes —
+one `implementation` plus one per AC. Notation:
 - `[ ]` — not started
 - `[-]` — in progress
 - `[x]` — complete
 
-**Ownership of each checkbox:**
+**Ownership:**
 - `implementation` — **Coder** marks. `[-]` when implementation
-  begins; `[x]` when the requirement's implementation is committed
-  and ready for testing.
+  begins; `[x]` when committed and ready for testing.
 - `AC1`, `AC2`, ... — **Tester** (Unit Tester or E2E Tester per
-  scenario type) marks. `[-]` when test authoring or execution
-  begins; `[x]` when the automated test that verifies the AC passes.
-- Parent requirement — **Analyst** rolls up from the children. The
-  Analyst does not author leaf statuses; only the rollup.
+  scenario type) marks. `[-]` when authoring or executing; `[x]`
+  when the automated test passes.
+- Parent — **Analyst** rolls up from children; doesn't author leaf
+  statuses.
 
-**Roll-up rule for the parent (computed by the Analyst):**
+**Roll-up rule (Analyst):**
 - All children `[x]` → parent `[x]`
-- Any child `[-]` or `[x]` (but not all `[x]`) → parent `[-]`
+- Any child `[-]` or `[x]` (not all `[x]`) → parent `[-]`
 - All children `[ ]` → parent `[ ]`
 
 **Status transitions:**
-- `[ ]` → `[-]`: the owning role marks the leaf (Coder for
-  `implementation`, Tester for an AC) as work begins. The Analyst
-  updates the parent roll-up to `[-]` once any child is `[-]` or
-  `[x]`.
-- `[-]` → `[x]`: the owning role marks the leaf when its work is
-  done (Coder when implementation is committed; Tester when the
-  test passes). The Analyst updates the parent roll-up to `[x]`
-  only when all children are `[x]`. The squash merge carries the
-  final state to `{{DEV_BRANCH_NAME}}`. Dev only ever sees
+- `[ ]` → `[-]`: owning role marks the leaf when work begins.
+  Analyst updates parent roll-up to `[-]` once any child is `[-]`
+  or `[x]`.
+- `[-]` → `[x]`: owning role marks the leaf when done (Coder when
+  committed; Tester when the test passes). Analyst rolls up to
+  `[x]` only when all children are `[x]`. The squash merge carries
+  the final state to `{{DEV_BRANCH_NAME}}` — dev only sees
   `[ ]` → `[x]` transitions.
-- `[x]` → `[ ]` or `[-]` → `[ ]`: the Analyst resets a leaf when
+- `[x]` → `[ ]` or `[-]` → `[ ]`: Analyst resets a leaf when
   adding a new AC, substantively changing an AC's intent, or
-  invalidating prior implementation. (The Analyst owns reset
-  authority across all leaves and the parent because a reset is a
-  scope-management call, not the leaf-owner's call.) Resetting any
-  child may cascade to the parent (a previously-`[x]` requirement
-  becomes `[-]` if a child resets to `[ ]`). The Analyst must
-  notify the Lead on any reset so the Lead can assess impact on
-  active or completed tasks.
-- Renaming or moving a requirement or AC does not reset status, but
+  invalidating prior implementation. Reset authority is the
+  Analyst's because reset is a scope-management call, not the
+  leaf-owner's. Reset may cascade to the parent (a previously-`[x]`
+  requirement becomes `[-]` if a child resets to `[ ]`). Analyst
+  must notify the Lead on any reset so impact on active or
+  completed tasks can be assessed.
+- Renaming or moving a requirement/AC doesn't reset status, but
   the Analyst must update all cross-references (`INDEX.md`, active
   task files in `.claude/.tasks/`).
 
@@ -465,23 +474,22 @@ notation. Each teammate marks their own steps as `[-]` when starting
 and `[x]` when done.
 
 ### Project Status
-`.claude/.progress.md` is a minimal dispatcher — it exists solely so the
-Lead can recover current state after context compaction. It answers two
-questions: "which task am I working on, and what else is parked?" and
-"which requirement branches are in flight?"
+`.claude/.progress.md` is a minimal dispatcher so the Lead can
+recover current state after context compaction. It answers: "which
+task am I working on, and what else is parked?" and "which
+requirement branches are in flight?"
 
-`progress.md` is gitignored local metadata. It is not affected by branch
-operations and persists across branch switches and task
-suspension/resumption. It carries only IDs and one-line labels for
-recognition — all detail lives in the task files and requirement docs.
+`progress.md` is gitignored local metadata. Branch operations
+don't affect it; it persists across branch switches and task
+suspension/resumption. Only IDs and one-line labels — all detail
+lives in task files and requirement docs.
 
 **Single writer:** Only the Integrator writes `.claude/.progress.md`.
-No other role edits it directly. When state changes (a new task
-becomes active, a task is suspended or resumed, a requirement branch
-is created or merged, etc.), the Lead directs the Integrator to
-update `progress.md`; the Integrator also updates it proactively as
-part of workflows it owns (e.g., the Integration Merge Workflow).
-This single-writer rule prevents concurrent writes to the file.
+On state changes (new active task, task suspended/resumed,
+requirement branch created/merged), the Lead directs the
+Integrator to update; the Integrator also updates proactively as
+part of its workflows (e.g., Integration Merge Workflow).
+Single-writer prevents concurrent writes.
 
 Structure:
 ```markdown
@@ -507,84 +515,79 @@ Requirement branch statuses:
 
 ## Branching
 - Development branch: `{{DEV_BRANCH_NAME}}` (e.g., `develop`)
-- Requirement branches: `requirement/<slug>` — branched off `{{DEV_BRANCH_NAME}}`
-  by the Integrator for the Analyst to draft requirement docs. One branch per
-  topic or related group (e.g., `requirement/authentication`,
-  `requirement/dashboard-v2`), not per individual requirement — the
-  Analyst freely splits, merges, and cross-references requirements
-  within a group. Multiple requirement branches can exist simultaneously
-  at different stages. Squash-merged back to `{{DEV_BRANCH_NAME}}` after human
-  approval. Tracked in `.claude/.progress.md`.
-- Task branches: `task/<task-id>` — branched off `{{DEV_BRANCH_NAME}}` by the
-  Integrator for each implementation task.
-- Teammate sub-branches: `task/<task-id>/<role>` — each teammate
-  branches off the task branch to do their work:
+- Requirement branches: `requirement/<slug>` — branched off
+  `{{DEV_BRANCH_NAME}}` by the Integrator for the Analyst to draft
+  requirement docs. One branch per topic or related group (e.g.,
+  `requirement/authentication`, `requirement/dashboard-v2`), not
+  per individual requirement; the Analyst freely splits, merges,
+  and cross-references requirements within a group. Multiple
+  requirement branches can be in flight simultaneously.
+  Squash-merged back to `{{DEV_BRANCH_NAME}}` after human approval.
+  Tracked in `.claude/.progress.md`.
+- Task branches: `task/<task-id>` — branched off
+  `{{DEV_BRANCH_NAME}}` by the Integrator for each implementation
+  task.
+- Teammate sub-branches: `task/<task-id>/<role>`:
   - `task/<task-id>/coder` (or `coder-a` … `coder-<n>` when the
     Lead splits a task across parallel Coders, up to
     `{{MAX_PARALLEL_CODERS}}` — see Parallel Subtask Coders in
-    Coordination Rules in `.claude/agents/lead.md`)
+    `.claude/agents/lead.md`)
   - `task/<task-id>/unit-tester`
   - `task/<task-id>/e2e-tester`
-  - The Analyst has no sub-branch — it works on `requirement/<slug>`
-    branches and commits status marks directly on the task branch.
-  - The Architect has no branch — it reads code on other teammates'
-    branches but does not commit.
-  - The Tech Writer has no task sub-branch — it works on
-    `guide/<slug>` branches on the release cadence, not the task
-    cadence.
-- Teammate sub-branch operations: each teammate creates their
-  sub-branch once at the start of the task and reuses it for all
-  commit cycles within that task. Merge (not rebase) in both
-  directions — merge FROM the task branch to stay current, merge
-  INTO the task branch using the Task Branch Merge Protocol (see
-  Team Coordination Procedures below). No teammate commits to
-  another teammate's branch.
-  Sub-branches are local only — they are never pushed to the remote. Only
-  `{{DEV_BRANCH_NAME}}` interacts with the remote (via the Integration Merge
-  Workflow).
-- Merge strategy: squash merge for all branch-to-`{{DEV_BRANCH_NAME}}` merges.
-  This keeps `{{DEV_BRANCH_NAME}}` history clean but loses per-commit
-  granularity — ensure the squash commit message captures key decisions
-  and affected components (see Integration Merge Workflow T.5 in
+  - Analyst: no sub-branch — works on `requirement/<slug>` and
+    commits status marks directly on the task branch.
+  - Architect: no branch — reads code on others' branches but
+    doesn't commit.
+  - Tech Writer: no task sub-branch — works on `guide/<slug>` on
+    the release cadence, not task cadence.
+- Sub-branch operations: each teammate creates their sub-branch
+  once and reuses it for all commit cycles within the task. Merge
+  (not rebase) in both directions — FROM the task branch to stay
+  current, INTO via the Task Branch Merge Protocol (below). No
+  teammate commits to another's branch. Sub-branches are local
+  only; only `{{DEV_BRANCH_NAME}}` interacts with the remote (via
+  the Integration Merge Workflow).
+- Merge strategy: squash for all branch-to-`{{DEV_BRANCH_NAME}}`
+  merges — keeps history clean but loses per-commit granularity,
+  so the squash commit message must capture key decisions and
+  affected components (see Integration Merge Workflow T.5 in
   `.claude/agents/lead.md`).
 - Merge method: `{{MERGE_METHOD}}`
 
 ### Cost report destinations
 
-The Integrator computes a per-model token/cost delta report at task
-conclusion (via `ccusage`, see T.6 in `.claude/agents/lead.md`). It is
-**always reported verbally to the human** at task wrap-up
-regardless of the destination settings below; the settings control
-whether the report is also recorded durably.
+The Integrator computes a per-model token/cost delta report at
+task conclusion (via `ccusage`, see T.6 in
+`.claude/agents/lead.md`). It is **always reported verbally to
+the human** at task wrap-up regardless of the settings below;
+settings control durable recording.
 
 - **Include cost report in commit message:** `{{COST_IN_COMMIT}}`
   (`yes` or `no`). When `yes`, the Integrator appends the report
-  as a trailing block of the final squash-merge commit message so
-  it persists in git history.
-- **Append cost report to project log:** `{{COST_IN_LOG}}` (`yes` or
-  `no`). When `yes`, the Integrator appends the report (with task
-  ID, date, and per-model breakdown) to `.claude/.cost-log.md` —
-  a project-local log file (gitignored) for cumulative
-  developer-local cost tracking. Useful when the team wants
-  cost visibility but does not want it in git history.
+  to the final squash-merge commit message so it persists in git.
+- **Append cost report to project log:** `{{COST_IN_LOG}}` (`yes`
+  or `no`). When `yes`, the Integrator appends the report (task
+  ID, date, per-model breakdown) to `.claude/.cost-log.md` — a
+  gitignored project-local log for cumulative developer-local
+  cost tracking. Useful when the team wants cost visibility but
+  not in git history.
 
-Both settings can be `yes` (record in both places), one `yes` and
-one `no` (single destination), or both `no` (verbal only). Other
-destinations may be added over time.
+Both `yes` (record everywhere), mixed (single destination), or
+both `no` (verbal only) are valid. Other destinations may be
+added later.
 
-To change either setting later, ask the Lead ("change `Include
-cost report in commit message` to `yes`/`no`"). The Lead delegates
-to the Integrator, which creates a working branch off
-`{{DEV_BRANCH_NAME}}`, updates the line in `CLAUDE.md`, commits, and
-finalizes per the project's merge method above. **Caveat:**
-`CLAUDE.md` is read by every role at task start, so a
-mid-engagement edit can collide with any task/requirement branch
-in flight. Prefer to make this change during a quiet period — no
-active tasks, no open requirement branches — so the new value is
-in effect uniformly for all subsequent work. If a change must
-happen while work is in flight, the Lead should pause new task
-creation until the edit is merged and all teammates have pulled
-the latest `{{DEV_BRANCH_NAME}}`.
+To change a setting later, ask the Lead ("change `Include cost
+report in commit message` to `yes`/`no`"). The Lead delegates to
+the Integrator, which creates a working branch off
+`{{DEV_BRANCH_NAME}}`, updates `CLAUDE.md`, commits, and finalizes
+per the project's merge method. **Caveat:** `CLAUDE.md` is read by
+every role at task start, so a mid-engagement edit can collide
+with any task/requirement branch in flight. Prefer a quiet period
+(no active tasks, no open requirement branches) so the new value
+applies uniformly. If a change must happen while work is in
+flight, the Lead pauses new task creation until the edit is
+merged and all teammates have pulled the latest
+`{{DEV_BRANCH_NAME}}`.
 
 ## Team Coordination Procedures
 
@@ -596,9 +599,9 @@ session start).
 
 ### Mid-Task Architect Escalation
 
-When the Coder encounters a problem during implementation that
-requires Architect involvement before committing (see the Coder's
-DIAGNOSIS-FIRST FIX PROTOCOL for triggers), use this procedure.
+When the Coder hits a problem that needs Architect involvement
+before committing (see the Coder's DIAGNOSIS-FIRST FIX PROTOCOL
+for triggers), use this procedure.
 
 **Triggers** (Coder MUST escalate, not MAY):
 
@@ -606,9 +609,8 @@ DIAGNOSIS-FIRST FIX PROTOCOL for triggers), use this procedure.
 - Fix-attempt limit reached for the same root cause
   (`{{FIX_ATTEMPT_LIMIT}}` consecutive attempts; see FIX ATTEMPT
   LIMIT in the Coder's DIAGNOSIS-FIRST FIX PROTOCOL)
-- Task requires modifying files or interfaces not identified in
-  the task file's scope or the Architect's kickoff guidance (if
-  any)
+- Task requires modifying files or interfaces outside the task
+  file's scope or the Architect's kickoff guidance
 - Need to add a dependency or change a method signature in a
   shared interface
 
@@ -676,99 +678,83 @@ BLOCKED WORK: [what cannot proceed until this is resolved]
 ```
 
 **Step 2 — Architect attempts internal resolution.**
-The Architect searches all project documentation (`docs/`,
-`CLAUDE.md`, code comments, commit messages) for evidence that
-resolves the ambiguity. If the docs collectively make the answer
-clear — even if no single doc states it explicitly — the Architect
-records the resolution and rationale in the task file. Work
-proceeds.
+The Architect searches project documentation (`docs/`,
+`CLAUDE.md`, code comments, commit messages) for evidence. If
+the docs collectively make the answer clear — even if no single
+doc states it explicitly — the Architect records the resolution
+and rationale in the task file. Work proceeds.
 
-**Step 3 — Lead escalates to human (if Architect cannot resolve).**
-If the Architect cannot resolve the ambiguity from existing docs,
-the Architect routes the question to the Lead, who presents it to
-the human using the teammate's original format plus the Architect's
-research summary. The Lead records the human's answer in the task
-file. If the answer reveals a docs gap, the Lead assigns the
-Analyst to draft an update to the relevant requirement doc; the
-Analyst submits the draft to the Architect for pre-review and
-incorporates feedback before submitting to the Lead. Because
-requirement docs are human-owned, the Architect-reviewed draft
-must be presented to the human for approval before it is committed
-(see Analyst rules in `.claude/agents/analyst.md`).
+**Step 3 — Lead escalates to human (if Architect can't resolve).**
+The Architect routes the question to the Lead, who presents it
+to the human using the teammate's original format plus the
+Architect's research summary. The Lead records the human's
+answer in the task file. If the answer reveals a docs gap, the
+Lead assigns the Analyst to draft an update; the Analyst submits
+the draft to the Architect for pre-review, incorporates feedback,
+then submits to the Lead. Requirement docs are human-owned, so
+the Architect-reviewed draft must be approved by the human
+before commit (see Analyst rules in `.claude/agents/analyst.md`).
 
-**While waiting for resolution:**
+**While waiting:**
 
-- The teammate may continue working on unambiguous parts of the
-  task.
-- The teammate MUST NOT implement the ambiguous part using a
-  guess, placeholder, or TODO comment — incomplete implementations
-  create false progress and mislead other teammates.
-- If the ambiguous part blocks ALL remaining work, the teammate
-  signals this in the escalation so the Lead knows to prioritize
-  the question.
+- Continue working on unambiguous parts of the task.
+- Do NOT implement the ambiguous part with a guess, placeholder,
+  or TODO comment — incomplete implementations create false
+  progress and mislead others.
+- If the ambiguous part blocks ALL remaining work, signal this
+  in the escalation so the Lead can prioritize.
 
 ### Subtask Discovery
 
-During implementation, the team may discover that satisfying the
-in-scope requirements also requires work not originally in the
-plan steps — but this work does NOT require a separate full task
-lifecycle. Examples: an additional validation rule, a missing data
-migration step, a UI state that wasn't anticipated.
+During implementation, satisfying in-scope requirements may need
+work not in the original plan steps — but not enough to warrant
+a separate task lifecycle. Examples: an additional validation
+rule, a missing migration step, an unanticipated UI state.
 
 **Procedure:**
 
-1. The teammate reports the discovery to the Lead via
-   `SendMessage`.
+1. Teammate reports the discovery to the Lead via `SendMessage`.
 2. If the work maps to an existing documented requirement: the
    Lead asks the Integrator to add the requirement cross-reference
-   to the task file's "Requirements in Scope" section and adds
-   new plan steps.
-3. If the work requires a new requirement: follow the ad-hoc
-   discovery flow (Analyst drafts → Architect pre-review → human
+   to the task file's "Requirements in Scope" and adds plan steps.
+3. If the work needs a new requirement: follow the ad-hoc
+   discovery flow (Analyst drafts → Architect pre-reviews → human
    approves). Once approved, the Lead asks the Integrator to add
    the cross-reference and plan steps.
-4. The Analyst marks the newly in-scope ACs as `[-]` and rolls up
+4. Analyst marks the newly in-scope ACs as `[-]` and rolls up
    the parent on the task branch.
-5. Work proceeds within the same task branch — no suspension
-   needed.
+5. Work continues on the same task branch — no suspension.
 
 ### Task Branch Merge Protocol
 
 When any teammate merges their sub-branch into the task branch,
-they must follow this protocol to prevent concurrent merges from
-creating conflicts:
+follow this protocol to prevent concurrent-merge conflicts:
 
 1. **Announce:** Message all teammates on the task: "I'm merging
    to the task branch."
-2. **Hold:** All other teammates hold off on their own merges
-   until the announcement in step 5.
+2. **Hold:** All other teammates hold off on merges until the
+   release in step 5.
 3. **Sync:** Merge from the task branch into your sub-branch
-   first to pick up any recent changes. Resolve conflicts if
-   necessary.
+   first to pick up recent changes. Resolve conflicts.
 4. **Merge:** Merge your sub-branch into the task branch.
 5. **Release:** Message all teammates: "I'm done merging to the
    task branch."
 
-This protocol applies to all teammates that merge into the task
-branch (Coder, Unit Tester, E2E Tester), not just during parallel
-Coder work. Teammates waiting to merge proceed in the order they
-announced.
+This applies to all teammates that merge into the task branch
+(Coder, Unit Tester, E2E Tester), not just parallel Coder work.
+Teammates waiting proceed in the order they announced.
 
-**Crash recovery:** If a teammate does not post the release
-message (step 5) within 5 minutes of the announce (step 1), the
-Lead investigates:
+**Crash recovery:** If a teammate doesn't post the release
+message within 5 minutes of announcing, the Lead investigates:
 
-1. Check `git log` on the task branch to determine whether the
-   merge commit was created.
-2. If the merge completed: the Lead posts the release message on
-   behalf of the unresponsive teammate, then attempts recovery
-   per Teammate Recovery (resume the teammate via `SendMessage`
-   first; if resume fails, spawn a replacement from the same
-   agent definition).
-3. If the merge did not complete (or is partial): the Lead
-   reverts any partial merge state on the task branch, then
-   recovers the teammate per Teammate Recovery.
-4. The Lead notifies all holding teammates before they proceed.
+1. Check `git log` on the task branch for the merge commit.
+2. If the merge completed: Lead posts release on behalf of the
+   unresponsive teammate, then runs Teammate Recovery (resume via
+   `SendMessage`; if resume fails, spawn a replacement from the
+   same agent definition).
+3. If the merge didn't complete or is partial: Lead reverts
+   partial merge state, then runs Teammate Recovery.
+4. Lead notifies all holding teammates before they proceed.
 
 ## What NOT to do
 - Do not add new dependencies without messaging the Lead.
@@ -786,11 +772,10 @@ usability, and other quality attribute requirements.
 ## Context Compaction Warning
 <!-- SYNC NOTE: The file list below is duplicated in the Pre-Task
      Context Check in `.claude/agents/lead.md`. If you update one, update both. -->
-This file is read at session start but may be LOST during long sessions
-when context compaction occurs. You cannot reliably detect whether
-compaction has occurred. Therefore: before starting ANY task, you MUST
-verify you still have the context needed to work safely. Do this by
-explicitly re-reading the following files in order:
+This file is read at session start but may be LOST when context
+compaction occurs. You cannot reliably detect compaction. Before
+starting ANY task, verify you still have the needed context by
+re-reading these files in order:
 
 1. `CLAUDE.md` (this file) — stack, ownership rules, critical constraints
 2. `docs/INDEX.md` — master list of all requirement, glossary, and

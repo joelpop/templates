@@ -8,10 +8,14 @@ accumulates the kind of debt that's expensive to unwind later.
 ## Diagnose before fixing
 
 When a build error, test failure, or unexpected runtime behavior shows
-up:
+up — or when something in your own implementation doesn't behave as
+you expect:
 
-1. **Stop.** Read the full error output. Identify the *root cause*, not
-   just the symptom.
+1. **Stop.** Read the full output. Identify the *root cause* by
+   asking "why?" past each apparent culprit until further "why?"
+   can't be answered. The first plausible answer is rarely the
+   true root cause; expect to go 3–5 levels deep before the chain
+   bottoms out. A fix at the wrong layer just relocates the bug.
 2. **Classify the failure** before touching code:
    - **TRIVIAL** — typo, missing import, wrong method name. The fix is
      mechanical. Proceed.

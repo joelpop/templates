@@ -1,9 +1,8 @@
 # Security Patterns
 
 Authentication, authorization, session management, and hardening patterns for
-Vaadin 24+ with Spring Security (Spring Boot 3+). Version-sensitive notes are inline
-where they apply; see `docs/patterns/README.md` → "Version Compatibility" for the summary
-matrix.
+Vaadin 24+ with Spring Security (Spring Boot 3+). Version-sensitive notes inline;
+see `docs/patterns/README.md` → "Version Compatibility" for the summary matrix.
 
 ## Authentication
 
@@ -23,8 +22,8 @@ format (`$2a$...`).
 
 ### Entropy-Based Password Validation
 
-Reject passwords based on entropy rather than arbitrary character class requirements
-(uppercase + number + symbol rules are easily gamed and frustrate users):
+Reject passwords by entropy, not by character-class rules (uppercase +
+number + symbol rules are gamed easily and frustrate users):
 
 - Minimum entropy: 50 bits
 - Minimum length: 8 characters
@@ -81,12 +80,13 @@ attempt counts, or countdown timers.
 
 ### Session Fixation Protection
 
-Session fixation protection is handled for you by **`VaadinWebSecurity`**
-(`com.vaadin.flow.spring.security`), the Vaadin-supplied base class for Spring Security
-configuration in Vaadin 24+ Flow applications. Extend it for your security configuration
-and you get session-ID regeneration on login without writing the `http.sessionManagement(...)`
-DSL yourself — along with the rest of the Vaadin-Spring-Security integration tuned for a
-server-side SPA.
+Session fixation protection is handled by **`VaadinWebSecurity`**
+(`com.vaadin.flow.spring.security`), the Vaadin-supplied base class for
+Spring Security configuration in Vaadin 24+ Flow applications. Extend it
+for your security configuration and you get session-ID regeneration on
+login — along with the rest of the Vaadin-Spring-Security integration
+tuned for a server-side SPA — without writing the
+`http.sessionManagement(...)` DSL yourself.
 
 ```java
 @EnableWebSecurity
@@ -116,10 +116,11 @@ What `VaadinWebSecurity` configures for you (do not re-declare these manually):
 - **Login / logout endpoints** — `setLoginView(...)` wires form-login and logout redirects
   to your login view.
 
-**Do not** mirror these with raw Spring Security DSL — re-declaring them can override
-Vaadin's defaults in subtle, breakage-prone ways.
+**Do not** mirror these with raw Spring Security DSL — re-declaring them
+can override Vaadin's defaults in subtle, breakage-prone ways.
 
-**Verify:** the session cookie value changes between the pre-login and post-login responses.
+**Verify:** the session cookie value changes between pre-login and
+post-login responses.
 
 ### Session Timeout
 
@@ -129,9 +130,9 @@ Sessions expire after a configured period of inactivity:
 server.servlet.session.timeout=30m
 ```
 
-When a session expires during an active Vaadin session, Vaadin's built-in session expiry
-handling displays a "Session expired" notification and offers a page reload. The user is
-redirected to login.
+When a session expires during an active Vaadin session, Vaadin's
+built-in handling displays a "Session expired" notification, offers a
+page reload, and redirects the user to login.
 
 ### Session Cookie Flags
 
@@ -161,12 +162,13 @@ A view without an access annotation is a security defect.
 
 ### Role Name Constants
 
-Define the project's roles as a single enum that owns both the canonical name (the
-exact string Spring Security uses for the granted authority) and the human-facing
-metadata (display label, description). The enum exposes a parallel set of
-`public static final String ROLE_*` constants whose values match each enum's
-canonical name. The constants are what `@RolesAllowed` and `hasRole(...)` checks
-reference; the enum entries are what UI code uses for display and runtime checks.
+Define the project's roles as a single enum owning both the canonical
+name (the exact string Spring Security uses for the granted authority)
+and the human-facing metadata (display label, description). The enum
+exposes a parallel set of `public static final String ROLE_*` constants
+whose values match each enum's canonical name. `@RolesAllowed` and
+`hasRole(...)` reference the constants; UI code uses the enum entries
+for display and runtime checks.
 
 ```java
 package com.example.uimodel.type;
@@ -220,24 +222,25 @@ public enum UserRole {
 public class UserView extends BaseView { ... }
 ```
 
-Not `@RolesAllowed({"ADMIN", "MANAGER"})`. String literals scatter the role names
-across the codebase; renaming a role becomes a project-wide grep instead of a
-single-file edit, and typos are silent (a misspelled `"ADMNI"` compiles but never
-matches anyone).
+Not `@RolesAllowed({"ADMIN", "MANAGER"})`. String literals scatter role
+names across the codebase; renaming becomes a project-wide grep instead
+of a single-file edit, and typos are silent (a misspelled `"ADMNI"`
+compiles but never matches anyone).
 
-**Where the enum lives matters.** Place it in the module that's accessible from
-both the persistence layer (where the role is stored on the user record) and the
-UI layer (where the constants are referenced in `@RolesAllowed`). In a typical
-multi-module Vaadin/Spring layout, that's the `uimodel` module — `service`
-already depends on it, and so does `ui` transitively. Putting it in the JPA
-model module instead would force the UI to reach across an architectural
-boundary just to gate routes.
+**Where the enum lives.** Place it in a module accessible from both
+persistence (where the role is stored on the user record) and UI (where
+the constants are referenced in `@RolesAllowed`). In a typical
+multi-module Vaadin/Spring layout, that's the `uimodel` module —
+`service` already depends on it, and so does `ui` transitively. Putting
+it in the JPA model module would force UI to reach across an
+architectural boundary just to gate routes.
 
-**Why a `getSecurityName()` getter even though the value matches the enum name.**
-Spring Security represents authorities as strings (typically `ROLE_<NAME>`), and
-some integrations need a method-of-an-instance accessor — for example, when
-mapping a `UserEntity` field to a granted-authority list. The getter is the
-seam; the constants are the compile-time form for annotations.
+**Why a `getSecurityName()` getter when the value matches the enum
+name.** Spring Security represents authorities as strings (typically
+`ROLE_<NAME>`), and some integrations need a method-of-an-instance
+accessor — e.g., when mapping a `UserEntity` field to a
+granted-authority list. The getter is the seam; the constants are the
+compile-time form for annotations.
 
 ### Access Annotation on the Main Layout
 
@@ -279,38 +282,39 @@ blocks navigation.
 
 ### No @PreAuthorize on Views
 
-Do not use `@PreAuthorize` (Spring Security method security) on Vaadin views. Access control
-is enforced at the view level via Jakarta Security annotations and Vaadin's
-`AnnotatedViewAccessChecker` (or equivalent in older versions). `@PreAuthorize` at the view
-level adds confusion and may not behave as expected with Vaadin's navigation model in any
-supported version.
+Don't use `@PreAuthorize` (Spring Security method security) on Vaadin
+views. Access control is enforced at the view level via Jakarta Security
+annotations and Vaadin's `AnnotatedViewAccessChecker` (or its older
+equivalent). `@PreAuthorize` adds confusion and may not behave as
+expected with Vaadin's navigation model.
 
 ### Role-Based Rendering — Security Application of the UI Rubrics
 
-Authorization gating at the UI layer must use the "do not generate" mode: a component or
-navigation item the current user's role does not authorize must never be constructed,
-never added to the layout, and therefore never present in the DOM — leaving no artifact
-for the user to discover or re-enable via the browser inspector. `setVisible(false)` and
-CSS-based concealment are **not** acceptable substitutes for role gating, because the
-underlying component is still present and (if the server considers it enabled)
-interactive.
+Authorization gating at the UI layer must use the "do not generate" mode:
+a component or navigation item the current user's role doesn't authorize
+must never be constructed, never added to the layout, and therefore
+never present in the DOM — leaving no artifact for the user to discover
+or re-enable via the browser inspector. `setVisible(false)` and CSS
+concealment are **not** acceptable: the underlying component is still
+present and (if the server considers it enabled) interactive.
 
-For the full three-mode rubric (do not generate / hide / disable), layout-preservation
-guidance, and the Vaadin-server-state authority rule, see:
+For the full three-mode rubric (do not generate / hide / disable),
+layout-preservation guidance, and the Vaadin-server-state authority
+rule, see:
 
-- `docs/patterns/ui/components.md` → "Conditional Component Rendering — Do Not Generate
-  vs. Hide vs. Disable" and its "Layout Preservation — When a Placeholder Is Needed"
-  subsection.
-- `docs/patterns/ui/navigation.md` → "Conditional Navigation Rendering" for the
-  application to `SideNavItem` / menu entries.
+- `docs/patterns/ui/components.md` → "Conditional Component Rendering —
+  Do Not Generate vs. Hide vs. Disable" and its "Layout Preservation —
+  When a Placeholder Is Needed" subsection.
+- `docs/patterns/ui/navigation.md` → "Conditional Navigation Rendering"
+  for `SideNavItem` / menu entries.
 
-This section stops at the security *rule* — the canonical UI patterns for expressing it
-live with the rest of the component and navigation patterns.
+This section stops at the security *rule*; the canonical UI patterns
+live with the component and navigation docs.
 
 ### Self-Editing Restrictions
 
-Implement service-layer guards for self-editing scenarios that would leave the system
-in an inconsistent state:
+Implement service-layer guards for self-editing actions that would leave
+the system inconsistent:
 
 ```java
 // Service implementation
@@ -323,14 +327,14 @@ public void deactivate(long key) {
 }
 ```
 
-Mirror these restrictions in the UI (disabled button with tooltip) but enforce them in the
-service layer so they hold even when called programmatically.
+Mirror these in the UI (disabled button with tooltip) but enforce them
+in the service layer so they hold against programmatic callers.
 
 ## Security Headers
 
-Vaadin's documented behavior for HTTP security headers is narrower than generic Spring
-Security guidance might suggest. Start from the Vaadin-documented rules and only add
-more when you have a concrete reason.
+Vaadin's documented behavior for HTTP security headers is narrower than
+generic Spring Security guidance. Start from Vaadin's rules; add more
+only when you have a concrete reason.
 
 ### What Vaadin Does and Does Not Set
 
@@ -350,10 +354,10 @@ more when you have a concrete reason.
 
 ### Adding a Header via `VaadinWebSecurity`
 
-Security headers are added through Spring Security's `HttpSecurity.headers(...)` DSL
-within the `VaadinWebSecurity.configure(...)` override — this is the `http` variable's
-origin. Nothing Vaadin-specific wraps the headers API; the Vaadin idiom is just to keep
-everything inside the `VaadinWebSecurity` subclass you already maintain.
+Add security headers through Spring Security's `HttpSecurity.headers(...)`
+DSL within the `VaadinWebSecurity.configure(...)` override — `http` comes
+from there. Nothing Vaadin-specific wraps the headers API; the idiom is
+just to keep everything inside the `VaadinWebSecurity` subclass.
 
 ```java
 @EnableWebSecurity
@@ -374,48 +378,50 @@ public class SecurityConfig extends VaadinWebSecurity {
 }
 ```
 
-Spring Security's own defaults cover `X-Content-Type-Options: nosniff`, cache-control
-headers, and (when running over HTTPS) `Strict-Transport-Security`. `Referrer-Policy` is
-not set by default but can be added to the same `headers(...)` block if a specific
-policy is required. These headers are generic Spring Security concerns — Vaadin has no
-documented guidance on them — so follow standard Spring Security / OWASP practice.
+Spring Security's defaults cover `X-Content-Type-Options: nosniff`,
+cache-control headers, and (over HTTPS) `Strict-Transport-Security`.
+`Referrer-Policy` is not set by default; add it in the same
+`headers(...)` block if needed. These are generic Spring Security
+concerns — Vaadin has no documented guidance — so follow standard Spring
+Security / OWASP practice.
 
 ### Strict CSP (Nonce-Based)
 
-If the application needs a strict CSP beyond Vaadin's default relaxations, do **not**
-use Spring Security's `headers().contentSecurityPolicy(...)` for the policy itself — use
+If a strict CSP beyond Vaadin's default relaxations is needed, do **not**
+use Spring Security's `headers().contentSecurityPolicy(...)` — use
 Vaadin's [nonce-based strict CSP](https://vaadin.com/docs/latest/flow/security/advanced-topics/strict-csp)
-mechanism instead. It requires:
+mechanism. It requires:
 
 - An `IndexHtmlRequestListener` that generates a random nonce per request and sets the
   `Content-Security-Policy` header on the response with `script-src 'nonce-...'`.
 - Nonce injection into script tags in the index file.
 - JavaScript overrides that replace `Function` / `eval()` with CSP-compliant versions.
 
-This pattern is production-mode only and has prerequisites — follow the linked Vaadin
-documentation rather than reproducing the recipe here.
+Production-mode only with prerequisites — follow the linked Vaadin docs
+rather than reproducing the recipe here.
 
 ## CSRF Protection
 
-Vaadin's `VaadinWebSecurity` base class configures CSRF protection automatically for
-Vaadin endpoints. No manual CSRF token handling is required in views.
+`VaadinWebSecurity` configures CSRF protection automatically for Vaadin
+endpoints. No manual CSRF token handling is required in views.
 
-Any endpoint outside Vaadin's filter chain (e.g., actuator endpoints, custom REST endpoints)
-must implement CSRF protection independently. In Phase 1, no such endpoints should exist.
+Endpoints outside Vaadin's filter chain (actuator, custom REST) must
+implement CSRF protection independently. In Phase 1, no such endpoints
+should exist.
 
 ## Rate Limiting
 
-Limit login attempts per IP address to prevent brute-force attacks:
+Limit login attempts per IP to prevent brute-force attacks:
 
 - Threshold: more than 10 failed attempts within 5 minutes from a single IP
 - Response: temporary block or CAPTCHA challenge
-- Log the rate limit event server-side
+- Log the rate-limit event server-side
 
-Rate limit responses return HTTP 429 with a generic "Too many requests" message. Do not
-reveal specific thresholds or countdowns in any response header or body.
+Return HTTP 429 with a generic "Too many requests" message. Do not
+reveal thresholds or countdowns in any header or body.
 
-The implementation mechanism (in-memory, Redis, database) is an architectural decision
-made per project.
+The implementation (in-memory, Redis, database) is a per-project
+architectural decision.
 
 ## Input Validation and SQL Injection Prevention
 
@@ -430,11 +436,11 @@ List<EmployeeListItemProjection> findActiveByDepartment(@Param("deptKey") Long d
 @Query("SELECT e FROM EmployeeEntity e WHERE e.name = '" + name + "'")  // NEVER
 ```
 
-No `nativeQuery = true` with string concatenation in any repository. All custom JPQL uses
+No `nativeQuery = true` with string concatenation. All custom JPQL uses
 `:param` named parameters.
 
-Vaadin's component layer escapes output by default, preventing XSS from user-supplied data
-rendered in the UI.
+Vaadin's component layer escapes output by default, preventing XSS from
+user-supplied data rendered in the UI.
 
 ## Sensitive Information Leakage Prevention
 

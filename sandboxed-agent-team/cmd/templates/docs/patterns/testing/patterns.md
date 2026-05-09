@@ -1,10 +1,11 @@
 # Testing Patterns
 
-Unit, browserless UI, E2E, and test data patterns for Vaadin 24+ with Spring Boot 3+
-projects. `@DataJpaTest`, `@SpringBootTest`, `@Transactional` rollback, AssertJ, Mockito,
-and Playwright usage shown below are stable across every supported Vaadin and Spring Boot
-line. Vaadin's browserless UI test API (`SpringBrowserlessTest` / `$(...).id(...)` etc.)
-is also consistent across supported versions.
+Unit, browserless UI, E2E, and test-data patterns for Vaadin 24+ with
+Spring Boot 3+. `@DataJpaTest`, `@SpringBootTest`, `@Transactional`
+rollback, AssertJ, Mockito, and Playwright usage below are stable across
+supported Vaadin and Spring Boot lines. Vaadin's browserless UI API
+(`SpringBrowserlessTest` / `$(...).id(...)`) is also consistent across
+supported versions.
 
 ## Testing Pyramid
 
@@ -26,8 +27,8 @@ is also consistent across supported versions.
 
 ## One Test Class Per Production Class
 
-Every production class has a corresponding test class. The test class name is the
-production class name with a `Test` suffix:
+Every production class has a corresponding test class named with the
+production class name plus a `Test` suffix:
 
 ```
 EmployeeService       →  EmployeeServiceTest
@@ -39,8 +40,8 @@ No test class covers multiple unrelated production classes.
 
 ## Unit Tests — JUnit + Mockito
 
-Write unit tests for every non-UI public method. Service methods, utility methods, and
-business logic methods each have at least one corresponding test.
+Every non-UI public method has at least one unit test — service,
+utility, and business-logic methods alike.
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -79,9 +80,9 @@ Use AssertJ for assertions — prefer `assertThat(...)` over JUnit's `assertEqua
 
 ## Browserless UI Tests — Vaadin TestBench
 
-Every UI feature has a browserless UI test using Vaadin's browserless testing
-(`SpringBrowserlessTest`). These tests exercise form submission, validation errors,
-and grid interactions in-process without a real browser.
+Every UI feature has a browserless UI test using
+`SpringBrowserlessTest`. These exercise form submission, validation
+errors, and grid interactions in-process — no real browser.
 
 ```java
 @SpringBootTest
@@ -116,29 +117,29 @@ class EmployeeViewTest extends SpringBrowserlessTest {
 }
 ```
 
-Browserless UI tests live in the same package as the view they test and use the `*Test.java`
-suffix (run by surefire, not failsafe).
+Browserless UI tests live in the same package as the view they test
+with the `*Test.java` suffix (surefire, not failsafe).
 
 ## Page Object Pattern
 
-Tests that look up components by deep tree traversal — `view.getChildren().flatMap(...)`
-chains in browserless tests, or `page.locator('vaadin-text-field >> nth=2')` chains in
-E2E tests — break whenever the layout is rearranged, even if no user-visible behavior
-changed. The fix is the [Page Object Pattern][fowler-pageobject]: hide the traversal
-behind a class whose public surface is the user-visible contract (heading text, button
-labels, named inputs).
-
-When the layout moves, only the page object changes; tests stay green because the
-contract didn't.
+Tests that look up components by deep tree traversal —
+`view.getChildren().flatMap(...)` chains in browserless tests,
+`page.locator('vaadin-text-field >> nth=2')` chains in E2E tests —
+break when the layout is rearranged, even if no user-visible behavior
+changed. The fix is the [Page Object Pattern][fowler-pageobject]:
+hide the traversal behind a class whose public surface is the
+user-visible contract (heading text, button labels, named inputs).
+When the layout moves, only the page object changes; tests stay green
+because the contract didn't.
 
 [fowler-pageobject]: https://martinfowler.com/bliki/PageObject.html
 
 ### Page Objects in Browserless UI Tests
 
-The page object walks the server-side component tree starting from the view root, and
-exposes high-level lookups (`headingText()`, `buttonWithText("Save")`,
-`paragraphMatching(predicate)`). Tests then assert against the user-visible contract,
-not the layout's nesting depth.
+The page object walks the server-side component tree from the view root
+and exposes high-level lookups (`headingText()`, `buttonWithText("Save")`,
+`paragraphMatching(predicate)`). Tests assert against the user-visible
+contract, not the layout's nesting depth.
 
 ```java
 final class EmployeeFormPageObject {
@@ -186,21 +187,23 @@ void saveButton_isVisible_afterFormLoads() {
 }
 ```
 
-When `SpringBrowserlessTest` is used, the framework's `$()` and `$view()` queries
-already provide much of this abstraction (filter by component type, label, attribute,
-predicate). The page object is most valuable when those queries aren't enough — for
-example, when several components share a tag and only their position in the tree
-distinguishes them, or when a single semantic concept ("the details paragraph")
-needs a single named accessor across many tests.
+With `SpringBrowserlessTest`, the framework's `$()` and `$view()`
+queries already cover most of this (filter by component type, label,
+attribute, predicate). Page objects are most valuable when those
+aren't enough — e.g., several components share a tag and only their
+tree position distinguishes them, or a single semantic concept ("the
+details paragraph") needs one named accessor across many tests.
 
-Page objects live in the test source tree, package-private, in the same package as
-the views they cover. A working in-tree example is `ErrorViewPageObject` in
-`fleet-acuity-ui/src/test/java/.../ui/view/error/`, used by all four error-view tests.
+Page objects live in the test source tree, package-private, in the
+same package as the views they cover. A working example is
+`ErrorViewPageObject` in
+`fleet-acuity-ui/src/test/java/.../ui/view/error/`, used by all four
+error-view tests.
 
 ### Page Objects in E2E Tests
 
-The same pattern applies in Playwright tests: the page object encapsulates DOM
-selectors, and the test asserts against user-visible behavior.
+Same pattern in Playwright: the page object encapsulates DOM selectors;
+the test asserts user-visible behavior.
 
 ```typescript
 // e2e/page-objects/EmployeeFormPage.ts
@@ -234,23 +237,25 @@ test('creates an employee successfully', async ({ page }) => {
 });
 ```
 
-When an action navigates to a new view, the page object should return the next page's
-page object so tests can chain calls. This also implicitly asserts that the navigation
-succeeded — if the next page isn't found, the test fails at the chain point.
+When an action navigates to a new view, the page object should return
+the next page's page object so tests can chain. This also implicitly
+asserts the navigation succeeded — if the next page isn't found, the
+test fails at the chain point.
 
-Vaadin's TestBench documentation covers the same pattern for Java E2E tests using
-`@Element("tag-name")` annotated classes that extend `TestBenchElement` — see
-[Tests with Page Objects][vaadin-page-objects]. The shape it describes is the same
-abstraction this section recommends; the locator mechanism differs (TestBench's
-`$(LoginViewElement.class)` vs. Playwright's `page.getByLabel(...)`), but the goal
-is identical: tests stay coupled to the user-visible contract, not the DOM.
+Vaadin's TestBench documentation covers the same pattern for Java E2E
+tests using `@Element("tag-name")`-annotated classes that extend
+`TestBenchElement` — see [Tests with Page Objects][vaadin-page-objects].
+Same abstraction; the locator mechanism differs
+(`$(LoginViewElement.class)` vs. `page.getByLabel(...)`), but the goal
+is identical: tests stay coupled to the user-visible contract, not the
+DOM.
 
 [vaadin-page-objects]: https://vaadin.com/docs/latest/flow/testing/end-to-end/page-objects
 
 ## Repository Tests — @DataJpaTest
 
-Use `@DataJpaTest` for lightweight repository tests. It loads only the JPA layer and wraps
-each test in a transaction that rolls back automatically:
+Use `@DataJpaTest` for lightweight repository tests. It loads only the
+JPA layer and wraps each test in an auto-rollback transaction:
 
 ```java
 @DataJpaTest
@@ -278,8 +283,8 @@ class EmployeeRepositoryTest {
 
 ### @Transactional Rollback
 
-Integration tests manage their own test data using `@Transactional` rollback rather than
-shared seed data:
+Integration tests manage their own test data via `@Transactional`
+rollback rather than shared seed data:
 
 ```java
 @SpringBootTest
@@ -303,8 +308,8 @@ No test depends on data created by another test. Each test starts in a known sta
 
 ### H2 in PostgreSQL Compatibility Mode
 
-Test configuration uses H2 in-memory database in PostgreSQL compatibility mode so that
-migration scripts written for PostgreSQL are compatible with the test environment:
+Tests use H2 in-memory in PostgreSQL compatibility mode so production
+PostgreSQL migration scripts also run in tests:
 
 ```properties
 # application-test.properties
@@ -339,8 +344,9 @@ void listAll_issuesExactlyOneQuery() {
 
 ## E2E Tests — Playwright (TypeScript)
 
-End-to-end tests are written in TypeScript using `@playwright/test` and live in the `e2e/`
-directory. They run against the full application stack (started via Docker or Maven failsafe).
+E2E tests use `@playwright/test` (TypeScript) and live in `e2e/`. They
+run against the full application stack (started via Docker or Maven
+failsafe).
 
 ```typescript
 // e2e/employee.spec.ts
@@ -358,8 +364,9 @@ test('creates an employee successfully', async ({ page }) => {
 });
 ```
 
-E2E tests run only at the pre-PR gate — not on every commit. They exercise user-visible
-flows end-to-end and catch integration failures that browserless tests cannot detect.
+E2E tests run only at the pre-PR gate, not per-commit. They exercise
+user-visible flows end-to-end and catch integration failures that
+browserless tests can't detect.
 
 ## Coverage Targets
 
@@ -369,23 +376,24 @@ flows end-to-end and catch integration failures that browserless tests cannot de
 | Utility classes | ≥ 80% line coverage |
 | UI views | All form interactions, validation errors, grid interactions covered by browserless tests |
 
-Coverage is measured per module. The UI module is covered by browserless tests, not line
-coverage tools (which cannot easily instrument Vaadin component interactions).
+Coverage is measured per module. The UI module is covered by
+browserless tests, not line-coverage tools (which can't easily
+instrument Vaadin component interactions).
 
 ## Tests Trace to Acceptance Criteria
 
-Line coverage measures *whether code ran*. It does not measure
-*whether the code did what was specified*. Both matter, but they
-answer different questions.
+Line coverage measures *whether code ran*; it doesn't measure *whether
+the code did what was specified*. Both matter, and they answer
+different questions.
 
 Every requirement's acceptance criteria (ACs) must have at least one
-automated test that exercises and verifies that AC. If an AC has no
-test, the requirement is not implemented — regardless of what line
-coverage reports say.
+automated test exercising and verifying it. If an AC has no test, the
+requirement isn't implemented — regardless of what line coverage
+reports say.
 
 ### One AC, one or more tests
 
-A requirement looks like this — one `implementation` child plus one
+A requirement looks like this: one `implementation` child plus one
 checkbox per AC, with the parent as a roll-up:
 
 ```markdown
@@ -417,13 +425,13 @@ Each AC needs a test (or several, when the AC has parameters):
 | AC5 | `LoginViewTest.expiredResetLink_displaysFriendlyError` |
 
 When an AC parameterizes (e.g., "valid email formats are accepted"),
-the test is parameterized accordingly.
+parameterize the test accordingly.
 
 ### Test names should identify what they verify
 
-Test method names describe the behavior under test, not the
-implementation. A reader scanning the test class should be able to
-match a test name to an AC without reading the test body:
+Test method names describe the behavior, not the implementation. A
+reader scanning the test class should be able to match a test name
+to an AC without reading the body:
 
 ```java
 // Preferred — name describes the behavior
@@ -435,44 +443,43 @@ match a test name to an AC without reading the test body:
 @Test void emailServiceMockTest() { ... }
 ```
 
-This naming pattern (`subject_verb_condition`) reads as a sentence
-and matches naturally to AC phrasing. When the requirement evolves,
-the test name evolves with it.
+The `subject_verb_condition` pattern reads as a sentence and matches
+AC phrasing. When the requirement evolves, the test name evolves
+with it.
 
 ### Cross-reference, but don't depend on it
 
 Some teams put the AC ID in the test name (e.g.,
-`AC3_requestReset_sendsEmail`) or in a Javadoc comment on the test
-method. This makes traceability searchable but couples test names to
-external identifiers that rename over time.
+`AC3_requestReset_sendsEmail`) or in a Javadoc comment. That makes
+traceability searchable but couples test names to external
+identifiers that rename over time.
 
-The pragmatic stance: name tests by *behavior* (which is stable);
-maintain the AC ↔ test mapping in the requirement document if the
-project benefits from explicit traceability. The mapping table can
-live alongside the requirement statement and is updated by the Unit
-Tester at the per-commit cycle.
+Pragmatic stance: name tests by *behavior* (stable); maintain the
+AC ↔ test mapping in the requirement document if the project benefits
+from explicit traceability. The mapping table lives alongside the
+requirement statement; the Unit Tester updates it during the
+per-commit cycle.
 
 ### Coverage gaps surface ACs without tests
 
-When the Unit Tester checks AC coverage at the pre-PR gate, the
-question is "which ACs have a passing test?" — not "what's the line
-coverage percentage?". A line of code without a test for the AC it
-implements is a hole; line coverage of that line under an unrelated
-test does not fill the hole.
+At the pre-PR gate, the Unit Tester asks "which ACs have a passing
+test?" — not "what's the line-coverage percentage?". A line of code
+without a test for the AC it implements is a hole; coverage of that
+line under an unrelated test does not fill it.
 
 If an AC has no test, the Unit Tester reports the gap to the Coder
-and Architect. Closing the gap may mean (a) writing the missing test,
-(b) recognizing the AC was never implemented and adding the
-implementation, or (c) recognizing the AC was misstated and revising
-it (back through the requirement gate). All three are legitimate
-outcomes; shipping without one of them is not.
+and Architect. Closing it may mean (a) writing the missing test, (b)
+recognizing the AC was never implemented and implementing it, or (c)
+recognizing the AC was misstated and revising it (back through the
+requirement gate). All three are legitimate; shipping without one of
+them is not.
 
 ### Tests are documentation of behavior
 
 A well-written test class doubles as a behavioral specification. A
 new contributor reading `PasswordResetServiceTest` should be able to
-infer the password-reset flow from the test names alone, without
-reading the production code. If they can't — if the test names are
-mechanical (`testEmptyInput`, `testEdgeCase2`) or generic
-(`shouldWork`, `verifyBehavior`) — the tests are failing as
-documentation, not just failing as discipline.
+infer the reset flow from test names alone, without reading the
+production code. If they can't — if names are mechanical
+(`testEmptyInput`, `testEdgeCase2`) or generic (`shouldWork`,
+`verifyBehavior`) — the tests fail as documentation, not just as
+discipline.

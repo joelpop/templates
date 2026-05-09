@@ -1,10 +1,9 @@
 # Recipe: Conditional Authentication Methods via `application.properties`
 
 A configuration-driven pattern for enabling any combination of
-authentication methods — form login (username + password), passkey
-(WebAuthn), OIDC SSO — at startup, with **invalid combinations
-failing fast at startup**, not silently at runtime. Build the
-foundation here once, then layer the per-method recipes
+authentication methods — form login, passkey (WebAuthn), OIDC SSO —
+with **invalid combinations failing fast at startup**. Build this
+foundation once, then layer the per-method recipes
 ([passkey](passkey.md), [oidc-sso](oidc-sso.md)) on top.
 
 ## What this produces
@@ -64,14 +63,13 @@ public record AuthProperties(
 }
 ```
 
-The compact constructor (`AuthProperties { ... }`) defaults each
-method to `disabled` if the property is absent — startup never
-NPEs on a missing block.
+The compact constructor defaults each method to `disabled` when the
+property is absent — no NPE on a missing block.
 
 ## Step 2 — Expose a runtime API
 
-A small interface in your `service` module decouples consumers from
-the config record. The rest of the app queries `AuthMethods`, never
+A small interface in `service` decouples consumers from the config
+record. The rest of the app queries `AuthMethods`, never
 `AuthProperties` directly.
 
 ```java
@@ -145,11 +143,10 @@ public class AuthMethodsConfig {
 
 ## Step 4 — Validate combinations at startup
 
-A `@Component` with a constructor that fails the application context
-boot when the configuration is invalid. This is the right place for
-"at-least-one method must be enabled" and "passkey requires form
-login" rules: invalid configuration becomes a clear startup error,
-not a runtime mystery.
+A `@Component` whose constructor throws when configuration is
+invalid — the right place for "at least one method must be enabled"
+and "passkey requires form login." Invalid config becomes a clear
+startup error, not a runtime mystery.
 
 ```java
 package {base_package}.provider.security;
@@ -186,8 +183,8 @@ combinability constraints in one place.
 
 ## Step 5 — Branch the SecurityConfig on `AuthMethods`
 
-The `SecurityFilterChain` injects `AuthMethods` and adds only the
-configured branches. Common pattern:
+The `SecurityFilterChain` injects `AuthMethods` and adds only
+configured branches:
 
 ```java
 @Bean
@@ -215,16 +212,14 @@ SecurityFilterChain securityFilterChain(
 }
 ```
 
-`ObjectProvider<>` is the right injection shape for OIDC beans
-because they only exist when SSO is enabled — `ObjectProvider`
-returns `null` when no bean is registered, which is the natural
-sentinel.
+`ObjectProvider<>` is correct for OIDC beans that only exist when
+SSO is enabled — it returns `null` when no bean is registered.
 
 ## Step 6 — `application.properties` defaults
 
 Set conservative defaults in `application.properties` (form login
-on, passkey/SSO off) and document the toggle keys inline. Per-env
-overrides go in `application-{profile}.properties` or
+on, passkey/SSO off) with inline documentation. Per-env overrides
+go in `application-{profile}.properties` or
 `application-local.properties` (gitignored).
 
 ```properties
@@ -247,20 +242,16 @@ overrides go in `application-{profile}.properties` or
   `@ConfigurationProperties` record gives compile-time refactoring
   safety and a single place to default missing blocks. Avoid
   `@Value("${...}")` lookups scattered across the codebase.
-- **Fail fast at startup on invalid combinations.** A separate
-  validator component catches bad configs before users hit them.
-  The cost is a few lines of code; the payback is no
-  silent-misconfiguration at-runtime mysteries.
-- **A separate runtime API (`AuthMethods`) decouples consumers
-  from the config record.** Future config changes (renaming a key,
-  splitting a method into sub-flags) don't ripple through callers.
+- **Fail fast on invalid combinations.** The validator catches bad
+  configs before users hit them; the cost is a few lines of code.
+- **`AuthMethods` decouples consumers from the config record.**
+  Future config changes (renaming a key, splitting a method into
+  sub-flags) don't ripple through callers.
 - **Default to *off* for non-essential methods.** Form login on,
   passkey/SSO off. Operators opt in per environment.
 - **Method-specific config beans are conditional.** `WebAuthnConfig`
   uses `@ConditionalOnProperty` so its beans don't load when passkey
-  is off — see [passkey.md](passkey.md). This keeps a team that
-  doesn't enable a method from accidentally tripping over its
-  optional dependencies at startup.
+  is off — see [passkey.md](passkey.md).
 
 ## What to verify
 

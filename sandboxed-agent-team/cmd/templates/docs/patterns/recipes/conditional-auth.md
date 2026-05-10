@@ -270,6 +270,16 @@ go in `application-{profile}.properties` or
 
 ## Related
 
+- [audited-principal.md](audited-principal.md) — the
+  cross-flow identity/audit foundation. The `SecurityFilterChain`
+  here implicitly assumes every authenticated principal carries
+  the user's key; `audited-principal` defines that contract and
+  the `AuditorAware` wiring downstream.
+- [form-login.md](form-login.md) — the username/password
+  branch's `UserDetailsService`, principal, and Vaadin
+  `LoginForm` integration. (`VaadinSecurityConfigurer` covers the
+  filter wiring above; `form-login.md` covers the user lookup,
+  password handling, and view.)
 - [passkey.md](passkey.md) — the passkey-specific filter chain,
   WebAuthn bean wiring, and Vaadin/CSRF coordination.
 - [oidc-sso.md](oidc-sso.md) — OIDC client setup, SSO Kit

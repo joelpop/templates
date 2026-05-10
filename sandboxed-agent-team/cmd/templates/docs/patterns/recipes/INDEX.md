@@ -19,10 +19,22 @@ than project-specific decisions. Project-specific configuration
 (which IdP, tenancy model, entity layout) lives in
 `docs/architecture/`, referencing the recipe.
 
+**Recipe dependency order.** `conditional-auth` is the
+configuration foundation; `audited-principal` is the
+identity/audit foundation. The three auth-method recipes layer on
+both. `passkey` additionally requires `form-login` (passkey is
+supplementary, not a primary method). `oidc-sso` is independent
+of `form-login` and `passkey`. Read in this order:
+`conditional-auth` → `audited-principal` →
+`form-login` / `oidc-sso` → `passkey` (if applicable).
+
 | Path | Description |
 |------|-------------|
-| [conditional-auth.md](conditional-auth.md) | Configuration-driven authentication: typed `@ConfigurationProperties`, runtime `AuthMethods` API, startup combinability validator, `SecurityConfig` filter-chain branching. Foundation for the per-method recipes below. |
-| _(more recipes pending: passkey integration, OIDC/SSO with Vaadin SSO Kit)_ | |
+| [conditional-auth.md](conditional-auth.md) | Configuration-driven authentication: typed `@ConfigurationProperties`, runtime `AuthMethods` API, startup combinability validator, `SecurityConfig` filter-chain branching. Configuration foundation for the per-method recipes below. |
+| [audited-principal.md](audited-principal.md) | Cross-flow auth/audit foundation: `AuditedPrincipal` interface (`getKey()` + `getUsername()`), `CurrentUser` helper returning the principal, `AuditedEntity<K>` mapped superclass, `AuditorAware` with the `EntityManager.getReference()` optimisation (no SELECT per audited write). Every per-method recipe's principal implements this contract. |
+| [form-login.md](form-login.md) | Username/password authentication via `VaadinSecurityConfigurer` and Spring Security's `DaoAuthenticationProvider`: `UserLookup` seam, `AuditedFormLoginUser` principal, `UserDetailsAdapter`, `BCryptPasswordEncoder`, Vaadin `LoginForm` integration. Username is whatever your project uses — not necessarily email. |
+| [passkey.md](passkey.md) | WebAuthn / FIDO2 passkey authentication on Spring Security 7+: `WebAuthnUserAdapter`, triple-role `JpaPasskeyService` (`PasskeyService` + `PasskeyHandleManager` + `UserCredentialRepository`), the `webauthn_user_handle` invariant, Vaadin Flow ↔ Lit `PasskeyButton` bridge, `SecurityContextHolderStrategy` ordering gotcha, CSRF coordination with Vaadin's UIDL token. Requires `form-login`. |
+| [oidc-sso.md](oidc-sso.md) | OpenID Connect SSO with Spring Boot's OAuth2 client: `OidcUserAdapter`, `AuditedOidcUser`, RP-initiated logout via `OidcClientInitiatedLogoutSuccessHandler` wrapped with Vaadin's `UidlRedirectStrategy` (so `/logout` over UIDL doesn't return "Invalid JSON response"), SSO Kit auto-config exclusion. Existing-user-only by default; auto-provisioning is a project decision. |
 
 ## Recipe-writing conventions
 

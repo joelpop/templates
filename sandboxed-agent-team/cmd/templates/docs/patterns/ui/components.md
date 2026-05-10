@@ -291,6 +291,44 @@ notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 Reserve toasts for outcomes that cannot be shown inline (service errors, async completions).
 Do not use toasts as the sole means of reporting form validation errors.
 
+## Service Error Handling
+
+Services throw typed exceptions; views catch them and decide what to do. The exception
+type drives the response — that is why exception types must be specific enough for the
+view to branch on (see `docs/patterns/architecture/services.md` — "Error Contracts").
+
+Three branches cover all cases:
+
+```java
+try {
+    itemService.save(binder.getBean());
+    Notification.show("Saved successfully").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    close();
+} catch (ValidationException e) {
+    // ValidationException messages are authored by the service for user consumption —
+    // show them directly. Each error in the list is a discrete user-facing message.
+    e.getErrors().forEach(msg ->
+            Notification.show(msg)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR));
+} catch (EntityNotFoundException e) {
+    // Record disappeared between load and save. Navigate away — leaving the user on a
+    // detail form for a nonexistent record is worse than a navigation reset.
+    Notification.show("Record no longer exists.")
+            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+    getUI().ifPresent(ui -> ui.navigate(ItemListView.class));
+} catch (Exception e) {
+    // Unexpected — log server-side, show nothing that reveals internals.
+    log.error("Unexpected error saving item", e);
+    Notification.show("An error occurred. Please try again.")
+            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+}
+```
+
+`ValidationException.getErrors()` messages are the only exception messages safe to
+surface directly — they are authored for that purpose. `EntityNotFoundException` and
+any unexpected exception always show a generic message. Never pass an arbitrary
+`e.getMessage()` to `Notification.show()`; the exception message is internal state.
+
 ## Confirmation Dialogs
 
 Destructive actions (deactivate, delete) require explicit confirmation before execution:
@@ -323,7 +361,8 @@ try {
     Notification.show("Saved successfully").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     close();
 } catch (ValidationException e) {
-    Notification.show(e.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
+    e.getErrors().forEach(msg ->
+            Notification.show(msg).addThemeVariants(NotificationVariant.LUMO_ERROR));
 } finally {
     saveButton.setEnabled(true);
     saveButton.setText("Save");

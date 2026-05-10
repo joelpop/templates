@@ -205,6 +205,14 @@ Service implementations catch `DataIntegrityViolationException` from the databas
 translate them to `ValidationException` before propagating to the UI. Raw database
 error messages must never reach the user.
 
+Services must not import or reference Vaadin — no `Notification.show(...)`, no
+`UI.getCurrent()`, no component creation. An exception thrown from a service carries
+a *signal*; the view decides whether that signal warrants a notification, an inline
+error, a navigation reset, or something else. A service that shows its own toast has
+taken a UI decision it cannot make correctly: it cannot know the caller's context, the
+user's locale, or whether a notification makes sense in that view. See
+`docs/patterns/ui/components.md` — "Service Error Handling" for the catch pattern.
+
 ## MapStruct Mapper Pattern
 
 Mappers live in `{app}-jpaservice`. Each mapper converts between the three representations:

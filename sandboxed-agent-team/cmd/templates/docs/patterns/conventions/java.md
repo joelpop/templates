@@ -137,6 +137,46 @@ binder.setBean(item);
 The selected value comes from `binder.setBean(...)` in step 5. Keep `setItems` next to
 other `setXxx` calls, not mixed with bindings.
 
+## Enum Display — `HasCaption`
+
+UI model enums that appear in selection components (`ComboBox`, `Select`, etc.) implement
+`HasCaption`, a custom interface in `{app}-uimodel`:
+
+```java
+public interface HasCaption {
+    String getCaption();
+}
+```
+
+Any enum whose constants need a display label implements it:
+
+```java
+public enum ActiveFilterOption implements HasCaption {
+    ALL("All"),
+    ACTIVE("Active"),
+    INACTIVE("Inactive");
+
+    private final String caption;
+
+    ActiveFilterOption(String caption) { this.caption = caption; }
+
+    @Override public String getCaption() { return caption; }
+}
+```
+
+This enables a uniform `setItemLabelGenerator` call across all display enums:
+
+```java
+statusSelect.setItemLabelGenerator(ActiveFilterOption::getCaption);
+```
+
+Without `HasCaption`, each enum has its own getter name (`getLabel()`, `getDisplayName()`,
+`getName()`, …), forcing a per-call decision. With it, any `HasCaption` enum drops into
+`setItemLabelGenerator` the same way.
+
+Enums that are only stored or compared (not displayed in selection components) do not need
+to implement `HasCaption`.
+
 ## Local Variable Declaration
 
 Declare local variables close to their first use, not at the top of the method:

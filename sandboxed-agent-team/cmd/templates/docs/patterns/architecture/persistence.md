@@ -168,7 +168,7 @@ public abstract class OrderMapper {
 
 **Timezone source:** The `InstantMapper` is injected with a `ClientDetailsService`
 that provides the user's timezone (typically resolved from the user's profile or
-session configuration). See `conventions/vaadin.md` → "Browser Client Details —
+session configuration). See `conventions/vaadin/datetime.md` → "Browser Client Details —
 Bridging the SoC Wall" for the full `ClientDetailsService` pattern, including
 version-specific notes and `VaadinSession` caching guidance.
 
@@ -300,10 +300,108 @@ public class EmployeeEntity extends BaseEntity<Long>
 ```
 
 Name projections for their UI context, not generic suffixes:
+- `EmployeePickerItemProjection` — for a `ComboBox` or `Select`
 - `EmployeeListItemProjection` — for the grid
 - `EmployeeDetailProjection` — for the edit form
 
 Prefer interface projections over loading full entities for list views and search results.
+
+### Projection inheritance — detail extends list-item
+
+A detail projection extends the list-item projection rather than re-declaring its
+fields. The detail query returns everything the grid already shows, plus the
+detail-only fields:
+
+```java
+public interface EmployeeListItemProjection {
+    Long getKey();
+    String getFirstName();
+    String getLastName();
+    String getStatus();
+}
+
+// Inherits all list-item getters; adds only what the edit form needs beyond the grid
+public interface EmployeeDetailProjection extends EmployeeListItemProjection {
+    String getEmail();
+    Long getDepartmentKey();
+}
+```
+
+The entity still implements both — satisfying `EmployeeDetailProjection` implies
+satisfying `EmployeeListItemProjection` by inheritance:
+
+```java
+public class EmployeeEntity extends AuditedEntity<Long>
+        implements EmployeeDetailProjection { ... }
+```
+
+### Shared slices — `AuditProjection`
+
+Audit columns (`createdAt`, `updatedAt`, and the audit-by user references) recur on
+every audited entity's detail view. Rather than declaring them on each detail
+projection, extract a shared slice:
+
+```java
+public interface AuditProjection {
+    Instant getCreatedAt();
+    Instant getUpdatedAt();
+    UserAuditProjection getCreatedBy();
+    UserAuditProjection getUpdatedBy();
+}
+```
+
+Any detail projection for an audited entity mixes it in:
+
+```java
+public interface EmployeeDetailProjection
+        extends EmployeeListItemProjection, AuditProjection {
+    String getEmail();
+    Long getDepartmentKey();
+}
+```
+
+### Nested projections
+
+Returning another projection interface from a getter (rather than a scalar) causes
+Spring Data to generate a JOIN and populate the nested object in the same query —
+no separate SELECT per row.
+
+`UserAuditProjection` is the canonical example: it exposes only the fields needed
+to display an audit-by label ("Created by Alice Anderson"), avoiding a full
+`UserEntity` fetch:
+
+```java
+public interface UserAuditProjection {
+    String getFirstName();
+    String getLastName();
+}
+```
+
+Spring Data resolves `getCreatedBy()` → `UserAuditProjection` via a JOIN on the
+audit FK column. The audit-by references can be `null` for system-originated writes
+(no authenticated principal at write time); null-check before rendering.
+
+The same technique applies to any `@ManyToOne` relationship where the caller only
+needs a single field: return a narrow projection interface rather than loading the
+full related entity.
+
+### Picker projections — for `ComboBox` and `Select`
+
+A picker projection fetches only the key and the field(s) needed to render the
+display label. It is independent of the list-item and detail projections — it does
+not extend either:
+
+```java
+public interface EmployeePickerItemProjection {
+    Long getKey();
+    String getFirstName();
+    String getLastName();
+}
+```
+
+The corresponding UI model record implements `HasCaption` to carry the display
+label. See `docs/patterns/conventions/vaadin/uimodel.md` — "Enum Display — `HasCaption`" and
+"UI Model Capability Interfaces" for the UI-side pattern.
 
 ## Relationship Cascade Strategies
 

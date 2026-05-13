@@ -275,7 +275,7 @@ chrome before the redirect.
 On **Vaadin 24.x**, the access-checker issue does not apply and `@PermitAll`
 works without the `anyRequest=permitAll` override.
 
-See `docs/patterns/conventions/vaadin.md` → "Access Annotations on Layout
+See `docs/patterns/conventions/vaadin/spring.md` → "Access Annotations on Layout
 Classes" for additional context. Each view's own annotation still controls
 access — the layout annotation only determines whether the layout itself
 blocks navigation.

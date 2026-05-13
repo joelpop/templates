@@ -4,7 +4,7 @@ Breakpoints, device detection, and adaptive behavior for Vaadin 24+ across phone
 and desktop. `FormLayout` responsive steps, `AppLayout` drawer behavior, and LumoUtility
 classes are stable across all supported Vaadin lines. The `retrieveExtendedClientDetails`
 API for server-side width detection differs between Vaadin 24 and 25 — see
-`docs/patterns/conventions/vaadin.md` → "Version-Specific Notes".
+`docs/patterns/README.md` → "Version Compatibility".
 
 ## Breakpoints
 

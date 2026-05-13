@@ -133,7 +133,7 @@ form.setResponsiveSteps(
 
 ## Dialogs — Delegation Pattern
 
-See `docs/patterns/conventions/vaadin.md` for the full dialog delegation pattern. Summary:
+See `docs/patterns/conventions/vaadin/components.md` for the full dialog delegation pattern. Summary:
 
 - Never extend `Dialog` — wrap it via delegation
 - Implement `NonComponent` for event publishing from dialog classes
@@ -264,7 +264,7 @@ Dispatch is keyed by the event's runtime class, so a listener registered on
 `ComponentEventBus` behavior. The `Registration` returned from `addListener` removes the
 listener on `remove()`.
 
-See `docs/patterns/conventions/vaadin.md` → "NonComponent Event System for Delegating
+See `docs/patterns/conventions/vaadin/components.md` → "NonComponent Event System for Delegating
 Dialogs" for the caller-side pattern (defining `SaveEvent` / `CancelEvent` subclasses,
 exposing typed `addSaveListener(Consumer<SaveEvent>)` convenience methods, and firing
 through the support instance).

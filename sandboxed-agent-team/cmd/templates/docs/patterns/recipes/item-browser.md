@@ -29,7 +29,7 @@ all three.
 - `MasterDetailLayout` — a Vaadin preview feature at time of writing;
   enable it in `vaadin-featureflags.properties`.
 - `HasCaption` — for filter-option enum display (see
-  `docs/patterns/conventions/java.md` — "Enum Display — `HasCaption`").
+  `docs/patterns/conventions/vaadin/uimodel.md` — "Enum Display — `HasCaption`").
 - `AppIcon` — for toolbar and action icons (see
   [app-icon.md](app-icon.md)).
 
@@ -438,7 +438,7 @@ is meaningless in this layout, the interface contract relaxes: the
   `ItemBrowser` via `setContent(browser)`.
 - [app-icon.md](app-icon.md) — `AppIcon` used for toolbar and action
   icons (`FILTER`, `SEARCH`, `OVERFLOW_MENU`, `EDIT`, `REMOVE`).
-- `docs/patterns/conventions/java.md` — `HasCaption` for filter-option
+- `docs/patterns/conventions/vaadin/uimodel.md` — `HasCaption` for filter-option
   enum display; `ComboBox` / `Select` item-label-generator convention;
   UI model capability interfaces (`HasActive`, `HasRole`, …)
   that `muteRowsWhen` and `FilterOption.matches()` bind against.

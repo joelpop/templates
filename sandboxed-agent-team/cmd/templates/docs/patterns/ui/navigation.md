@@ -11,7 +11,7 @@ and content slot. `SideNav` populates the drawer.
 
 ```java
 @Layout
-@AnonymousAllowed  // See docs/patterns/conventions/vaadin.md — do NOT use @PermitAll
+@AnonymousAllowed  // See docs/patterns/conventions/vaadin/spring.md — do NOT use @PermitAll
 public class MainLayout extends AppLayout {
     // DO NOT add "implements RouterLayout" — already inherited from AppLayout
 

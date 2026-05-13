@@ -199,5 +199,5 @@ site automatically.
   the string literal in `@Menu(icon = "vaadin:xxx")`.
 - `docs/patterns/ui/navigation.md` — `@Menu` and sidebar navigation;
   explains the string-literal icon problem that `@ViewIcon` addresses.
-- `docs/patterns/conventions/java.md` — `HasCaption` for display enums;
+- `docs/patterns/conventions/vaadin/uimodel.md` — `HasCaption` for display enums;
   a related pattern for enum display in selection components.

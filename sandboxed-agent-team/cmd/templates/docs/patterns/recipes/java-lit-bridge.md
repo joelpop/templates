@@ -31,7 +31,7 @@ component and cannot be called server-side:
 **Don't use for** browser *details* (timezone, locale, screen size)
 that only need to cross the module-boundary once — the
 `ClientDetailsService` pattern in
-`docs/patterns/conventions/vaadin.md` covers that case with less
+`docs/patterns/conventions/vaadin/datetime.md` covers that case with less
 overhead.
 
 ## Dependencies
@@ -288,7 +288,7 @@ instances.
 
 ## Related
 
-- `docs/patterns/conventions/vaadin.md` — "Browser Client Details —
+- `docs/patterns/conventions/vaadin/datetime.md` — "Browser Client Details —
   Bridging the SoC Wall": the related pattern for passing browser
   *details* (timezone, locale) across the module boundary without a
   full Lit component.

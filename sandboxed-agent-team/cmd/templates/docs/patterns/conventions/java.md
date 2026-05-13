@@ -177,6 +177,68 @@ Without `HasCaption`, each enum has its own getter name (`getLabel()`, `getDispl
 Enums that are only stored or compared (not displayed in selection components) do not need
 to implement `HasCaption`.
 
+## UI Model Capability Interfaces
+
+UI model data records implement small single-method interfaces from `{app}-uimodel` to
+advertise structural capabilities — the shapes that generic UI components bind against:
+
+```java
+public interface HasActive {
+    boolean active();
+}
+
+public interface HasRole {
+    UserRole role();
+}
+```
+
+A list-item record declares what it carries:
+
+```java
+public record UserListItem(
+        long id,
+        String username,
+        UserRole role,
+        boolean active) implements HasActive, HasRole { }
+```
+
+UI components bind to the interface, not the concrete record type. This decouples
+grid and filter logic from any particular record shape:
+
+```java
+// Mute inactive rows in any grid whose item type implements HasActive
+browser.muteRowsWhen(item -> !item.active());
+
+// FilterOption.matches() takes a method reference to the interface accessor —
+// one static factory works for every HasRole item type
+public static <T extends HasRole> SerializableBiPredicate<RoleFilterOption, T> matches() {
+    return FilterOption.matches(HasRole::role);
+}
+```
+
+### Naming convention
+
+Interface names match the record component they expose, prefixed with `Has`:
+`HasActive` exposes `active()`, `HasRole` exposes `role()`. The accessor name
+matches the record component name — no `get` prefix (records use accessor syntax,
+not getter syntax).
+
+### When to define a new interface
+
+Define a `Has*` interface when at least two record types share the same structural
+property **and** at least one UI component binds to that property generically. A
+property unique to one record type does not need an interface.
+
+### Relationship to `HasCaption`
+
+`HasCaption` is for *enum types* used in selection components — it normalises the
+display label. Capability interfaces are for *data records* used in grids and
+filters — they normalise the structural shape that generic components key off.
+Both live in `{app}-uimodel`; neither imports Vaadin.
+
+See `docs/patterns/recipes/item-browser.md` for the primary consumer: `muteRowsWhen`
+and `FilterOption.matches()` both bind through capability interfaces.
+
 ## Local Variable Declaration
 
 Declare local variables close to their first use, not at the top of the method:

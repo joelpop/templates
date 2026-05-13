@@ -439,7 +439,9 @@ is meaningless in this layout, the interface contract relaxes: the
 - [app-icon.md](app-icon.md) — `AppIcon` used for toolbar and action
   icons (`FILTER`, `SEARCH`, `OVERFLOW_MENU`, `EDIT`, `REMOVE`).
 - `docs/patterns/conventions/java.md` — `HasCaption` for filter-option
-  enum display; `ComboBox` / `Select` item-label-generator convention.
+  enum display; `ComboBox` / `Select` item-label-generator convention;
+  UI model capability interfaces (`HasActive`, `HasRole`, …)
+  that `muteRowsWhen` and `FilterOption.matches()` bind against.
 - `docs/patterns/architecture/services.md` — service error contracts
   (`ValidationException`, `EntityNotFoundException`); `trySave()`
   catch pattern follows `docs/patterns/ui/components.md` — "Service

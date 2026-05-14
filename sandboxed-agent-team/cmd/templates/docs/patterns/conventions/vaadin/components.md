@@ -236,12 +236,26 @@ private final Grid<ItemListItem> itemGrid;  // "Grid" clarifies
 
 ## Lumo Theme and LumoUtility
 
-Use `LumoUtility` class constants for padding, margin, color, flexbox, and sizing. Do not
-write custom CSS for things Lumo provides. Use component theme variants before resorting
-to custom styling.
+### Styling priority
+
+Reach for each level in order before moving to the next:
+
+1. **Component theme variants** — `addThemeVariants(...)` on the component itself. Zero
+   CSS, zero class names; the component expresses its own intent.
+2. **`LumoUtility` class constants** — `addClassNames(LumoUtility.Padding.MEDIUM, ...)`.
+   Covers padding, margin, gap, colour, typography, flexbox, sizing, and more without
+   writing any CSS.
+3. **`getStyle().set(...)`** — inline style on a specific element. Use when the value
+   is dynamic or not covered by a `LumoUtility` constant.
+4. **Custom CSS** — a `.css` file imported via `@StyleSheet`. Last resort, for
+   structural rules that cannot be expressed any other way.
 
 ```java
-// Preferred — LumoUtility constants
+// Level 1 — component variant
+button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+
+// Level 2 — LumoUtility constants
 content.addClassNames(
     LumoUtility.Padding.MEDIUM,
     LumoUtility.Gap.SMALL,
@@ -249,10 +263,29 @@ content.addClassNames(
     LumoUtility.FlexDirection.COLUMN
 );
 
-// Preferred — component variants
-button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+// Level 3 — inline style (dynamic value)
+badge.getStyle().set("--badge-color", item.getColor());
+
+// Level 4 — custom CSS (last resort)
+// @StyleSheet("styles.css") on the AppShell class
 ```
+
+### Applying the Lumo theme (`@Theme` deprecated since Vaadin 25)
+
+`@Theme` is deprecated as of Vaadin 25. Apply Lumo, the utility stylesheet, and
+project CSS via `@StyleSheet` annotations on the application's `AppShellConfigurator`
+class in this order:
+
+```java
+@StyleSheet(Lumo.STYLESHEET)          // Lumo base theme
+@StyleSheet(Lumo.UTILITY_STYLESHEET)  // LumoUtility classes
+@StyleSheet("styles.css")             // project overrides
+public class AppShell implements AppShellConfigurator { }
+```
+
+Order matters: project styles load after Lumo so they can override it. On
+Vaadin 24.x, continue using `@Theme(Lumo.class)` — the `@StyleSheet` approach
+is a Vaadin 25+ API.
 
 ## Binder for Forms
 

@@ -240,33 +240,42 @@ private final Grid<ItemListItem> itemGrid;  // "Grid" clarifies
 
 Reach for each level in order before moving to the next:
 
-1. **Component theme variants** — `addThemeVariants(...)` on the component itself. Zero
-   CSS, zero class names; the component expresses its own intent.
-2. **`LumoUtility` class constants** — `addClassNames(LumoUtility.Padding.MEDIUM, ...)`.
+1. **Component API** — `setWidth()`, `setMinWidth()`, `setMaxWidth()`, `setHeight()`,
+   `setPadding()`, `setSpacing()`, `setMargin()`, etc. If the component exposes a Java method for the
+   style concern, use it — it is the most refactor-safe and type-safe option.
+2. **Component theme variants** — `addThemeVariants(...)`. Zero CSS, zero class names;
+   the component expresses its own intent.
+3. **`LumoUtility` class constants** — `addClassNames(LumoUtility.Padding.MEDIUM, ...)`.
    Covers padding, margin, gap, colour, typography, flexbox, sizing, and more without
    writing any CSS.
-3. **`getStyle().set(...)`** — inline style on a specific element. Use when the value
+4. **`getStyle().set(...)`** — inline style on a specific element. Use when the value
    is dynamic or not covered by a `LumoUtility` constant.
-4. **Custom CSS** — a `.css` file imported via `@StyleSheet`. Last resort, for
+5. **Custom CSS** — a `.css` file imported via `@StyleSheet`. Last resort, for
    structural rules that cannot be expressed any other way.
 
 ```java
-// Level 1 — component variant
+// Level 1 — component API
+layout.setPadding(true);
+layout.setSpacing(true);
+layout.setWidth("320px");
+
+// Level 2 — component variant
 button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
 
-// Level 2 — LumoUtility constants
+// Level 3 — LumoUtility constants
 content.addClassNames(
-    LumoUtility.Padding.MEDIUM,
+    LumoUtility.Padding.Horizontal.MEDIUM,
     LumoUtility.Gap.SMALL,
     LumoUtility.Display.FLEX,
+    LumoUtility.BoxSizing.BORDER,
     LumoUtility.FlexDirection.COLUMN
 );
 
-// Level 3 — inline style (dynamic value)
+// Level 4 — inline style (dynamic value)
 badge.getStyle().set("--badge-color", item.getColor());
 
-// Level 4 — custom CSS (last resort)
+// Level 5 — custom CSS (last resort)
 // @StyleSheet("styles.css") on the AppShell class
 ```
 

@@ -162,7 +162,6 @@ Lead to regenerate this file).
 - **Build tool:** {{BUILD_TOOL}}
 - **Development branch:** {{DEV_BRANCH_NAME}}
 - **Existing code requirements:** {{EXISTING_CODE_REQS}}
-- **Feature workflow:** {{FEATURE_WORKFLOW}}
 - **Bug workflow:** {{BUG_WORKFLOW}}
 - **Auth method at original agent team setup:** <API_KEY | OAUTH>
 - **Git remote transport:** <SSH | HTTPS>

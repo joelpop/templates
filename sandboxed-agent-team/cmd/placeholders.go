@@ -168,21 +168,6 @@ The task branch is never pushed; no PR is created.`,
 		},
 		Default: "implicit",
 	},
-	"FEATURE_WORKFLOW": {
-		Name:    "FEATURE_WORKFLOW",
-		Source:  SourcePrompt,
-		Prompt:  "How should new features and behavior changes be handled?",
-		Options: []string{"req-first", "code-first"},
-		OptionDescriptions: []string{
-			`- Requirement Gate Workflow runs before the Coder starts.
-- Analyst drafts the requirement, Architect pre-reviews, human approves, then implementation begins.
-- Choose this for doc-centric projects where requirements are the contract.`,
-			`- Coder implements from intent; Analyst backfills requirement docs after the fact.
-- Faster to start, but requirements trail the code.
-- Choose this when the team prefers to prototype first and formalize later.`,
-		},
-		Default: "req-first",
-	},
 	"BUG_WORKFLOW": {
 		Name:    "BUG_WORKFLOW",
 		Source:  SourcePrompt,
@@ -242,7 +227,6 @@ var placeholderOrder = []string{
 	"COST_IN_LOG",
 	"FIX_ATTEMPT_LIMIT",
 	"EXISTING_CODE_REQS",
-	"FEATURE_WORKFLOW",
 	"BUG_WORKFLOW",
 	"MAX_PARALLEL_CODERS",
 	// Auto-discovered fall-backs — rarely prompt:

@@ -665,25 +665,12 @@ implication that the codebase or requirements have changed:
 - `explicit` → `implicit`: Code may fill requirement gaps without
   drafting new requirements first.
 
-**Tension note:** `explicit` + `FEATURE_WORKFLOW=req-first` is the
-strictest combination — any gap in requirements needed for the
-current task must be explicitly drafted before coding proceeds.
-`implicit` + `FEATURE_WORKFLOW=req-first` also creates friction
-(changes hit the requirement gate for code with no formal
-requirement), but agents may use the code to inform a draft before
-proceeding. The Lead surfaces these tensions at kickoff.
-
-#### Feature workflow: `{{FEATURE_WORKFLOW}}`
-
-Controls whether new features and behavior changes require an
-approved requirement before coding starts.
-
-- **`req-first`** — Requirement Gate Workflow runs before the
-  Coder starts: Analyst drafts, Architect pre-reviews, human
-  approves, then implementation begins. Default for doc-centric
-  projects.
-- **`code-first`** — Coder implements from intent; Analyst
-  backfills requirement docs after the fact.
+**Tension note:** `explicit` + `EXISTING_CODE_REQS` is the strictest
+combination — any requirement gap needed for a task must be drafted
+and approved before coding proceeds; code cannot fill gaps.
+`implicit` may create friction when changing existing behavior that
+has no formal requirement, but agents may use the code to inform a
+draft before proceeding. The Lead surfaces these tensions at kickoff.
 
 #### Bug workflow: `{{BUG_WORKFLOW}}`
 

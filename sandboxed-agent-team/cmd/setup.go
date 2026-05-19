@@ -262,7 +262,6 @@ func printInstallIntro(fresh bool) {
 	fmt.Println("     * Team-discipline knobs:")
 	fmt.Println("       - Coder fix-attempt limit")
 	fmt.Println("       - Existing code requirements (explicit / implicit)")
-	fmt.Println("       - Feature workflow (req-first / code-first)")
 	fmt.Println("       - Bug workflow (doc-first / fix-first)")
 	fmt.Println("       - Maximum parallel Coders per task")
 	fmt.Println("     * Preference to set up your local sandbox after install")
@@ -328,7 +327,6 @@ func confirmProceedWithInstall(vars Variables, fresh bool, runJoinAfterInstall b
 	printKV("Append cost to project log", vars["COST_IN_LOG"])
 	printKV("Fix-attempt limit", vars["FIX_ATTEMPT_LIMIT"])
 	printKV("Existing code reqs", vars["EXISTING_CODE_REQS"])
-	printKV("Feature workflow", vars["FEATURE_WORKFLOW"])
 	printKV("Bug workflow", vars["BUG_WORKFLOW"])
 	printKV("Max parallel Coders / task", vars["MAX_PARALLEL_CODERS"])
 	if fresh {

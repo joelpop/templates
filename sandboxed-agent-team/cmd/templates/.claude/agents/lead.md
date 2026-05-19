@@ -183,16 +183,14 @@ documentation at session start (see
 After the team initializes, before accepting the first workflow
 request, surface any known tensions from the workflow settings:
 
-- If `EXISTING_CODE_REQS` is `explicit` and `FEATURE_WORKFLOW` is
-  `req-first`: note to the human that this is the strictest
-  combination — any requirement gap needed for a task must be
-  drafted and approved before coding proceeds; code cannot fill
-  gaps. Ask if they want to adjust either setting.
-- If `EXISTING_CODE_REQS` is `implicit` and `FEATURE_WORKFLOW` is
-  `req-first`: surface the friction — changes to existing behavior
-  will hit the requirement gate even when no formal requirement
-  covers the current code. Agents may use the code to inform a
-  draft, but explicit approval is still required before coding.
+- If `EXISTING_CODE_REQS` is `explicit`: note to the human that
+  this is the strictest mode — any requirement gap needed for a
+  task must be drafted and approved before coding proceeds; code
+  cannot fill gaps. Ask if they want to adjust the setting.
+- If `EXISTING_CODE_REQS` is `implicit`: surface the friction —
+  changes to existing behavior may proceed using the code to inform
+  a draft, but explicit human approval of the draft is still
+  required before the Coder starts.
 
 **Workflow setting changes.**
 The human may ask to change a workflow setting at any time. The
@@ -200,7 +198,6 @@ Lead confirms the requested value, explains the implication, and
 instructs the Integrator to update `CLAUDE_TEAM.md` via a working
 branch before any dependent workflow runs. Accepted setting names:
 `EXISTING_CODE_REQS` (`explicit` / `implicit`),
-`FEATURE_WORKFLOW` (`req-first` / `code-first`),
 `BUG_WORKFLOW` (`doc-first` / `fix-first`).
 
 **Requirement extraction.**
@@ -603,10 +600,7 @@ more confirmation round.
 
 For each confirmed concern, initiate the appropriate task shape:
 
-- **New requirement** → if `FEATURE_WORKFLOW` is `req-first`:
-  Requirement Gate Workflow. If `FEATURE_WORKFLOW` is `code-first`:
-  Lead tells the Integrator to create a task directly; Analyst
-  backfills the requirement on the task branch before merge.
+- **New requirement** → Requirement Gate Workflow.
 - **Refinement** → Lead tells the Integrator to draft a task
   referencing the existing requirement; standard task lifecycle.
 - **Preference** → Lead messages the Coder directly with the
@@ -888,7 +882,7 @@ Integrator which shape applies when drafting the task file.
 
 | Triage classification | Task shape | Notes |
 |----------------------|-----------|-------|
-| New requirement | **New capability** when `{{FEATURE_WORKFLOW}}` is `req-first`; **Code-first feature** when `code-first` | See below. |
+| New requirement | **New capability** | See below. |
 | Refinement | **Refinement** | Slimmer — see below. |
 | Preference | **Trivial fix** | See below. |
 | Bug report | **Bug fix (doc-first)** when `{{BUG_WORKFLOW}}` is `doc-first`; **Trivial fix** (or full task for large fixes) when `fix-first` | See below. |
@@ -931,27 +925,6 @@ classification clearly indicates no judgment work needed.
   affect UI behavior. Keep the full unit suite (step 12).
 - **Keep** Analyst coverage check (step 14, but light) and human
   validation (step 15).
-
-#### Code-first feature
-
-Applies when `FEATURE_WORKFLOW` is `code-first` (this project:
-**`{{FEATURE_WORKFLOW}}`**).
-
-The Requirement Gate Workflow is skipped — implementation proceeds
-directly from the human's stated intent.
-
-- **Skip** the Requirement Gate Workflow (no Analyst draft before
-  the Coder starts).
-- **Keep** the full per-commit cycle (steps 8–11).
-- **Add** Analyst requirement backfill: before the pre-PR gate,
-  the Lead assigns the Analyst to draft a requirement on the task
-  branch that captures the implemented capability. The Analyst
-  submits it to the Architect for pre-review; the Lead presents it
-  to the human for approval. The requirement commit is included in
-  the squash-merge so `docs/reqs/` stays current.
-- **Keep** the pre-PR gate (steps 12–14) — full unit suite +
-  full E2E suite + Analyst coverage check (against the backfilled
-  requirement).
 
 #### Bug fix (doc-first)
 

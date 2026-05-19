@@ -34,9 +34,6 @@ and recipes that govern your implementation work.
 - `docs/patterns/conventions/comments.md` — comment discipline,
   including the fix-mode trap. Especially relevant when fixing
   bugs.
-- `docs/patterns/conventions/fixing.md` — diagnose-before-fix
-  classification, workaround signatures, fix-attempt limit. Apply
-  before reaching for a quick fix.
 - `docs/patterns/conventions/abstraction.md` — the
   third-instance rule. Watch your own work for recurring shapes
   that deserve extraction.
@@ -183,6 +180,19 @@ occurs during implementation:
    - Type casts or `instanceof` checks to bypass type-system errors
    - Null checks that mask incorrect data flow
    - Copying code rather than fixing the shared abstraction
+5. **RIGHT FIX, NOT JUST WORKING FIX.** A fix that makes the code
+   *work* is not the same as one that makes it *right*. Address the
+   root cause — the symptom disappears as a consequence. Don't add
+   scaffolding (flags, branches, fallbacks, retry loops) that makes
+   the immediate failure go away but increases surface area. When
+   the right fix is too large for the current task, surface it as a
+   follow-up item sized appropriately — don't ship the working fix
+   and call it done.
+6. **TESTS ARE PART OF THE FIX.** A bug fix without a test that
+   fails before the fix and passes after is incomplete. Coordinate
+   with the Unit Tester to ensure a regression test is included in
+   the same task. Skipping it because "it's obvious" forfeits both
+   the regression guard and the record that the bug existed.
 
 ### REVERT-BEFORE-REWORK
 

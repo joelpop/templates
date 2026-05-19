@@ -23,7 +23,6 @@ sensitive patterns carry inline "Vaadin ≥X / <X" notes; see [`README.md`](READ
 | [conventions/lombok.md](conventions/lombok.md) | Lombok guidelines: safe and unsafe annotations on JPA entities (`@Data` / `@EqualsAndHashCode` / `@ToString` pitfalls, managed collection fields, `@Builder`); `@Getter` + `@RequiredArgsConstructor` for enums with properties; `@Slf4j` for SLF4J logger declarations |
 | [conventions/comments.md](conventions/comments.md) | Code comment discipline: default to no comments, comments justify invariants not history, the fix-mode trap (don't paste conversational explanations into the code), where the *why* of a fix actually belongs (commit message, PR description, architecture docs) |
 | [conventions/abstraction.md](conventions/abstraction.md) | Abstraction recognition: the third-instance rule; value-object patterns (`ContentData`, `PersonName`); sizing the abstraction (value object → shared base class → component-family package) with wrong-size signs for each tier; where extracted abstractions live; when to leave duplication alone |
-| [conventions/fixing.md](conventions/fixing.md) | Fix discipline: diagnose-before-fix classification (trivial / localized / structural), workaround signatures (suppression annotations, swallowed exceptions, defensive casts, masking null checks, copied code), fix-attempt limit, right-thing vs working-thing, revert-before-rework, tests are part of the fix |
 
 ## Writing
 

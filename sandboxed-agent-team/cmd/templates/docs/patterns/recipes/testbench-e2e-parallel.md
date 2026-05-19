@@ -77,10 +77,9 @@ public class TestBenchParallelLimiter implements LauncherSessionListener {
 }
 ```
 
-`ServerExtension.applyConcurrentLimit()` reads the limit from `it-test.properties`
-and calls `Parameters.setTestsInParallel()`. It is a no-op when the system property
-is already set (Failsafe sets it via `<systemPropertyVariables>` before the forked
-JVM starts, so this path is only active in IDE runs).
+`ServerExtension.applyConcurrentLimit()` is defined in the `testbench-e2e-server`
+recipe — add the static initializer, `applyConcurrentLimit()`, and
+`readIntegrationTestConcurrentLimit()` to `ServerExtension` as shown there.
 
 Register via SPI — create
 `src/test/resources/META-INF/services/org.junit.platform.launcher.LauncherSessionListener`

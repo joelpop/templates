@@ -85,7 +85,3 @@ mvn test
 
 Tests should run in parallel (32 concurrent by default). Total wall-clock time
 for the full suite should be close to the time for a single test.
-
-See `docs/patterns/testing/patterns.md` → "Page Objects in Browserless UI Tests"
-for `ComponentTester<T>` three-section structure, stable location, typed
-accessor, and slot-children conventions.

@@ -71,10 +71,10 @@ with the field's left edge. The label has no box of its own and does not affect 
 field's width calculation.
 
 ```
-| |  Your name            | |
-| | +-nameTextField------+ | |
-| | |                    | | |
-| | +--------------------+ | |
+| |  Your name             | |       | |  Default role          | |
+| | +-nameTextField------+ | |       | | +-role(ComboBox)-+---+ | |
+| | |                    | | |       | | | Developer      | V | | |
+| | +--------------------+ | |       | | +----------------+---+ | |
 ```
 
 If no label is set, omit that row entirely.

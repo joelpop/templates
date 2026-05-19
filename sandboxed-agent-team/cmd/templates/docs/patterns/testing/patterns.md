@@ -2,17 +2,17 @@
 
 Unit, browserless UI, E2E, and test-data patterns for Vaadin 24+ with
 Spring Boot 3+. `@DataJpaTest`, `@SpringBootTest`, `@Transactional`
-rollback, AssertJ, Mockito, and Playwright usage below are stable across
-supported Vaadin and Spring Boot lines. Vaadin's browserless UI API
-(`SpringBrowserlessTest` / `$(...).id(...)`) is also consistent across
-supported versions.
+rollback, AssertJ, and Mockito usage below are stable across supported
+Vaadin and Spring Boot lines. Vaadin's browserless UI API
+(`BrowserlessTest` / `ComponentTester<T>`) and TestBench E2E API are
+also consistent across supported versions.
 
 ## Testing Pyramid
 
 ```
           /\
          /  \
-        /E2E \          Playwright — browser-based, pre-PR gate only
+        /E2E \          TestBench / Playwright — browser-based, pre-PR gate only
        /------\
       /Browser-\       Vaadin browserless UI — in-process, per-commit
      / less UI  \
@@ -23,8 +23,8 @@ supported versions.
 
 - **Unit tests** run on every commit via Maven surefire (`*Test.java` suffix)
 - **Browserless UI tests** run on every commit via Maven surefire (`*Test.java` suffix)
-- **E2E tests** run only at the pre-PR gate via Maven failsafe (`*IT.java` suffix or
-  Playwright via Node.js test runner in `e2e/`)
+- **E2E tests** run only at the pre-PR gate via Maven failsafe (`*IT.java` suffix with
+  TestBench) or Node.js test runner in `e2e/` (Playwright)
 
 ## One Test Class Per Production Class
 
@@ -79,7 +79,7 @@ Target code coverage for the service layer: **at least 80%**.
 
 Use AssertJ for assertions — prefer `assertThat(...)` over JUnit's `assertEquals`.
 
-## Browserless UI Tests — Vaadin TestBench
+## Browserless UI Tests
 
 Every UI feature has a browserless UI test using
 `SpringBrowserlessTest`. These exercise form submission, validation
@@ -511,7 +511,9 @@ void listAll_issuesExactlyOneQuery() {
 
 E2E tests use `@playwright/test` (TypeScript) and live in `e2e/`. They
 run against the full application stack (started via Docker or Maven
-failsafe).
+failsafe). For Java-based E2E tests, see the TestBench page objects
+section above and the `testbench-e2e-server` / `testbench-e2e-parallel`
+recipes.
 
 ```typescript
 // e2e/employee.spec.ts

@@ -215,6 +215,38 @@ private static void waitUntilReady(int port) throws Exception {
 }
 ```
 
+**`applyConcurrentLimit()`** — if the `testbench-e2e-parallel` recipe is also
+applied, add this static method and its helper to `ServerExtension`. The
+`TestBenchParallelLimiter` SPI and the static initializer call it to set
+TestBench's parallel limit before `ParallelConfigurationStrategy` captures it.
+It is a no-op when Failsafe has already set the system property:
+
+```java
+static {
+    applyConcurrentLimit();
+}
+
+static void applyConcurrentLimit() {
+    if (!System.getProperties().containsKey("com.vaadin.testbench.Parameters.testsInParallel")) {
+        int limit = readIntegrationTestConcurrentLimit();
+        System.setProperty("com.vaadin.testbench.Parameters.testsInParallel", String.valueOf(limit));
+        Parameters.setTestsInParallel(limit);
+    }
+}
+
+private static int readIntegrationTestConcurrentLimit() {
+    var props = new Properties();
+    try (var in = ServerExtension.class.getClassLoader()
+            .getResourceAsStream("it-test.properties")) {
+        props.load(in);
+    } catch (Exception e) {
+        throw new IllegalStateException(
+                "Failed to read integration-test.concurrent-limit from it-test.properties", e);
+    }
+    return Integer.parseInt(props.getProperty("integration-test.concurrent-limit"));
+}
+```
+
 **Jetty classpath** — `AnnotationConfiguration` must find Vaadin's
 `LookupServletContainerInitializer` to register `VaadinServlet`. Build the
 classpath from both `java.class.path` and the `URLClassLoader` hierarchy — in

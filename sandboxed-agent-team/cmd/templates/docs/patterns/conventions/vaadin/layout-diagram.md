@@ -29,7 +29,7 @@ Each box is labeled `+-varName(ClassName)--+`:
 - Omit `(ClassName)` and the parentheses when the variable name's suffix matches
   the class name (case-insensitive): `scroller` → `Scroller` ✓,
   `greetButton` → `Button` ✓, `content` wrapping a `Card` ✗ → `content(Card)`.
-- Unnamed components use only the class name: `Div`.
+- Unnamed components use only the class name in parentheses: `+-(Div)--+`.
 
 ## Drawing Characters
 
@@ -44,7 +44,7 @@ Each box is labeled `+-varName(ClassName)--+`:
 |---|---|
 | `Button` (text) | Label text, centered |
 | `Button` (icon only) | `[X]`, centered |
-| `TextField` | Placeholder or label text, left-aligned |
+| `TextField` | Empty interior (or placeholder if set); label text on the row above the box |
 | `Checkbox` | `[ ] Label text`, left-aligned |
 | `ComboBox` | value with `\| V` dropdown cell on right |
 | `Span` / `Div` | Sample/representative text, left-aligned |
@@ -52,14 +52,32 @@ Each box is labeled `+-varName(ClassName)--+`:
 Individual component examples:
 
 ```
-+-saveButton-+         +-userId(TextField)-------+
-|    Save    |         | name@company.com        |
-+------------+         +-------------------------+
+                        User ID
++-saveButton-+         +-userId(TextField)---------+
+|    Save    |         | enter your email address  |
++------------+         +---------------------------+
 
+                                       Default Name
 +-showTimestampsOption(Checkbox)-+    +-defaultName(ComboBox)----------+---+
 | [ ] Show timestamps            |    | Anonymous                      | V |
 +--------------------------------+    +--------------------------------+---+
 ```
+
+## Field Labels
+
+Vaadin renders field labels (e.g., on `TextField`, `ComboBox`) above the input.
+Show the label text on the row immediately above the field's top border, left-aligned
+with the field's left edge. The label has no box of its own and does not affect the
+field's width calculation.
+
+```
+| |  Your name            | |
+| | +-nameTextField------+ | |
+| | |                    | | |
+| | +--------------------+ | |
+```
+
+If no label is set, omit that row entirely.
 
 ## Width Calculation
 
@@ -101,6 +119,63 @@ zero-or-more multiplicity:
 | | |        .        | | |
 | | |        .        | | |
 ```
+
+## Complete Example
+
+A view and its custom component, each diagrammed in its own class comment.
+
+`GreetingCard` — custom component class:
+
+```
++-content(Card)-----------------------------------+
+| +-header(HorizontalLayout)--------------------+ |
+| | +-timestamp(Span)---------+ +-closeButton-+ | |
+| | | yyyy-MM-dd HH:mm:ss.SSS | |     [X]     | | |
+| | +-------------------------+ +-------------+ | |
+| +---------------------------------------------+ |
+| +-(Div)---------------------------------------+ |
+| | Hello, anonymous user.                      | |
+| +---------------------------------------------+ |
++-------------------------------------------------+
+```
+
+Rules illustrated: `content(Card)` — Composite root, suffix doesn't match `Card`;
+`header(HorizontalLayout)` — suffix doesn't match; `timestamp(Span)` — suffix
+doesn't match; `closeButton` — suffix matches `Button`, no class shown; `[X]` for
+icon-only button; `+-(Div)--+` for unnamed component.
+
+`MainView` — uses `GreetingCard` as a repeated custom component:
+
+```
++-content(VerticalLayout)---------------+
+| +-scroller--------------------------+ |
+| | +-cardsLayout(VerticalLayout)---+ | |
+| | | +-card(GreetingCard)--------+ | | |
+| | | | (see GreetingCard)        | | | |
+| | | +---------------------------+ | | |
+| | | +-card(GreetingCard)--------+ | | |
+| | | | (see GreetingCard)        | | | |
+| | | +---------------------------+ | | |
+| | |               .               | | |
+| | |               .               | | |
+| | |               .               | | |
+| | +-------------------------------+ | |
+| +-----------------------------------+ |
+| +-inputArea(HorizontalLayout)-------+ |
+| |  Your name                        | |
+| | +-nameTextField-+ +-greetButton-+ | |
+| | |               | |  Say hello  | | |
+| | +---------------+ +-------------+ | |
+| +-----------------------------------+ |
++---------------------------------------+
+```
+
+Rules illustrated: `content(VerticalLayout)` — Composite root, suffix doesn't
+match; `scroller` — suffix matches `Scroller`, no class shown; `cardsLayout` —
+suffix doesn't match `VerticalLayout` → `cardsLayout(VerticalLayout)`; custom
+component placeholder with two instances + dots for zero-or-more multiplicity;
+field label "Your name" on the row above `nameTextField`; `nameTextField` —
+suffix matches `TextField`; `greetButton` — suffix matches `Button`.
 
 ## Verification
 

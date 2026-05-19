@@ -10,14 +10,15 @@ supported versions.
 ## Testing Pyramid
 
 ```
-         /\
-        /E2E\          Playwright — browser-based, pre-PR gate only
+          /\
+         /  \
+        /E2E \          Playwright — browser-based, pre-PR gate only
        /------\
       /Browser-\       Vaadin browserless UI — in-process, per-commit
      / less UI  \
     /------------\
    /  Unit Tests  \    JUnit + Mockito — per-commit
-  /--------------\
+  /----------------\
 ```
 
 - **Unit tests** run on every commit via Maven surefire (`*Test.java` suffix)
@@ -84,6 +85,13 @@ Every UI feature has a browserless UI test using
 `SpringBrowserlessTest`. These exercise form submission, validation
 errors, and grid interactions in-process — no real browser.
 
+Choose the base class based on whether the test needs Spring beans:
+
+- **`BrowserlessTest`** — the default. No application context is started; `navigate(View.class)` returns a typed view instance. Use when the view doesn't need injected Spring beans.
+- **`SpringBrowserlessTest`** — when the test needs `@Autowired` beans alongside the view. Annotate with `@SpringBootTest`.
+
+Default to `BrowserlessTest`; switch to `SpringBrowserlessTest` only when the test must also assert against an injected service. The example below uses `SpringBrowserlessTest` to assert against `EmployeeService`:
+
 ```java
 @SpringBootTest
 class EmployeeViewTest extends SpringBrowserlessTest {
@@ -136,69 +144,105 @@ because the contract didn't.
 
 ### Page Objects in Browserless UI Tests
 
-The page object walks the server-side component tree from the view root
-and exposes high-level lookups (`headingText()`, `buttonWithText("Save")`,
-`paragraphMatching(predicate)`). Tests assert against the user-visible
-contract, not the layout's nesting depth.
+`ComponentTester<T>` (from `browserless-test-junit6`) is the page object base class for
+browserless tests. It wraps the server-side component tree and exposes `find(Type.class)`
+queries so tests interact through stable, intention-revealing methods rather than raw tree
+traversal.
+
+**Three-section structure:**
 
 ```java
-final class EmployeeFormPageObject {
+public class EmployeeViewTester extends ComponentTester<EmployeeView> {
 
-    private final Component root;
+    // PUBLIC API
 
-    EmployeeFormPageObject(Component root) {
-        this.root = root;
+    public EmployeeViewTester(EmployeeView component) {
+        super(component);
     }
 
-    String headingText() {
-        return descendants(H2.class).findFirst()
-                .map(H2::getText)
-                .orElseThrow(() -> new AssertionError("No heading found"));
+    public void setName(String name) {
+        getNameFieldTester().setValue(name);
     }
 
-    Optional<Button> buttonWithText(String label) {
-        return descendants(Button.class)
-                .filter(b -> label.equals(b.getText()))
-                .findFirst();
+    public void save() {
+        getSaveButtonTester().click();
     }
 
-    private <T extends Component> Stream<T> descendants(Class<T> type) {
-        return walk(root).filter(type::isInstance).map(type::cast);
+    public String getValidationError() {
+        return getNameFieldTester().getErrorMessage();
     }
 
-    private static Stream<Component> walk(Component component) {
-        return Stream.concat(
-                Stream.of(component),
-                component.getChildren().flatMap(EmployeeFormPageObject::walk));
+
+    // INTERNAL component tester accessors
+
+    private TextFieldTester<TextField, String> getNameFieldTester() {
+        return new TextFieldTester<>(find(TextField.class).withCaption("Name").single());
+    }
+
+    private ButtonTester<Button> getSaveButtonTester() {
+        return new ButtonTester<>(find(Button.class).withText("Save").single());
+    }
+
+
+    // INTERNAL helpers
+    // ...
+}
+```
+
+Key conventions:
+
+- **Stable location** — locate by user-visible identifier: `find(TextField.class).withCaption("Name").single()`,
+  not `find(TextField.class).single()`, which breaks when a second field is added.
+- **Typed accessor naming** — private accessors return typed tester instances (`TextFieldTester`,
+  `ButtonTester`, `SpanTester`, `DivTester`). The `get*Tester()` naming communicates the return
+  type and prevents confusion.
+- **User input via tester API** — `getNameFieldTester().setValue(name)`, not
+  `nameField.setValue(name)`. The tester checks usability (visibility, enabled state) before
+  delegating to the component.
+- **Method chaining** — actions that add content return the newly added item's tester:
+  `GreetingCardTester card = view.greet("Alice")` → `assertEquals("Hello, Alice!", card.getMessage())`.
+- **Separation of concerns** — visibility of a child is a concern of the parent container:
+  `isCardVisible(card)` lives on the view tester, not the card tester.
+
+**Slot children** (e.g., Vaadin `Card` header slot) are not reachable via `find()`. Navigate
+through the component's Java API instead: `getComponent().getContent().getHeader().getChildren()`.
+
+The test class works entirely through the tester's public API — no component lookups in the body:
+
+```java
+class EmployeeViewTest extends BrowserlessTest {
+
+    private EmployeeViewTester view;
+
+    @BeforeEach
+    void open() {
+        view = new EmployeeViewTester(navigate(EmployeeView.class));
+    }
+
+    @Test
+    void saveButton_savesEmployee_whenFormIsValid() {
+        view.setName("Jane Smith");
+        view.save();
+        assertEquals(1, view.getCardCount());
+    }
+
+    @Test
+    void saveButton_showsValidationError_whenNameIsEmpty() {
+        view.save();
+        assertEquals("Name is required", view.getValidationError());
     }
 }
 ```
 
-The test stays focused on behavior:
+Page object classes live in the test source tree, in the same package as the view they cover.
+
+To trigger a keyboard shortcut without a browser, call `fireShortcut()` from the test class:
 
 ```java
-@Test
-void saveButton_isVisible_afterFormLoads() {
-    var view = new EmployeeView();
-    var page = new EmployeeFormPageObject(view);
-
-    assertThat(page.headingText()).isEqualTo("New Employee");
-    assertThat(page.buttonWithText("Save")).isPresent();
-}
+view.setName("Alice");
+fireShortcut(Key.ENTER);
+assertEquals(1, view.getCardCount());
 ```
-
-With `SpringBrowserlessTest`, the framework's `$()` and `$view()`
-queries already cover most of this (filter by component type, label,
-attribute, predicate). Page objects are most valuable when those
-aren't enough — e.g., several components share a tag and only their
-tree position distinguishes them, or a single semantic concept ("the
-details paragraph") needs one named accessor across many tests.
-
-Page objects live in the test source tree, package-private, in the
-same package as the views they cover. A working example is
-`ErrorViewPageObject` in
-`fleet-acuity-ui/src/test/java/.../ui/view/error/`, used by all four
-error-view tests.
 
 ### Page Objects in E2E Tests
 
@@ -242,15 +286,136 @@ the next page's page object so tests can chain. This also implicitly
 asserts the navigation succeeded — if the next page isn't found, the
 test fails at the chain point.
 
-Vaadin's TestBench documentation covers the same pattern for Java E2E
-tests using `@Element("tag-name")`-annotated classes that extend
-`TestBenchElement` — see [Tests with Page Objects][vaadin-page-objects].
-Same abstraction; the locator mechanism differs
-(`$(LoginViewElement.class)` vs. `page.getByLabel(...)`), but the goal
-is identical: tests stay coupled to the user-visible contract, not the
-DOM.
+#### TestBench page objects
+
+For TestBench E2E tests (`BrowserTestBase`), the page object extends `TestBenchElement` and
+carries an `@Element("vaadin-tag-name")` annotation that identifies its root element. The
+same three-section structure and typed-accessor conventions apply:
+
+```java
+@Element("vaadin-vertical-layout")
+public class EmployeeViewElement extends TestBenchElement {
+
+    // PUBLIC API
+
+    public void setName(String name) {
+        getNameFieldElement().click();
+        getNameFieldElement().sendKeys(name);
+    }
+
+    public void save() {
+        getSaveButtonElement().click();
+    }
+
+    public int getCardCount() {
+        return $(EmployeeCardElement.class).all().size();
+    }
+
+    public boolean isNameFieldFocused() {
+        return getNameFieldElement().hasAttribute("focused");
+    }
+
+    public boolean isNameFieldTextSelected() {
+        return (Boolean) executeScript(
+                "const el = arguments[0].inputElement;" +
+                "return el.value.length > 0 && el.selectionStart === 0 && el.selectionEnd === el.value.length;",
+                getNameFieldElement());
+    }
+
+    public boolean isCardVisible(EmployeeCardElement card) {
+        var scrollerRect = $(ScrollerElement.class).single().getRect();
+        var cardRect = card.getRect();
+        return cardRect.getY() + cardRect.getHeight() <= scrollerRect.getY() + scrollerRect.getHeight() + 1
+            && cardRect.getY() >= scrollerRect.getY() - 1;
+    }
+
+
+    // INTERNAL element accessors
+
+    private TextFieldElement getNameFieldElement() {
+        return $(TextFieldElement.class).withCaption("Name").single();
+    }
+
+    private ButtonElement getSaveButtonElement() {
+        return $(ButtonElement.class).withText("Save").single();
+    }
+}
+```
+
+Differences from browserless page objects:
+
+- **User input** — use `click() + sendKeys(name)`, not `TextFieldElement.setValue(name)`.
+  `setValue()` leaves the prior text selected, masking whether autoselect behavior is present.
+- **Root access** — retrieve the view element from the test with
+  `$(EmployeeViewElement.class).onPage().get(0)`.
+- **Focus** — check `hasAttribute("focused")` on the Vaadin field element (the web
+  component, not the inner `<input>`).
+- **Text selection** — use `executeScript()` against the inner `inputElement`;
+  `selectionStart === 0 && selectionEnd === value.length` means all text is selected.
+- **Scroll visibility** — compare `getRect()` bounds of the scroller and card with ±1 px
+  tolerance to absorb sub-pixel rounding.
+- **Slot children** (e.g., `CardElement` header/content slots) — use the slot-aware
+  accessors (`getHeader()`, `getContents()`) rather than `$()`, which doesn't cross slot
+  boundaries.
+
+**Test class:**
+
+```java
+@ExtendWith(ServerExtension.class)
+class EmployeeViewIT extends BrowserTestBase {
+
+    private EmployeeViewElement view;
+
+    @BeforeEach
+    void open() {
+        getDriver().get("http://localhost:" + System.getProperty("deployment.port") + "/");
+        view = $(EmployeeViewElement.class).onPage().get(0);
+    }
+
+    @BrowserTest
+    void saveButton_savesEmployee_whenFormIsValid() {
+        view.setName("Jane Smith");
+        view.save();
+        assertEquals(1, view.getCardCount());
+    }
+
+    @BrowserTest
+    void openView_nameFieldIsFocused() {
+        waitUntil(_ -> view.isNameFieldFocused());
+        assertTrue(view.isNameFieldFocused());
+    }
+}
+```
+
+Use `@BrowserTest` (not `@Test`) to opt into TestBench's parallel executor. Use
+`waitUntil()` for any assertion on state that may not be immediate after a server
+round-trip.
+
+See `testbench-e2e-server` and `testbench-e2e-parallel` recipes for Maven `it`
+profile, `ServerExtension`, and `TestBenchParallelLimiter` setup.
 
 [vaadin-page-objects]: https://vaadin.com/docs/latest/flow/testing/end-to-end/page-objects
+
+## What Only a Real Browser Can Test
+
+Browserless tests cover server-side component state and event handling without a browser.
+A real browser (TestBench) is required for anything the browser engine mediates:
+
+| Capability | Browserless | TestBench |
+|---|---|---|
+| Component state, server events | ✓ | ✓ |
+| Focus | — | ✓ (`hasAttribute("focused")`) |
+| Text selection | — | ✓ (`executeScript()` on `selectionStart`/`selectionEnd`) |
+| Scroll position | — | ✓ (`getRect()` comparison) |
+| CSS rendering, hover states | — | ✓ |
+| Web component internals (slots, shadow DOM) | — | ✓ |
+
+For browser-only assertions, use `waitUntil()` to let the browser settle before asserting:
+
+```java
+waitUntil(_ -> view.isNameFieldFocused());
+assertTrue(view.isNameFieldFocused());
+```
 
 ## Repository Tests — @DataJpaTest
 

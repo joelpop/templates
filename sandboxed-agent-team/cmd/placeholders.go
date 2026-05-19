@@ -153,11 +153,41 @@ The task branch is never pushed; no PR is created.`,
 		Prompt: "Coder fix-attempt limit before escalating to the Architect (consecutive attempts on the same root cause)",
 		Default: "2",
 	},
-	"DOC_FIRST_FIX": {
-		Name:    "DOC_FIRST_FIX",
+	"EXISTING_CODE_REQS": {
+		Name:    "EXISTING_CODE_REQS",
 		Source:  SourcePrompt,
-		Prompt:  "Route bug reports through doc-gap diagnosis (Analyst / Architect) before the code fix?",
-		Options: []string{"yes", "no"},
+		Prompt:  "How should agents treat requirements relative to the existing codebase when requirements are silent or incomplete?",
+		Options: []string{"explicit", "implicit"},
+		OptionDescriptions: []string{
+			`- Requirements are the authoritative specification; the code implements requirements.
+- Any gap needed for the current task must be drafted and approved before coding proceeds — inferring intent from the code is not a substitute.
+- Choose this when requirements are the primary source of intent for all team members.`,
+			`- Requirements are consulted but gaps are acceptable; the code fills in what requirements don't cover.
+- Agents infer intent from the existing implementation when requirements are silent.
+- Choose this when the team wants flexibility to code without filling every requirement gap first.`,
+		},
+		Default: "implicit",
+	},
+	"FEATURE_WORKFLOW": {
+		Name:    "FEATURE_WORKFLOW",
+		Source:  SourcePrompt,
+		Prompt:  "How should new features and behavior changes be handled?",
+		Options: []string{"req-first", "code-first"},
+		OptionDescriptions: []string{
+			`- Requirement Gate Workflow runs before the Coder starts.
+- Analyst drafts the requirement, Architect pre-reviews, human approves, then implementation begins.
+- Choose this for doc-centric projects where requirements are the contract.`,
+			`- Coder implements from intent; Analyst backfills requirement docs after the fact.
+- Faster to start, but requirements trail the code.
+- Choose this when the team prefers to prototype first and formalize later.`,
+		},
+		Default: "req-first",
+	},
+	"BUG_WORKFLOW": {
+		Name:    "BUG_WORKFLOW",
+		Source:  SourcePrompt,
+		Prompt:  "How should bug reports be routed?",
+		Options: []string{"doc-first", "fix-first"},
 		OptionDescriptions: []string{
 			`- Lead diagnoses what kind of doc gap (missing requirement / AC / pattern / architecture entry) the bug exposes.
 - Doc fix lands first; code fix follows.
@@ -166,7 +196,7 @@ The task branch is never pushed; no PR is created.`,
 - Faster per bug, but doesn't grow the requirements / patterns corpus.
 - Choose this if the docs corpus is still being built or if the team prefers to land fixes first and harvest patterns separately.`,
 		},
-		Default: "yes",
+		Default: "doc-first",
 	},
 	"MAX_PARALLEL_CODERS": {
 		Name:    "MAX_PARALLEL_CODERS",
@@ -211,7 +241,9 @@ var placeholderOrder = []string{
 	"COST_IN_COMMIT",
 	"COST_IN_LOG",
 	"FIX_ATTEMPT_LIMIT",
-	"DOC_FIRST_FIX",
+	"EXISTING_CODE_REQS",
+	"FEATURE_WORKFLOW",
+	"BUG_WORKFLOW",
 	"MAX_PARALLEL_CODERS",
 	// Auto-discovered fall-backs — rarely prompt:
 	"PROJECT_NAME",

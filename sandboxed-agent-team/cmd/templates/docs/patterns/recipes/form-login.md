@@ -304,7 +304,7 @@ public class UserService {
 Password-strength validation (entropy, length, pwned-list check)
 is project policy — see
 `docs/patterns/architecture/security.md` for the kit's stance and
-defer to `docs/architecture/` for project-specific rules.
+defer to `docs/solutions/` for project-specific rules.
 
 ## Decisions this recipe imposes
 
@@ -326,7 +326,7 @@ defer to `docs/architecture/` for project-specific rules.
   filter, the login view, the CSRF strategy, and the session
   defaults coherently with Vaadin.
 - **BCrypt at strength 10 by default.** Adjustable; document any
-  deviation in `docs/architecture/security.md`.
+  deviation in `docs/solutions/security.md`.
 
 ## What to verify
 
@@ -359,5 +359,5 @@ defer to `docs/architecture/` for project-specific rules.
   configurable independently.
 - `docs/patterns/architecture/security.md` — password strength
   policy, BCrypt strength rationale, session config, RBAC.
-- `docs/architecture/` — your project's username column choice,
+- `docs/solutions/` — your project's username column choice,
   user-lookup logic, role mapping, password policy.

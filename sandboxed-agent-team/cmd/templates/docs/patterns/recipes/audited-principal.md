@@ -283,7 +283,7 @@ public class AuditedFormLoginUser implements UserDetails, AuditedPrincipal {
   employee ID, login handle, or an opaque identifier. The
   `AuditedPrincipal.getUsername()` contract reflects what Spring
   Security calls it: a *username*. Project-specific column choice
-  belongs in `docs/architecture/`.
+  belongs in `docs/solutions/`.
 - **`EntityManager.getReference()` over `findById()` in
   `AuditorAware`.** A SELECT on every audited write is invisible
   cost; the proxy is the same FK persistence with none of the
@@ -325,6 +325,6 @@ public class AuditedFormLoginUser implements UserDetails, AuditedPrincipal {
   `AuditedOidcUser`.
 - `docs/patterns/architecture/persistence.md` — surrounding JPA
   conventions (`@MappedSuperclass` hierarchy, lazy fetch defaults).
-- `docs/architecture/` — your project's specific user-key type
+- `docs/solutions/` — your project's specific user-key type
   (`Long` / `UUID` / `String`), username column choice (email /
   employee ID / handle), and any system-principal handling.

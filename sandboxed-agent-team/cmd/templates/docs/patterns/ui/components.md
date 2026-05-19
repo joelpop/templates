@@ -63,7 +63,7 @@ application-specific UI requirements — see `docs/reqs/external-interfaces/user
 > (full-dataset loading, record count, row-click → edit) were
 > project-specific requirements, not agnostic patterns. They have been
 > moved to `docs/reqs/functional/cross-cutting/admin-list.md` (the
-> canonical cross-cutting requirement) and `docs/architecture/admin-grid.md`
+> canonical cross-cutting requirement) and `docs/solutions/admin-grid.md`
 > (the impl companion). Only the genuinely agnostic Column Configuration
 > guidance remains below.
 >

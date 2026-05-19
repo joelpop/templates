@@ -339,7 +339,7 @@ private boolean isSsoOnly() {
   decision — typically wrong for B2B / regulated apps, sometimes
   right for B2C. The recipe's `OidcUserAdapter` refuses unknown
   emails with `user_not_provisioned`; opt into auto-provisioning
-  in `docs/architecture/` and add the JIT-creation step there.
+  in `docs/solutions/` and add the JIT-creation step there.
 - **Email is one valid claim choice; the recipe doesn't bake it
   in.** The `OidcUserAdapter` matches the example to fleet-acuity's
   email-as-username choice; substitute `preferred_username` or
@@ -403,6 +403,6 @@ private boolean isSsoOnly() {
 - [passkey.md](passkey.md) — alternative auth method.
 - `docs/patterns/architecture/security.md` — surrounding
   security architecture.
-- `docs/architecture/` — your project's IdP choice, role mapping
+- `docs/solutions/` — your project's IdP choice, role mapping
   from IdP claims to application roles, auto-provisioning policy
   if any, name-attribute claim choice, and SSO-only-mode UX.

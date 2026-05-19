@@ -57,7 +57,7 @@ audited-principal contract.
 - A custom Lit web component (`{app}-passkey-button.ts`) that
   performs the browser-side WebAuthn ceremony. Sketch only in
   this recipe; the full TypeScript implementation lives in
-  `docs/architecture/` or your client-side codebase.
+  `docs/solutions/` or your client-side codebase.
 
 ## Step 1 — Define the `WebAuthnSettings` interface
 
@@ -672,6 +672,6 @@ add(register);
 - [oidc-sso.md](oidc-sso.md) — alternative auth method.
 - `docs/patterns/architecture/security.md` — surrounding
   security architecture.
-- `docs/architecture/` — your project's Lit component
+- `docs/solutions/` — your project's Lit component
   implementation, credential-label policy, registration-attempt
   limits, device-binding policy.

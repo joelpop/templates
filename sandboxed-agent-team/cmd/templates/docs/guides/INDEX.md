@@ -1,7 +1,7 @@
 # Guides — Index
 
 End-user, administrator, and operator-facing guides for using the
-running system. Distinct from `docs/reqs/`, `docs/architecture/`,
+running system. Distinct from `docs/reqs/`, `docs/solutions/`,
 and `docs/patterns/` — those trees are about *building* the system;
 this one is about *using* it.
 
@@ -51,5 +51,5 @@ covered.
 | To link a guide entry to | Use |
 |--------------------------|-----|
 | A requirement (the *what*) | Relative link to `docs/reqs/...` |
-| An architecture entry (the *how*) | Relative link to `docs/architecture/...` (mostly for developer-facing operator guides) |
+| An architecture entry (the *how*) | Relative link to `docs/solutions/...` (mostly for developer-facing operator guides) |
 | A pattern (style or recipe) | Usually unnecessary in guides; patterns are internal-facing |

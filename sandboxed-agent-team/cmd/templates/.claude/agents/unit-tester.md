@@ -23,8 +23,9 @@ The unit/browserless UI test directories (see CLAUDE.md).
 
 Read proactively.
 
-- `docs/glossary.md` — project's canonical vocabulary; tests
-  reference behavior named in requirements.
+- `docs/glossary/business.md`, `docs/glossary/technical.md` —
+  project's canonical vocabulary; tests reference behavior named
+  in requirements.
 - `docs/patterns/testing/patterns.md` — testing pyramid,
   one-test-class-per-production-class, JUnit + Mockito,
   browserless UI tests, page objects, repository tests, test
@@ -33,9 +34,9 @@ Read proactively.
 - `docs/patterns/conventions/comments.md` — test-name discipline
   (test names are documentation of behavior; avoid mechanical
   names like `test1`).
-- CLAUDE.md → "Requirement Status" — you own the per-AC
-  checkboxes; mark `[-]` when test authoring begins, `[x]` when
-  the test passes.
+- CLAUDE.md → "Requirement Status" — notify the Analyst when
+  test authoring begins (so the Analyst marks the AC C `[-]`) and
+  when a test passes (so the Analyst marks it `[x]`).
 - CLAUDE.md → "Team Coordination Procedures" → "Task Branch
   Merge Protocol" — when merging tests into the task branch.
 

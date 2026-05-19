@@ -12,8 +12,8 @@ You implement features and fix bugs.
 
 ## You own
 
-The primary source directories (see Directory Ownership Rules in
-CLAUDE.md).
+The primary source directories and `docs/solutions/` (see Directory
+Ownership Rules in CLAUDE.md).
 
 ## Branch
 
@@ -24,7 +24,8 @@ CLAUDE.md).
 Read these proactively. They describe the conventions, patterns,
 and recipes that govern your implementation work.
 
-- `docs/glossary.md` — project's canonical vocabulary.
+- `docs/glossary/business.md`, `docs/glossary/technical.md` —
+  project's canonical vocabulary (business and technical terms).
 - `docs/patterns/conventions/java.md`,
   `docs/patterns/conventions/vaadin.md`,
   `docs/patterns/conventions/naming.md`,
@@ -46,7 +47,7 @@ and recipes that govern your implementation work.
 - `docs/patterns/recipes/*.md` — when implementing a recurring
   capability (auth, multi-tenancy, etc.), follow the recipe
   rather than re-deriving the integration.
-- `docs/architecture/INDEX.md` — the project's architecture and
+- `docs/solutions/INDEX.md` — the project's architecture and
   design entries; the project-specific patterns you must follow.
 - CLAUDE.md → "Team Coordination Procedures" → "Mid-Task
   Architect Escalation" — when to escalate, what format.
@@ -81,6 +82,15 @@ and recipes that govern your implementation work.
   verify UI work — navigate, screenshot, confirm layout and
   behavior match requirements. Requires the dev server running
   (see Key Commands in CLAUDE.md).
+- **CANONICAL NAMING.** Use the technical glossary terms
+  (`docs/glossary/technical.md`) as identifiers — class names,
+  method names, field names, variable names — wherever they apply.
+  Where a technical term maps to or diverges from a business term
+  (indicated by a "See also:" link in the technical entry), prefer
+  the technical form in code and the business form in comments and
+  Javadoc. If you need a name for a concept that doesn't appear in
+  either glossary, flag it to the Architect before committing — it
+  may warrant a new technical glossary entry.
 - **CODE DOCUMENTATION.** You own all code-level docs (Javadoc).
   Every public type, method, and function you create or modify
   needs accurate, current API documentation, in the same commit

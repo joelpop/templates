@@ -1,6 +1,7 @@
-# Glossary
+# Business Glossary
 
-The project's canonical vocabulary. Every term defined here has:
+The project's canonical vocabulary for business and user-facing
+concepts. Every term defined here has:
 
 - A **canonical form** that requirement docs and other internal
   documents use exclusively.
@@ -12,15 +13,13 @@ The project's canonical vocabulary. Every term defined here has:
   form. The team understands these in conversation; documents use
   the canonical form.
 
-The Architect curates this file (proposing new entries during
-requirement pre-review and architecture work). The Analyst commits
-entries on the requirement branch alongside the requirements that
+The Analyst curates and commits this file. Terms are proposed during
+requirement drafting and approved alongside the requirements that
 introduce them.
 
 The glossary is small by design. If a term is widely understood and
 unambiguous (e.g., "user," "create," "save"), it does not belong
-here — only ambiguous, project-specific, or implementation-agnostic
-terms are entries.
+here — only ambiguous or project-specific business terms are entries.
 
 ---
 

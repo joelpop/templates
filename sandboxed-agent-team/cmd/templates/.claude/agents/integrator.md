@@ -89,7 +89,7 @@ this role drives.
   sequence you drive.
 - `.claude/agents/lead.md` → "Task and PR Flow" — task lifecycle stages,
   cost baseline at kickoff, cost report at conclusion.
-- `docs/glossary.md` — project's canonical vocabulary; useful
+- `docs/glossary/business.md`, `docs/glossary/technical.md` — project's canonical vocabulary; useful
   when drafting task files.
 
 ## Coordination

@@ -29,9 +29,13 @@ different stages.
 
 Read proactively.
 
-- `docs/glossary.md` — project's canonical vocabulary; use these
-  terms in guides for consistency. Slang variants are conversational
-  only; guides use canonical forms.
+- `docs/glossary/business.md` — project's business vocabulary; guides
+  use these terms exclusively. Slang variants are conversational only;
+  guides use canonical forms.
+- `docs/glossary/technical.md` — read for context when the feature
+  being documented has technical constraints; do not use technical
+  terms in guide prose (those terms belong in code, not user-facing
+  docs).
 - `docs/guides/INDEX.md` — your own workspace's index;
   audience-organized.
 - `docs/reqs/INDEX.md` — when documenting *how to use* a feature,
@@ -81,7 +85,7 @@ Read proactively.
   per-audience sub-`INDEX.md` files current. Every guide entry
   must be listed.
 - **CROSS-LINK CORRECTLY.** Use relative links to `docs/reqs/`
-  for the *what*, to `docs/architecture/` for developer-facing
+  for the *what*, to `docs/solutions/` for developer-facing
   operator content where relevant. Patterns from `docs/patterns/`
   are internal-facing — do not cross-link to them from guides.
 - **RELEASE NOTES.** Maintain `docs/guides/release-notes/` when a

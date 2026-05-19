@@ -109,8 +109,8 @@ Teams feature. Seven teammates are defined in `.claude/agents/`:
 |-------------|----------------------------------|----------------------------------------------------------------------------------------------------|
 | Integrator  | `.claude/agents/integrator.md`   | Operational lieutenant — task files, git, PR lifecycle, post-merge hygiene, on-demand dep audits, cost recording |
 | Analyst     | `.claude/agents/analyst.md`      | Requirements engineer — owns `docs/reqs/`; runs consistency checks                                 |
-| Architect   | `.claude/agents/architect.md`    | Architecture guardian; curates `docs/glossary.md`, `docs/patterns/`, and `docs/architecture/`      |
-| Coder       | `.claude/agents/coder.md`        | Implementer — features, bug fixes, commit-time lint/format/analysis, dependency-audit-on-change   |
+| Architect   | `.claude/agents/architect.md`    | Architecture guardian; owns `docs/patterns/` and `docs/glossary/technical.md`; `pattern/<slug>` branches |
+| Coder       | `.claude/agents/coder.md`        | Implementer — features, bug fixes, commit-time lint/format/analysis, dependency-audit-on-change; owns `docs/solutions/` |
 | Unit Tester | `.claude/agents/unit-tester.md`  | Unit and browserless UI tests                                                                      |
 | E2E Tester  | `.claude/agents/e2e-tester.md`   | Playwright browser tests                                                                           |
 | Tech Writer | `.claude/agents/tech-writer.md`  | Owns `docs/guides/` — install / deploy / user / admin / operator guides; release-cadence updates  |
@@ -159,16 +159,16 @@ Beyond this file and CLAUDE.md (auto-loaded), consult these when
 triaging requests, drafting task files, or routing teammate
 questions:
 
-- `docs/glossary.md` — project vocabulary; for ambiguous terms or
-  slang variants.
+- `docs/glossary/business.md`, `docs/glossary/technical.md` —
+  project vocabulary; for ambiguous terms or slang variants.
 - `docs/reqs/INDEX.md` — current requirements; for new-vs-refinement
   classification.
 - `docs/reqs/open-items.md` — outstanding human-input questions; a
   request may resolve one.
 - `docs/patterns/INDEX.md` — project-agnostic patterns; for
   new-pattern vs. project-specific decisions.
-- `docs/architecture/INDEX.md` — project architecture entries; for
-  new architecture entries or in-flight architectural concerns.
+- `docs/solutions/INDEX.md` — project solution entries; for
+  non-obvious implementation decisions or in-flight concerns.
 - `docs/guides/INDEX.md` — when a request affects user-facing
   docs (route to Tech Writer).
 - `.claude/agents/*.md` — each teammate's role definition,
@@ -178,6 +178,41 @@ questions:
 The session-start hook also injects canonical Agent Teams
 documentation at session start (see
 `.claude/hooks/session-start-fetch-docs.sh`).
+
+**Workflow settings check.**
+After the team initializes, before accepting the first workflow
+request, surface any known tensions from the workflow settings:
+
+- If `EXISTING_CODE_REQS` is `explicit` and `FEATURE_WORKFLOW` is
+  `req-first`: note to the human that this is the strictest
+  combination — any requirement gap needed for a task must be
+  drafted and approved before coding proceeds; code cannot fill
+  gaps. Ask if they want to adjust either setting.
+- If `EXISTING_CODE_REQS` is `implicit` and `FEATURE_WORKFLOW` is
+  `req-first`: surface the friction — changes to existing behavior
+  will hit the requirement gate even when no formal requirement
+  covers the current code. Agents may use the code to inform a
+  draft, but explicit approval is still required before coding.
+
+**Workflow setting changes.**
+The human may ask to change a workflow setting at any time. The
+Lead confirms the requested value, explains the implication, and
+instructs the Integrator to update `CLAUDE_TEAM.md` via a working
+branch before any dependent workflow runs. Accepted setting names:
+`EXISTING_CODE_REQS` (`explicit` / `implicit`),
+`FEATURE_WORKFLOW` (`req-first` / `code-first`),
+`BUG_WORKFLOW` (`doc-first` / `fix-first`).
+
+**Requirement extraction.**
+When the human asks to extract requirements from the existing
+codebase (at install time or later), the Lead assigns the Analyst
+on a `requirement/extraction` branch to read the codebase —
+entity model, service interfaces, views, routes — and draft
+requirements for each distinct capability already present. Each
+draft follows the standard intake flow: Architect pre-review →
+human approval → commit. When complete, the Lead reminds the
+human to consider updating `EXISTING_CODE_REQS` to `explicit` if
+the extracted requirements are now authoritative.
 
 ## Coordination Rules
 
@@ -194,20 +229,19 @@ these files in order. Don't rely on memory — compaction is
 invisible.
 
 1. `CLAUDE.md` — stack, ownership rules, critical constraints
-2. `docs/INDEX.md` — master list of requirement, glossary, and
+2. `docs/README.md` — master list of requirement, glossary, and
    architecture documents
-3. `docs/glossary.md` — agnostic vocabulary linked inline from
-   requirement docs. Read before any requirement doc so the linked
-   terms make sense.
+3. `docs/glossary/business.md`, `docs/glossary/technical.md` —
+   project vocabulary linked inline from requirement docs. Read
+   before any requirement doc so linked terms make sense.
 4. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
-   ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL,
-   ENVIRONMENTAL, or EXTERNAL-INTERFACE docs relevant to your
-   task. Also any PATTERN entry your role's Primary references
-   points to.
-5. `docs/architecture/architecture-debt.md` — known structural debt
+   SOLUTION in `docs/README.md`, plus any TECHNICAL, ENVIRONMENTAL,
+   or EXTERNAL-INTERFACE docs relevant to your task. Also any
+   PATTERN entry your role's Primary references points to.
+5. `docs/solutions/technical-debt.md` — known structural debt
 6. The FEATURE doc matching your task, plus all
    FEATURE-SUPPLEMENTAL docs linked from it. Follow inline links
-   into `docs/glossary.md` and `docs/architecture/` — those are
+   into `docs/glossary/` and `docs/solutions/` — those are
    part of the requirement's intent.
 7. `.claude/.tasks/<your-task>.md` — your assignment
 8. `.claude/.progress.md` — active and suspended tasks. Verify
@@ -232,19 +266,22 @@ being held hostage to a single implementation.
   can pick the best fit. Concrete component names belong in the
   tech ref, not here, unless required by a hard constraint
   (e.g., regulation).
-- **Glossary** (`docs/glossary.md`, curated by the Architect,
-  committed by the Analyst) — defines agnostic terms used in
-  requirements ("edit affordance", "action trigger", "navigation
-  target"). Each entry is a Markdown anchor that requirements
-  link to inline. If a needed term is missing, the Architect
-  proposes one during pre-review.
-- **Technical Reference** (`docs/architecture/`, curated by the
-  Architect, committed by the Analyst; tagged ARCHITECTURE in
-  `docs/INDEX.md`) — pattern playbook describing HOW the team
-  builds things, above code but below requirements. Each entry
-  covers a recurring pattern ("edit surfaces with unsaved-changes
-  guards") and names the components and integrations involved.
-  Grows as new patterns are decided.
+- **Business Glossary** (`docs/glossary/business.md`, Analyst
+  owns) — defines agnostic business terms used in requirements
+  ("edit affordance", "action trigger", "navigation target"). Each
+  entry is a Markdown anchor that requirements link to inline. If a
+  needed term is missing, the Analyst drafts one and submits for
+  human approval.
+- **Technical Glossary** (`docs/glossary/technical.md`, Architect
+  owns) — defines technical and implementation vocabulary. Terms
+  may overlap with the business glossary when a concept has both a
+  business and a technical meaning; each file carries the
+  definition appropriate to its audience.
+- **Solutions** (`docs/solutions/`, Coder owns; tagged SOLUTION in
+  `docs/README.md`) — documents how the codebase realizes its
+  requirements: non-obvious implementation choices, project-specific
+  pattern applications, and known technical debt. Grows as the
+  Coder makes implementation decisions worth recording.
 
 **Vocabulary annotation (Markdown link convention).**
 Every implementation-suggestive or jargon term in a requirement
@@ -283,12 +320,14 @@ glossary entries up front.
 3. Analyst submits the draft to the Architect for pre-review.
 4. Architect responds with one of three outcomes:
    a. **Linked** — Replaces or annotates implementation-suggestive
-      terms with links into `docs/glossary.md` (agnostic
-      replacements) or `docs/architecture/` (justified concrete
+      terms with links into `docs/glossary/business.md` (agnostic
+      replacements) or `docs/solutions/` (justified concrete
       terms). Returns the revised draft.
    b. **New glossary entry** — When no existing term captures the
-      intent, the Architect drafts one and applies it inline. The
-      Analyst commits the new entry on the requirement branch.
+      intent, the Architect proposes one. If business-facing, the
+      Analyst adds it to `docs/glossary/business.md` on the
+      requirement branch. If technical, the Architect adds it to
+      `docs/glossary/technical.md` on a `pattern/<slug>` branch.
    c. **Flagged** — When an implementation-specific term lacks
       hard-constraint justification, the Architect returns the
       draft for a redraft using agnostic vocabulary.
@@ -308,14 +347,15 @@ propose a new glossary entry and let the human sanction it in step
 6. Only flag back (4c) if the abstraction itself is unclear and
 needs human disambiguation before any term can be coined.
 
-**Architecture entries.**
-Usually proposed during task kickoff, not requirement pre-review.
-When the Architect proposes a structural approach and the human
-approves it (Task Kickoff in Task and PR Flow), the Architect
-drafts a corresponding architecture entry; the Analyst commits it
-on the task branch. Justification entries (for concrete terms
-that survive in a requirement) are committed on the requirement
-branch alongside it.
+**Solutions entries.**
+The Coder authors and commits entries to `docs/solutions/` during
+or after implementation, documenting non-obvious choices and how
+patterns were applied. If a pattern is portable (worth reusing
+across projects), the Architect documents it in `docs/patterns/`
+on a `pattern/<slug>` branch. Justification entries (for concrete
+terms that must survive in a requirement, e.g., regulatory) live in
+`docs/solutions/` and are authored and committed by the Coder on
+the task branch.
 
 ### Mid-Task Architect Escalation, Requirements Clarification Escalation
 
@@ -441,12 +481,13 @@ classification determines the dispatch destination.
 | **New requirement** | New capability or constraint not covered by any existing requirement | Requirement Gate Workflow (Analyst → Architect pre-review → human approval → task creation) |
 | **Refinement** | Change to *how* an existing requirement is implemented, within its current scope | Standard task lifecycle, referencing the existing requirement |
 | **Preference** | Aesthetic / UX feedback that does not change behavior | Coder, as a small task or feedback on the current task |
-| **Bug report** | Something is wrong | Bug routing (below) — `{{DOC_FIRST_FIX}}` controls whether doc-first diagnosis runs before the code fix |
-| **New project-agnostic pattern** | A rule, idiom, anti-pattern, framework guideline, or convention worth carrying across projects | Architect drafts entry to `docs/patterns/`; human approves; Analyst commits |
-| **New architectural pattern** | Project-specific: how *this* app does X, or a structural choice this project commits to | Architect drafts entry to `docs/architecture/`; human approves; Analyst commits |
-| **New glossary term** | Term needs canonical definition (with optional slang variants) | Architect drafts entry to `docs/glossary.md`; human approves; Analyst commits, typically on the requirement branch where the term first surfaces |
+| **Bug report** | Something is wrong | Bug routing (below) — `{{BUG_WORKFLOW}}` controls whether doc-gap diagnosis runs before the code fix |
+| **New project-agnostic pattern** | A rule, idiom, anti-pattern, framework guideline, or convention worth carrying across projects | Architect drafts and commits entry to `docs/patterns/` on a `pattern/<slug>` branch; human approves |
+| **New solutions entry** | Project-specific: how *this* app does X, or a non-obvious implementation choice | Coder authors and commits entry to `docs/solutions/` on the task branch |
+| **New business glossary term** | Business or user-facing term needing canonical definition | Analyst drafts entry to `docs/glossary/business.md`; human approves; Analyst commits on the requirement branch |
+| **New technical glossary term** | Technical or implementation term needing canonical definition | Architect drafts and commits entry to `docs/glossary/technical.md` on a `pattern/<slug>` branch; human approves |
 | **Trivial change** | Typo, formatting, comment update, single-line cleanup | Coder, as a small task |
-| **Architectural refactor** | Structural change spanning multiple call sites — recognized as deserving abstraction (e.g., the `ContentData` value-object pattern from `docs/patterns/conventions/abstraction.md`) | Architect proposes the pattern; human approves; Architect documents in `docs/architecture/` (and optionally `docs/patterns/` if portable); Coder implements across call sites |
+| **Architectural refactor** | Structural change spanning multiple call sites — recognized as deserving abstraction (e.g., the `ContentData` value-object pattern from `docs/patterns/conventions/abstraction.md`) | Architect proposes the pattern; human approves; Architect documents in `docs/patterns/` (portable) or Coder in `docs/solutions/` (project-specific); Coder implements |
 | **Question** | Asking for status, information, or a decision — not requesting work | Lead answers from context, routes to the appropriate teammate, or escalates to the human if unanswerable |
 
 **When the classification is ambiguous, default to the heavier
@@ -474,7 +515,7 @@ tree.
 |----------------|-----------|----------|
 | Business requirement (functional) | What the system does from a user, stakeholder, or domain perspective. | `docs/reqs/functional/` |
 | Technical requirement (non-functional) | A constraint the system must satisfy for performance, security, compliance, etc. | `docs/reqs/non-functional/` or `docs/reqs/technical/` |
-| Convention / pattern | Preferred way; alternatives would also satisfy requirements. | `docs/patterns/` (agnostic) or `docs/architecture/` (project-specific) |
+| Convention / pattern | Preferred way; alternatives would also satisfy requirements. | `docs/patterns/` (agnostic) or `docs/solutions/` (project-specific) |
 
 **Decision tests:**
 
@@ -562,28 +603,35 @@ more confirmation round.
 
 For each confirmed concern, initiate the appropriate task shape:
 
-- **New requirement** → Requirement Gate Workflow.
+- **New requirement** → if `FEATURE_WORKFLOW` is `req-first`:
+  Requirement Gate Workflow. If `FEATURE_WORKFLOW` is `code-first`:
+  Lead tells the Integrator to create a task directly; Analyst
+  backfills the requirement on the task branch before merge.
 - **Refinement** → Lead tells the Integrator to draft a task
   referencing the existing requirement; standard task lifecycle.
 - **Preference** → Lead messages the Coder directly with the
   change; inline or a small follow-up task.
 - **Bug report** → bug routing (below); the project's
-  `{{DOC_FIRST_FIX}}` setting controls whether the Lead diagnoses a
+  `{{BUG_WORKFLOW}}` setting controls whether the Lead diagnoses a
   doc gap first or routes straight to the Coder.
 - **New project-agnostic pattern** → Lead messages the Architect
-  to draft an entry to `docs/patterns/`; on human approval
-  (presented by the Lead), Lead delegates the commit to the
-  Analyst.
-- **New architectural pattern** → same flow, entry goes in
-  `docs/architecture/`.
-- **New glossary term** → Architect proposes; human approves;
-  Analyst commits (typically on the requirement branch where the
-  term first surfaces).
+  to draft an entry to `docs/patterns/` on a `pattern/<slug>`
+  branch; on human approval (presented by the Lead), Architect
+  commits.
+- **New solutions entry** → Lead assigns the Coder to author an
+  entry in `docs/solutions/` on the task branch; human approves.
+- **New business glossary term** → Analyst proposes; human
+  approves; Analyst commits (typically on the requirement branch
+  where the term first surfaces).
+- **New technical glossary term** → Architect proposes and commits
+  to `docs/glossary/technical.md` on a `pattern/<slug>` branch;
+  human approves.
 - **Trivial change** → Lead tells the Integrator to create a
   minimal task; Coder implements; minimal lifecycle.
 - **Architectural refactor** → Architect proposes the pattern
   with rationale; human approves; Architect documents in
-  `docs/architecture/`; Coder implements per the pattern,
+  `docs/patterns/` (if portable) or Coder in `docs/solutions/`
+  (if project-specific); Coder implements per the pattern,
   refactoring affected call sites.
 - **Question** → Lead answers from documentation and team
   context; if the answer requires teammate work, route to that
@@ -597,10 +645,10 @@ prerequisite is done.
 
 #### Bug routing
 
-This project's `DOC_FIRST_FIX` setting is **`{{DOC_FIRST_FIX}}`**. The
+This project's `BUG_WORKFLOW` setting is **`{{BUG_WORKFLOW}}`**. The
 Lead picks the bug-handling path based on that value:
 
-##### When `DOC_FIRST_FIX` is `yes` — doc-first fix routing
+##### When `BUG_WORKFLOW` is `doc-first`
 
 The Lead's first move is to diagnose *what kind of doc gap* the bug
 exposes. The fix to the docs comes before the fix to the code.
@@ -610,8 +658,8 @@ Possible gap kinds:
 |----------|---------|----------|
 | Missing requirement | The reported behavior isn't required (or prohibited) by any existing req | New requirement → Requirement Gate Workflow → standard implementation flow |
 | Missing acceptance criterion | The req exists but the failing behavior isn't covered by an AC | Analyst adds AC → Architect pre-reviews → human approves → Tester writes test for the new AC → Coder makes it pass |
-| Missing project-agnostic pattern | Bug stems from a rule, idiom, or convention violation that should have been documented for portability | Architect drafts `docs/patterns/` entry → human approves → Analyst commits → Coder fixes per the new rule |
-| Missing architectural pattern | Bug exposes a structural issue the project's architecture hasn't documented | Architect drafts `docs/architecture/` entry → human approves → Analyst commits → Coder fixes per the new pattern |
+| Missing project-agnostic pattern | Bug stems from a rule, idiom, or convention violation that should have been documented for portability | Architect drafts `docs/patterns/` entry → human approves → Architect commits → Coder fixes per the new rule |
+| Missing solutions entry | Bug exposes a structural approach the project hasn't documented | Coder authors `docs/solutions/` entry → human approves → Coder commits → Coder fixes per the new pattern |
 | Implementation defect with all docs intact | Reqs, ACs, patterns, architecture all correct; the implementation has a bug | Direct fix via standard task lifecycle |
 
 The Lead consults the Architect (for pattern / architecture gaps)
@@ -622,7 +670,7 @@ The doc-first principle: **every bug is an opportunity to
 strengthen the durable artifacts** so the next analogous bug is
 caught earlier or doesn't happen at all.
 
-##### When `DOC_FIRST_FIX` is `no` — direct fix routing
+##### When `BUG_WORKFLOW` is `fix-first`
 
 The Lead skips the gap-diagnosis step and routes the bug straight
 to the Coder. Lead messages the Coder with the bug repro and the
@@ -756,24 +804,32 @@ shipping behavior the human didn't sanction.
    c) Runs consistency check against all existing docs.
    d) Submits the draft to the Architect for pre-review (see
       "Architect Pre-Review of Requirements"). Incorporates the
-      Architect's feedback, including any new glossary entries the
-      Architect proposes (committed on the requirement branch).
+      Architect's feedback; new business glossary terms are
+      committed by the Analyst on the requirement branch; new
+      technical glossary terms are committed by the Architect on
+      a `pattern/<slug>` branch.
    e) If the human's description is vague or incomplete, the Analyst
       identifies specific questions and sends them to the Lead.
    f) Submits the (Architect-reviewed) draft to the Lead.
-6. Lead presents the draft, plus any new or revised glossary entries,
-   to the human for approval.
+6. Lead presents the draft, plus any new or revised business glossary
+   entries, to the human for approval.
    - If the Analyst raised questions, the Lead asks them now.
    - Human approves, revises, or answers questions. The human may
-     also correct any glossary entries the Architect added.
+     also correct any business glossary entries the Analyst proposed.
    - If revised, Lead sends revisions back to Analyst; repeat from 5.
-7. Analyst commits the approved requirement and any approved
-   glossary entries, and updates `INDEX.md`.
+7. Analyst commits the approved requirement and any approved business
+   glossary entries, and updates `docs/reqs/INDEX.md`.
 8. Lead tells the Integrator to initiate the Integration Merge Workflow
    for the requirement branch (see below). The requirement is now on
    `{{DEV_BRANCH_NAME}}`.
-9. Integrator updates `.claude/.progress.md` (branch status → `merged`).
-10. Lead proceeds to create a task (Task and PR Flow below).
+9. If one or more `pattern/<slug>` branches were opened during this
+   requirement's pre-review (new pattern or technical glossary term),
+   Lead tells the Integrator to merge each in sequence after the
+   requirement branch lands. The Coder does not branch until all of
+   them are on `{{DEV_BRANCH_NAME}}`.
+10. Integrator updates `.claude/.progress.md` (all merged branches →
+    `merged`).
+11. Lead proceeds to create a task (Task and PR Flow below).
 
 **Switching topics:**
 The human may switch to a different requirements topic at any time.
@@ -793,8 +849,8 @@ branch. The previous branch stays in its current state (tracked in
    terms inline), runs consistency check, submits to the Architect
    for pre-review (see "Architect Pre-Review of Requirements"),
    incorporates feedback, then sends to Lead.
-5. Lead presents draft (and any new glossary entries) to human for
-   approval.
+5. Lead presents draft (and any new business glossary entries) to
+   human for approval.
 6. Human approves → Analyst commits → work may proceed.
    Human rejects → the edge case is explicitly out of scope.
 7. If implementation is blocked while waiting, Coder works on
@@ -832,13 +888,14 @@ Integrator which shape applies when drafting the task file.
 
 | Triage classification | Task shape | Notes |
 |----------------------|-----------|-------|
-| New requirement | **New capability** | Default; full Task and PR Flow applies. Requirement Gate Workflow runs first to land the requirement, then the task is created against it. |
+| New requirement | **New capability** when `{{FEATURE_WORKFLOW}}` is `req-first`; **Code-first feature** when `code-first` | See below. |
 | Refinement | **Refinement** | Slimmer — see below. |
 | Preference | **Trivial fix** | See below. |
-| Bug report | **Bug fix (doc-first)** when `{{DOC_FIRST_FIX}}` is `yes`; **Trivial fix** (or full task for large fixes) otherwise | See below. |
+| Bug report | **Bug fix (doc-first)** when `{{BUG_WORKFLOW}}` is `doc-first`; **Trivial fix** (or full task for large fixes) when `fix-first` | See below. |
 | New project-agnostic pattern | **Pattern intake** | See below. |
-| New architectural pattern | **Architecture intake** | Same shape as Pattern intake; the entry just lands in `docs/architecture/` instead of `docs/patterns/`. |
-| New glossary term | (no full task) | Handled inline by Architect Pre-Review of Requirements. |
+| New solutions entry | **Solutions intake** | Same shape as Pattern intake; Coder authors and commits the entry in `docs/solutions/` instead of `docs/patterns/`. |
+| New business glossary term | (no full task) | Handled inline on the requirement branch where the term surfaces; Analyst commits. |
+| New technical glossary term | (no full task) | Handled inline on a `pattern/<slug>` branch; Architect commits. |
 | Trivial change | **Trivial fix** | See below. |
 | Architectural refactor | **Architectural refactor** | See below. |
 | Question | (no task) | The Lead answers, routes, or escalates. |
@@ -875,17 +932,39 @@ classification clearly indicates no judgment work needed.
 - **Keep** Analyst coverage check (step 14, but light) and human
   validation (step 15).
 
+#### Code-first feature
+
+Applies when `FEATURE_WORKFLOW` is `code-first` (this project:
+**`{{FEATURE_WORKFLOW}}`**).
+
+The Requirement Gate Workflow is skipped — implementation proceeds
+directly from the human's stated intent.
+
+- **Skip** the Requirement Gate Workflow (no Analyst draft before
+  the Coder starts).
+- **Keep** the full per-commit cycle (steps 8–11).
+- **Add** Analyst requirement backfill: before the pre-PR gate,
+  the Lead assigns the Analyst to draft a requirement on the task
+  branch that captures the implemented capability. The Analyst
+  submits it to the Architect for pre-review; the Lead presents it
+  to the human for approval. The requirement commit is included in
+  the squash-merge so `docs/reqs/` stays current.
+- **Keep** the pre-PR gate (steps 12–14) — full unit suite +
+  full E2E suite + Analyst coverage check (against the backfilled
+  requirement).
+
 #### Bug fix (doc-first)
 
-Applies when `DOC_FIRST_FIX` is `yes` (this project: **`{{DOC_FIRST_FIX}}`**).
+Applies when `BUG_WORKFLOW` is `doc-first` (this project: **`{{BUG_WORKFLOW}}`**).
 
-Triage's doc-first-fix routing already diagnosed the gap kind
-(missing requirement / AC / pattern / architecture entry). The
+Triage's doc-first routing already diagnosed the gap kind
+(missing requirement / AC / pattern / solutions entry). The
 fix path:
 
 1. Fix the doc gap first. Route to Analyst (for missing
-   requirement or AC), Architect (for missing pattern or
-   architecture entry); follow the relevant intake flow above.
+   requirement or AC), Architect (for missing pattern), or Coder
+   (for missing solutions entry); follow the relevant intake flow
+   above.
 2. Once docs are committed, the code fix flows through the
    normal per-commit cycle and pre-PR gate scoped to the parts
    the doc fix surfaces.
@@ -895,7 +974,7 @@ doc fix needed — go straight to the per-commit cycle and pre-PR
 gate. Otherwise this shape is sequenced: docs first, code
 second, regardless of how small the code change is.
 
-When `DOC_FIRST_FIX` is `no`, this shape doesn't apply — bug
+When `BUG_WORKFLOW` is `fix-first`, this shape doesn't apply — bug
 reports use the **Trivial fix** shape (or a full task if the
 change is non-trivial), per Triage dispatch.
 
@@ -904,7 +983,8 @@ change is non-trivial), per Triage dispatch.
 Recognized pattern requiring change across multiple call sites
 (the `ContentData` / `PersonName` kind of refactor). The
 Architect's proposed pattern is already documented in
-`docs/architecture/` (or `docs/patterns/` if portable) by Triage
+`docs/patterns/` (if portable, by the Architect) or
+`docs/solutions/` (if project-specific, by the Coder) by Triage
 dispatch.
 
 - **Replace** step 6 with: Architect's pattern entry is binding;
@@ -919,21 +999,32 @@ dispatch.
 - **Human validation**: the human is reviewing structural change,
   not feature behavior; expect different scrutiny.
 
-#### Pattern intake (and Architecture intake)
+#### Pattern intake
 
-Capturing a new project-agnostic pattern in `docs/patterns/` (or
-project-specific in `docs/architecture/`) without a code change.
+Capturing a new project-agnostic pattern in `docs/patterns/`
+without a code change.
 
 - **Skip** the entire per-commit / pre-PR gate sequence (no
   code).
 - **Replace** with: Architect drafts the entry on a
-  `requirement/<slug>` branch (re-purposed for pattern intake).
-  Analyst commits. Lead presents to human for approval. On
-  approval, normal merge-to-dev (Integration Merge Workflow R
-  variant).
+  `pattern/<slug>` branch. Lead presents to human for approval.
+  On approval, Architect commits and the branch merges to dev
+  (Integration Merge Workflow R variant).
 - If the pattern intake also requires applying the pattern to
   existing code, that's a separate **Architectural refactor**
   task that the Lead creates after the pattern entry merges.
+
+#### Solutions intake
+
+Capturing a project-specific implementation decision or
+non-obvious approach in `docs/solutions/` without a code change.
+
+- **Skip** the entire per-commit / pre-PR gate sequence (no
+  code).
+- **Replace** with: Coder authors the entry on the task branch
+  (or a dedicated `task/<id>` branch). Lead presents to human
+  for approval. On approval, Coder commits and the branch merges
+  to dev (Integration Merge Workflow R variant).
 
 ### Task and PR Flow
 
@@ -943,7 +1034,7 @@ project-specific in `docs/architecture/`) without a code change.
 
 ## Requirements in Scope
 <!-- Cross-references to specific requirement statements in docs/. -->
-<!-- Analyst marks these as [-] on the task branch at kickoff (first commit). -->
+<!-- Analyst verifies these are [*][ ] at kickoff; updates C marks on Coder/Tester notification during the task. -->
 - `docs/<path>` → "<requirement statement>"
 - `docs/<path>` → "<requirement statement>"
 
@@ -957,7 +1048,7 @@ project-specific in `docs/architecture/`) without a code change.
 - <filled in by Lead after Architect provides kickoff input>
 
 ## Plan Steps
-- [ ] Analyst: mark in-scope ACs `[-]` (first commit on task branch)
+- [ ] Analyst: verify in-scope requirements are `[*][ ]`
 - [ ] Architect: design <approach>
 - [ ] Coder: implement <component A> (lint/format on touched files at commit)
 - [ ] Coder: implement <component B> (lint/format on touched files at commit)
@@ -966,7 +1057,7 @@ project-specific in `docs/architecture/`) without a code change.
 - [ ] Architect: sign off (dead-code judgment + doc-hygiene notices during review)
 - [ ] Unit Tester: full unit suite (pre-PR gate); delegate browser-required scenarios to E2E Tester
 - [ ] E2E Tester: full E2E suite (pre-PR gate, after Unit Tester passes)
-- [ ] Analyst: confirm requirement coverage and roll up `implementation` and AC checkboxes to `[x]`
+- [ ] Analyst: confirm requirement coverage; commit any pending C `[*]` marks on task branch
 ```
 
 **Cost baseline sidecar file**: `.claude/.tasks/<task-id>.cost-baseline.json`.
@@ -992,9 +1083,11 @@ clobbering another's changes, each section has a designated writer:
   (role-assigned), and Requirements-in-Scope cross-refs; records
   Cost values from the Lead; updates structure when scope changes;
   deletes the file at task completion.
-- **Analyst** — marks the Requirements-in-Scope checkboxes (`[-]`
-  at kickoff, `[x]` at the pre-PR gate). No other role edits these
-  checkboxes.
+- **Analyst** — sole writer for all `[D][C]` status marks in the
+  requirement docs. Verifies requirement states at kickoff; updates
+  C marks on notification from Coder and Tester throughout the task;
+  commits final C `[*]` marks at the pre-PR gate. No other role
+  edits requirement docs.
 - **Each teammate** (Coder, Unit Tester, E2E Tester, Architect,
   Analyst, Tech Writer) — marks their own Plan Steps as `[-]`
   when starting and `[x]` when done. No teammate marks another
@@ -1031,16 +1124,16 @@ who delegates to the Integrator.
    above), specifying: requirements in scope (with cross-references to
    specific requirement statements in `docs/`), what is explicitly out
    of scope, relevant docs, and role-assigned plan steps. Lead directs
-   the Analyst to mark all in-scope requirements as `[-]` in the
-   requirement docs and commit on the task branch (this is the first
-   commit on the branch). Integrator updates `.claude/.progress.md` to
+   the Analyst to verify all in-scope requirements are in `[*][ ]`
+   state in the requirement docs and report any discrepancy before
+   coding begins. Integrator updates `.claude/.progress.md` to
    show the task as active.
 5. Analyst, Coder, Unit Tester, E2E Tester, and Architect each read the
    task file and either acknowledge or raise questions with the Lead
    before proceeding.
-   - Analyst: confirm that the task maps to documented requirements and
-     that the scope is consistent with the docs. (The `[-]` marks from
-     step 4 are already committed.)
+   - Analyst: confirm that the task maps to documented requirements,
+     that the scope is consistent with the docs, and that all in-scope
+     requirements are in `[*][ ]` state.
    - Architect: verify requirement coverage and dependency chains. If
      the implementation approach is not obvious, or if the relevant area
      of the codebase has known architectural debt, propose a structural
@@ -1112,12 +1205,10 @@ who delegates to the Integrator.
 14. If the full E2E suite passes, Analyst confirms that the
     implementation's scope matches the documented requirements —
     nothing was added that isn't required, nothing required was
-    omitted. Analyst rolls up the parent requirement statuses (per
-    the Requirement Status convention in CLAUDE.md): the Coder has
-    marked `implementation` `[x]` per the Coder's commit-time work,
-    the Tester has marked each AC `[x]` as a passing test was
-    written, and the Analyst recomputes each parent requirement's
-    rollup, then commits on the task branch.
+    omitted. Analyst commits any pending C `[*]` marks on the task
+    branch — each requirement's C `[*]` is set only after all of
+    that requirement's AC C statuses are `[*]` (confirmed via Tester
+    notifications received during the task).
 15. **Human validation gate.** Lead presents a summary of the
     completed work to the human — what was implemented, which
     requirements are addressed, and how to exercise the changes (e.g.,
@@ -1130,8 +1221,8 @@ who delegates to the Integrator.
       human validates again.
 
 ### Integration Merge Workflow
-This procedure is used whenever ANY working branch (requirement or task)
-is ready to merge back to `{{DEV_BRANCH_NAME}}`. Its purpose is to incorporate
+This procedure is used whenever ANY working branch (requirement,
+pattern, or task) is ready to merge back to `{{DEV_BRANCH_NAME}}`. Its purpose is to incorporate
 changes from other teams or developers that landed on `{{DEV_BRANCH_NAME}}` while
 this branch was in progress.
 
@@ -1141,15 +1232,15 @@ Follow C, then R or T depending on branch type, then P.
 C.1. Integrator fetches latest `{{DEV_BRANCH_NAME}}` from remote/origin.
 C.2. Integrator checks: is the working branch already up-to-date with
      `{{DEV_BRANCH_NAME}}`?
-     - YES → skip to finalization (R.4 for requirement branches,
+     - YES → skip to finalization (R.4 for doc-only branches,
        T.5 for task branches).
      - NO → continue.
 C.3. Integrator merges `{{DEV_BRANCH_NAME}}` into the working branch.
 
-**R. For requirement branches** (`requirement/<slug>`):
-R.1. If merge conflicts in docs → Analyst resolves on the requirement
-     branch.
-R.2. Analyst re-checks consistency of the requirement docs against any
+**R. For doc-only branches** (`requirement/<slug>` or `pattern/<slug>`):
+R.1. If merge conflicts in docs → Analyst (requirement branch) or
+     Architect (pattern branch) resolves on the working branch.
+R.2. Analyst/Architect re-checks consistency of the docs against any
      changes that arrived from `{{DEV_BRANCH_NAME}}` (another team may have
      landed conflicting requirements or code changes that affect
      assumptions).

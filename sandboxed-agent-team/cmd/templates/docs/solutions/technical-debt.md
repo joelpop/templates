@@ -1,4 +1,4 @@
-# Architecture Debt
+# Technical Debt
 
 Tracks known structural debt, deferred decisions, and recommended
 resolutions for this project. Each entry describes what the debt is,
@@ -11,7 +11,7 @@ review. Resolved entries are kept for historical context, marked
 
 This is an **append-only** log. Entries are not deleted; their
 status changes (Open → In Progress → Resolved) but the history
-stays. Each entry's ID (`AD-###`) is permanent and may be referenced
+stays. Each entry's ID (`TD-###`) is permanent and may be referenced
 from commit messages and PRs.
 
 ---
@@ -20,7 +20,7 @@ from commit messages and PRs.
 
 Each entry follows this template:
 
-### AD-### — [Short title]
+### TD-### — [Short title]
 **Identified:** YYYY-MM-DD
 **Status:** Open | In Progress | Resolved (YYYY-MM-DD)
 **Affects:** [component / doc references]
@@ -46,7 +46,7 @@ update.)* What changed; any partial resolution; new findings.
 <!--
 Example:
 
-### AD-001 — Flat package structure
+### TD-001 — Flat package structure
 
 **Identified:** 2026-XX-XX
 **Status:** Open

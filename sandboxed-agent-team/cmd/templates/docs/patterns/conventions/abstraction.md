@@ -211,7 +211,7 @@ isn't ready.
 | Branching on type | Polymorphism | Split the type, dispatch via virtual call |
 | Repeated structural template (chrome, lifecycle, fixture) | Shared base class | Abstract or concrete base class — see "Sizing the abstraction" |
 | N classes realising one named capability | Component-family package | A package; capability boundary = package boundary — see "Sizing the abstraction" |
-| Cross-cutting concern (validation, logging, mapping, etc.) | Shared mechanism | Interface + implementation (or aspect); document the contract in `docs/architecture/` |
+| Cross-cutting concern (validation, logging, mapping, etc.) | Shared mechanism | Interface + implementation (or aspect); document the contract in `docs/solutions/` |
 
 When the answer is "shared mechanism," that mechanism deserves an
 [architecture entry](../../architecture/) describing its contract — not
@@ -227,7 +227,7 @@ highest-leverage activities. Specifically:
   Flag it before the third instance ships.
 - Name the candidate abstraction in the review feedback. Naming makes
   the proposal concrete.
-- Record the pattern in `docs/architecture/` if the project commits to
+- Record the pattern in `docs/solutions/` if the project commits to
   it. Subsequent implementers should read the pattern, not re-derive
   it.
 - If the pattern is project-agnostic (like the `ContentData` shape
@@ -247,6 +247,6 @@ Duplication is not always a flaw. Cases where it stays:
 - **Trying to extract revealed that the "duplicates" weren't really
   the same** — the differences are meaningful.
 
-In each case, document *why* in the relevant `docs/architecture/` entry
+In each case, document *why* in the relevant `docs/solutions/` entry
 or a comment at the duplication site — the next reviewer shouldn't have
 to relitigate.

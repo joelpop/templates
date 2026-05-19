@@ -102,7 +102,7 @@ Preferred (agnostic; links to glossary):
 
 If a hard constraint (regulatory, accessibility) requires a
 specific component, link the concrete term to a justification entry
-in `docs/architecture/` — see the Markdown link convention in
+in `docs/solutions/` — see the Markdown link convention in
 CLAUDE.md.
 
 Words that almost always introduce ambiguity, and what to do about

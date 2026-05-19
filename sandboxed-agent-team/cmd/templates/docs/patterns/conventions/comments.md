@@ -83,7 +83,7 @@ public record Person(String firstname, String lastname) { }
   This is what `git blame` surfaces years later.
 - **PR description** — for cross-cutting context, screenshots, links to
   issues. PR descriptions are reviewer-facing.
-- **A `docs/architecture/` entry** — if the fix changes a pattern
+- **A `docs/solutions/` entry** — if the fix changes a pattern
   (e.g., the value-object refactor in the Person example above), the new
   pattern goes in the architecture docs. The code itself stays clean.
 - **A new `docs/patterns/` entry** — if the fix surfaced a project-

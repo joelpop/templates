@@ -24,7 +24,8 @@ The E2E test directory (see CLAUDE.md).
 
 Read proactively.
 
-- `docs/glossary.md` — project's canonical vocabulary.
+- `docs/glossary/business.md`, `docs/glossary/technical.md` —
+  project's canonical vocabulary.
 - `docs/patterns/testing/patterns.md` — especially the
   Playwright E2E section, page-object pattern for E2E, **AC
   traceability** (every AC has at least one passing test).
@@ -32,8 +33,9 @@ Read proactively.
   (prefer accessible selectors over CSS tied to internal
   structure).
 - `docs/patterns/conventions/comments.md` — test-name discipline.
-- CLAUDE.md → "Requirement Status" — you also mark per-AC
-  checkboxes for browser-required scenarios.
+- CLAUDE.md → "Requirement Status" — notify the Analyst when
+  test authoring begins and when a test passes, so the Analyst
+  updates C marks for browser-required scenarios.
 - CLAUDE.md → "Team Coordination Procedures" → "Task Branch
   Merge Protocol" — when merging E2E tests into the task branch.
 

@@ -17,7 +17,7 @@ A recipe belongs here when the steps are fixed by the framework
 stack (Vaadin's passkey API, Spring Security's OIDC client) rather
 than project-specific decisions. Project-specific configuration
 (which IdP, tenancy model, entity layout) lives in
-`docs/architecture/`, referencing the recipe.
+`docs/solutions/`, referencing the recipe.
 
 **Recipe dependency order.** `conditional-auth` is the
 configuration foundation; `audited-principal` is the
@@ -58,5 +58,5 @@ of `form-login` and `passkey`. Read in this order:
 
 When extracting a recipe from a project-specific feature, keep only
 framework-fixed steps. Move project-specific UX, error handling,
-and business rules to a `docs/architecture/` entry that references
+and business rules to a `docs/solutions/` entry that references
 the recipe.

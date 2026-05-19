@@ -101,26 +101,28 @@ agent frontmatter or team-related tool calls.
 
 ## Documentation Index
 
-See `docs/INDEX.md` for the master pointer to the four-tree
+See `docs/README.md` for the master pointer to the four-tree
 structure:
 
 - `docs/reqs/` — project-specific requirements (Analyst owns).
   IEEE 830 / ISO 29148 (SRS structure) and ISO 25010 (quality
   model).
 - `docs/patterns/` — project-agnostic conventions, architecture
-  patterns, and recipes for the project's stack. Architect
-  curates; Analyst commits. Designed to extract across projects.
-- `docs/architecture/` — project-specific architecture —
-  *how this codebase realizes the requirements*. Architect
-  curates; Analyst commits.
+  patterns, and recipes for the project's stack. Architect owns;
+  designed to extract across projects.
+- `docs/solutions/` — how this codebase realizes its requirements:
+  non-obvious implementation choices, project-specific pattern
+  applications, and known debt. Coder owns.
 - `docs/guides/` — install / deploy / user / admin / operator
   guides. Tech Writer owns; release-cadence updates.
-- `docs/glossary.md` — canonical vocabulary
+- `docs/glossary/business.md` — business and user-facing vocabulary
   (implementation-agnostic terms with optional slang variants).
-  Architect curates; Analyst commits.
+  Analyst owns.
+- `docs/glossary/technical.md` — technical and implementation
+  vocabulary. Architect owns.
 
-`docs/INDEX.md` is a sample file seeded at setup; setup doesn't
-overwrite it on re-runs, so edit freely as docs evolve.
+`docs/README.md` is seeded at setup and is human-owned — edit it
+freely as the docs structure evolves; agents do not write to it.
 
 ### Tags and teammate reading rules
 
@@ -156,18 +158,17 @@ overwrite it on re-runs, so edit freely as docs evolve.
 - **TECHNICAL** — stack, tooling, and design constraints
   expressed as requirements, under `docs/reqs/technical/`. Read
   as relevant to the current task.
-- **ARCHITECTURAL** — structural debt and design decisions; the
-  project-specific architecture entries under
-  `docs/architecture/`. The Architect curates; every teammate
-  reads relevant entries during their task work (per the Primary
-  references in their agent definition).
+- **SOLUTION** — non-obvious implementation choices and known debt
+  under `docs/solutions/`. Coder owns; every teammate reads
+  relevant entries during task work (per the Primary references in
+  their agent definition).
 - **GUIDE** — user-facing guide content under `docs/guides/`.
   Owned by the Tech Writer; teammates rarely consult unless
   release notes or deployment behavior is in scope.
-- **GLOSSARY** — entries in `docs/glossary.md`. Curated by the
-  Architect, committed by the Analyst. Every teammate reads
-  `docs/glossary.md` before starting any task (it is small) so
-  requirement links resolve.
+- **GLOSSARY** — entries in `docs/glossary/business.md` (business
+  terms, Analyst owns) and `docs/glossary/technical.md` (technical
+  terms, Architect owns). Every teammate reads both before starting
+  any task so requirement links and technical references resolve.
 
 Feature-scoped non-functional requirements (e.g., "dashboard loads in
 2 seconds") live under the feature as FUNCTIONAL-FEATURE-SUPPLEMENTAL,
@@ -175,43 +176,69 @@ not under `docs/reqs/non-functional/`.
 
 ### Requirement status convention
 
-Every discrete requirement statement in a doc carries a status
-checkbox: `[ ]` not started, `[-]` in progress, `[x]` complete. Under
-each requirement sit two kinds of child checkboxes:
+Every requirement statement and every acceptance criterion carries a
+two-column status marker — `[D]` for the **draft lifecycle** and `[C]`
+for the **code lifecycle**:
 
-- **`implementation`** (one per requirement) — the **Coder** marks
-  `[x]` when the requirement's implementation is committed and ready
-  for testing. This is the Coder's record of work.
-- **`AC1`, `AC2`, ...** (one per acceptance criterion) — the **Tester**
-  (Unit Tester or E2E Tester, as applicable) marks `[x]` when an
-  automated test that verifies that AC is passing. One test per AC at
-  minimum; parameterized ACs may have multiple.
+    `[D][C]` Requirement or AC text
 
-The parent's checkbox is a roll-up that the **Analyst** maintains:
-`[x]` only when `implementation` is `[x]` AND every AC is `[x]`;
-`[-]` when any child is `[-]` or `[x]` but not all children are `[x]`;
-`[ ]` when all children are `[ ]`. See "Status Tracking" below for
-transition rules. Example format inside a requirement doc:
+**Status key:**
+
+| Char | D — draft | C — code |
+|------|-----------|----------|
+| `[ ]` | Identified — drafting not started | Not started |
+| `[-]` | Drafting in progress | Coding in progress |
+| `[x]` | Drafted — awaiting approval | Coded — ACs pending verification |
+| `[*]` | Approved | Coded and verified |
+| `[!]` | Stale — spec needs revision | Stale — code needs update |
+
+**Valid combinations:**
+
+```
+[D][C]  meaning
+[ ][ ]  identified
+[-][ ]  drafting
+[x][ ]  drafted
+[*][ ]  approved
+[*][-]  coding
+[*][x]  coded
+[*][*]  verified
+
+[!][x]  draft stale, code current
+[!][*]  draft stale, code verified
+[-][!]  redrafting, code stale
+[x][!]  redrafted (pending approval), code stale
+[*][!]  re-approved, code stale
+```
+
+**Requirement D precondition:** A requirement's D can only reach `[*]`
+after all of its ACs' D are already `[*]`. Adding or substantively
+changing any AC resets the requirement's D from `[*]` to `[x]`, forcing
+a fresh review that the requirement text is still in sync with its AC
+set before re-approval.
+
+**Test pass/fail** is tracked by CI, not in requirement status. `[*]`
+in C marks a milestone — implementation was verified at the time of
+marking — not a live health indicator. A subsequent CI failure does not
+reset C status.
+
+Example format inside a requirement doc:
 
     ## Authentication
-    - [ ] Users can log in with SSO via SAML 2.0
-          ... additional detail and description ...
-      - [ ] implementation
-      - [ ] AC1: SAML 2.0 metadata exchange supported.
-      - [ ] AC2: Authenticated user lands on the post-login redirect target.
-      - [ ] AC3: Failed authentication displays a non-technical error.
-    - [-] Passkey-based authentication is supported
-          ... additional detail and description ...
-      - [x] implementation
-      - [x] AC1: Passkey registration available from account settings.
-      - [-] AC2: Passkey login available on the login view.
-      - [ ] AC3: Lost-passkey recovery flow.
-    - [x] Session timeout after 30 minutes of inactivity
-          ... additional detail and description ...
-      - [x] implementation
-      - [x] AC1: Inactive session ends after 30 minutes.
-      - [x] AC2: User is redirected to login on timeout.
-      - [x] AC3: Active sessions are not affected.
+    - `[*][*]` Users can log in with SSO via SAML 2.0
+               ... requirement description ...
+      - `[*][*]` AC1: SAML 2.0 metadata exchange supported
+      - `[*][*]` AC2: Authenticated user lands on the post-login redirect target
+      - `[*][*]` AC3: Failed authentication displays a non-technical error
+    - `[*][-]` Passkey-based authentication is supported
+               ... requirement description ...
+      - `[*][x]` AC1: Passkey registration available from account settings
+      - `[*][-]` AC2: Passkey login available on the login view
+      - `[*][ ]` AC3: Lost-passkey recovery flow
+    - `[x][ ]` Users can reset their password via a magic link
+               ... requirement description ...
+      - `[x][ ]` AC1: Magic link sent to registered email
+      - `[-][ ]` AC2: Link expires after 15 minutes
 
 ## Repository Structure
 ```
@@ -234,15 +261,28 @@ Ownership map (auto-derived — adjust after structural changes):
 - `src/test/java/`            → Unit Tester
 - `<e2e-test-dir>/`           → E2E Tester
 - `docs/reqs/`                → Analyst
-- `docs/patterns/`            → Architect curates / Analyst commits
-- `docs/architecture/`        → Architect curates / Analyst commits
+- `docs/patterns/`            → Architect
+- `docs/solutions/`           → Coder
 - `docs/guides/`              → Tech Writer
-- `docs/glossary.md`          → Architect curates / Analyst commits
+- `docs/glossary/business.md` → Analyst
+- `docs/glossary/technical.md`→ Architect
 - `pom.xml`                   → COORDINATE (Lead approves)
 - `README.md`                 → COORDINATE (Lead approves)
 - CI/CD config (e.g., `.github/workflows/`) → COORDINATE (Lead approves)
 - `Dockerfile` / `docker-compose.yml` → COORDINATE (Lead approves)
 - DB migrations (e.g., `src/main/resources/db/migration/`) → Coder (Architect reviews)
+
+Human-owned — no agent edits; agent-assisted editing happens outside the sandbox only:
+- `CLAUDE.md`
+- `CLAUDE_TEAM.md`
+- `ONBOARDING.md`
+- `TEAM_GUIDE.md`
+- `docs/README.md`
+- `docs/glossary/INDEX.md`
+- `.claude/agents/`
+- `.claude/commands/`
+- `.claude/hooks/`
+- `.claude/settings.json`
 
 **Multi-module projects:** Replace the map above with per-module
 entries (e.g., `module-a/src/main/java/` → Coder). Each module's
@@ -426,46 +466,38 @@ insufficiently specified. Teammates must escalate, not guess.
 ## Status Tracking
 
 ### Requirement Status
-Each requirement carries a parent checkbox plus child checkboxes —
-one `implementation` plus one per AC. Notation:
-- `[ ]` — not started
-- `[-]` — in progress
-- `[x]` — complete
+
+Two-column `[D][C]` markers on every requirement and AC. See
+"Requirement status convention" for the full format, key, and valid
+combinations.
 
 **Ownership:**
-- `implementation` — **Coder** marks. `[-]` when implementation
-  begins; `[x]` when committed and ready for testing.
-- `AC1`, `AC2`, ... — **Tester** (Unit Tester or E2E Tester per
-  scenario type) marks. `[-]` when authoring or executing; `[x]`
-  when the automated test passes.
-- Parent — **Analyst** rolls up from children; doesn't author leaf
-  statuses.
+- All `[D][C]` marks — **Analyst** is the sole writer for all
+  requirement docs. Other roles notify the Analyst when their portion
+  of the lifecycle advances; the Analyst updates the docs:
+  - **Coder** notifies Analyst: implementation begins → requirement C `[-]`;
+    implementation committed → requirement C `[x]`.
+  - **Tester** notifies Analyst: test being written → AC C `[-]`;
+    test written → AC C `[x]`; test passing → AC C `[*]`.
+  - **Analyst** marks requirement C `[*]` when all of that
+    requirement's AC C statuses are `[*]`.
 
-**Roll-up rule (Analyst):**
-- All children `[x]` → parent `[x]`
-- Any child `[-]` or `[x]` (not all `[x]`) → parent `[-]`
-- All children `[ ]` → parent `[ ]`
-
-**Status transitions:**
-- `[ ]` → `[-]`: owning role marks the leaf when work begins.
-  Analyst updates parent roll-up to `[-]` once any child is `[-]`
-  or `[x]`.
-- `[-]` → `[x]`: owning role marks the leaf when done (Coder when
-  committed; Tester when the test passes). Analyst rolls up to
-  `[x]` only when all children are `[x]`. The squash merge carries
-  the final state to `{{DEV_BRANCH_NAME}}` — dev only sees
-  `[ ]` → `[x]` transitions.
-- `[x]` → `[ ]` or `[-]` → `[ ]`: Analyst resets a leaf when
-  adding a new AC, substantively changing an AC's intent, or
-  invalidating prior implementation. Reset authority is the
-  Analyst's because reset is a scope-management call, not the
-  leaf-owner's. Reset may cascade to the parent (a previously-`[x]`
-  requirement becomes `[-]` if a child resets to `[ ]`). Analyst
-  must notify the Lead on any reset so impact on active or
-  completed tasks can be assessed.
-- Renaming or moving a requirement/AC doesn't reset status, but
-  the Analyst must update all cross-references (`INDEX.md`, active
-  task files in `.claude/.tasks/`).
+**Transitions:**
+- `[ ]` → `[-]` (D): Analyst begins drafting.
+- `[-]` → `[x]` (D): Analyst marks when draft is submitted for review.
+- `[x]` → `[*]` (D): Human approves (relayed through Lead). Precondition:
+  all AC D must already be `[*]`.
+- `[*]` → `[x]` (D): Analyst resets when requirement text needs revision.
+  Notifies Lead; Lead assesses impact on active and completed tasks.
+- `[*]` → `[!]` (D): Analyst marks when approved text is known stale —
+  the requirement no longer accurately describes the intended behavior.
+- `[*]` → `[!]` (C): Analyst marks when a requirement change invalidates
+  existing implementation.
+- Adding or substantively changing any AC resets the parent requirement's
+  D from `[*]` to `[x]` (Analyst). Analyst notifies Lead.
+- Renaming or moving a requirement or AC does not reset status. Analyst
+  must update all cross-references: `INDEX.md` and active task files in
+  `.claude/.tasks/`.
 
 ### Task Plan Status
 Each task file in `.claude/.tasks/<task-id>.md` tracks progress at the
@@ -505,10 +537,13 @@ Structure:
 
 ## Requirement Branches
 - requirement/<slug>: <status> — <one-line description>
+
+## Pattern Branches
+- pattern/<slug>: <status> — <one-line description>
 ```
 
-Requirement branch statuses:
-- `drafting` — Analyst is actively working on this branch
+Requirement and pattern branch statuses:
+- `drafting` — Analyst/Architect is actively working on this branch
 - `awaiting-approval` — draft submitted to the Lead for human review
 - `approved` — human approved; ready to merge to `{{DEV_BRANCH_NAME}}`
 - `merged` — merged to `{{DEV_BRANCH_NAME}}`; branch can be deleted
@@ -524,6 +559,13 @@ Requirement branch statuses:
   requirement branches can be in flight simultaneously.
   Squash-merged back to `{{DEV_BRANCH_NAME}}` after human approval.
   Tracked in `.claude/.progress.md`.
+- Pattern branches: `pattern/<slug>` — branched off
+  `{{DEV_BRANCH_NAME}}` by the Integrator for the Architect to
+  author `docs/patterns/` entries and `docs/glossary/technical.md`
+  additions. One branch per topic or related group. Multiple
+  pattern branches can be in flight simultaneously.
+  Squash-merged back to `{{DEV_BRANCH_NAME}}` after human approval.
+  Tracked in `.claude/.progress.md`.
 - Task branches: `task/<task-id>` — branched off
   `{{DEV_BRANCH_NAME}}` by the Integrator for each implementation
   task.
@@ -536,8 +578,9 @@ Requirement branch statuses:
   - `task/<task-id>/e2e-tester`
   - Analyst: no sub-branch — works on `requirement/<slug>` and
     commits status marks directly on the task branch.
-  - Architect: no branch — reads code on others' branches but
-    doesn't commit.
+  - Architect: no task sub-branch — reads code on others' branches
+    but doesn't commit to task branches. Works on `pattern/<slug>`
+    branches for `docs/patterns/` and `docs/glossary/technical.md`.
   - Tech Writer: no task sub-branch — works on `guide/<slug>` on
     the release cadence, not task cadence.
 - Sub-branch operations: each teammate creates their sub-branch
@@ -588,6 +631,74 @@ applies uniformly. If a change must happen while work is in
 flight, the Lead pauses new task creation until the edit is
 merged and all teammates have pulled the latest
 `{{DEV_BRANCH_NAME}}`.
+
+### Workflow settings
+
+These settings control what the kit *enforces*, not what the human
+*can* do. Any setting can be changed by asking the Lead — the Lead
+confirms the new value, explains the implication, and instructs
+the Integrator to update `CLAUDE.md` via a working branch.
+
+#### Existing code requirements: `{{EXISTING_CODE_REQS}}`
+
+Governs how agents treat requirements relative to the codebase
+when requirements are silent or incomplete. Requirements are
+always consulted first regardless of this value — the difference
+is what wins when requirements have gaps.
+
+- **`explicit`** — Requirements are the authoritative
+  specification. Any gap needed for the current task must be
+  drafted and approved before coding proceeds; inferring intent
+  from the code is not a substitute. Choose this when requirements
+  are the primary source of intent for all team members.
+- **`implicit`** — Requirements are consulted but gaps are
+  acceptable. The code serves as supplementary guidance; agents
+  infer intent from the existing implementation when requirements
+  are silent. Choose this when the team wants flexibility to code
+  without filling every requirement gap first.
+
+Neither value implies requirements are complete. Changing this
+setting adds or removes strictness going forward with no
+implication that the codebase or requirements have changed:
+- `implicit` → `explicit`: Code can no longer fill requirement
+  gaps; any missing requirement must be drafted first.
+- `explicit` → `implicit`: Code may fill requirement gaps without
+  drafting new requirements first.
+
+**Tension note:** `explicit` + `FEATURE_WORKFLOW=req-first` is the
+strictest combination — any gap in requirements needed for the
+current task must be explicitly drafted before coding proceeds.
+`implicit` + `FEATURE_WORKFLOW=req-first` also creates friction
+(changes hit the requirement gate for code with no formal
+requirement), but agents may use the code to inform a draft before
+proceeding. The Lead surfaces these tensions at kickoff.
+
+#### Feature workflow: `{{FEATURE_WORKFLOW}}`
+
+Controls whether new features and behavior changes require an
+approved requirement before coding starts.
+
+- **`req-first`** — Requirement Gate Workflow runs before the
+  Coder starts: Analyst drafts, Architect pre-reviews, human
+  approves, then implementation begins. Default for doc-centric
+  projects.
+- **`code-first`** — Coder implements from intent; Analyst
+  backfills requirement docs after the fact.
+
+#### Bug workflow: `{{BUG_WORKFLOW}}`
+
+Controls whether documentation gaps are resolved before the code
+fix. Code-level root-cause analysis is always expected regardless
+of this setting; this setting controls only whether the *doc gap*
+is diagnosed and fixed first.
+
+- **`doc-first`** — Lead diagnoses what doc gap (missing
+  requirement / AC / pattern / architecture entry) the bug exposes
+  and fixes it before routing the code fix to the Coder. Slower
+  per bug, but each bug strengthens the durable artifacts.
+- **`fix-first`** — Lead routes straight to the Coder for the code
+  fix. Faster per bug; doc gap harvesting happens separately or not
+  at all.
 
 ## Team Coordination Procedures
 
@@ -761,8 +872,8 @@ message within 5 minutes of announcing, the Lead investigates:
 - Do not modify CI/CD pipeline files without explicit approval.
 - Do not store secrets in code. Use environment variables.
 
-## Architecture Debt
-See `docs/reqs/architecture-debt.md` for known structural debt and
+## Technical Debt
+See `docs/solutions/technical-debt.md` for known structural debt and
 recommended resolutions.
 
 ## Non-Functional Requirements
@@ -778,21 +889,23 @@ starting ANY task, verify you still have the needed context by
 re-reading these files in order:
 
 1. `CLAUDE.md` (this file) — stack, ownership rules, critical constraints
-2. `docs/INDEX.md` — master list of all requirement, glossary, and
+2. `docs/README.md` — master list of all requirement, glossary, and
    architecture documents
-3. `docs/glossary.md` — agnostic vocabulary referenced inline by
-   requirement docs (Markdown links). Read this before any
+3. `docs/glossary/business.md` — agnostic business vocabulary referenced
+   inline by requirement docs (Markdown links). Read this before any
    requirement doc so the linked terms make sense.
+   `docs/glossary/technical.md` — technical implementation vocabulary
+   curated by the Architect; read before any solutions or pattern docs.
 4. Every file tagged NON-FUNCTIONAL, FUNCTIONAL-CROSS-CUTTING, or
-   ARCHITECTURAL in `docs/INDEX.md`, plus any TECHNICAL,
+   ARCHITECTURAL in `docs/README.md`, plus any TECHNICAL,
    ENVIRONMENTAL, or EXTERNAL-INTERFACE docs relevant to your
    current task. Also any PATTERN entry your role's Primary
    references list points at (see your agent definition).
-5. `docs/architecture/architecture-debt.md` — known structural debt
-6. The FEATURE doc in `docs/INDEX.md` matching your current task, plus
+5. `docs/solutions/technical-debt.md` — known structural debt
+6. The FEATURE doc in `docs/README.md` matching your current task, plus
    all FEATURE-SUPPLEMENTAL docs linked from it. Follow inline
-   Markdown links from the requirements into `docs/glossary.md` and
-   `docs/architecture/` as you encounter them — those are part of the
+   Markdown links from the requirements into `docs/glossary/business.md`
+   and `docs/solutions/` as you encounter them — those are part of the
    requirement's intent.
 7. `.claude/.tasks/<your-task>.md` — your specific assignment
 8. `.claude/.progress.md` — which task is active, which are suspended.

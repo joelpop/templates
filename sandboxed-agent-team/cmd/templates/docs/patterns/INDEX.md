@@ -17,6 +17,7 @@ sensitive patterns carry inline "Vaadin ≥X / <X" notes; see [`README.md`](READ
 | [conventions/vaadin/spring.md](conventions/vaadin/spring.md) | Spring bean registration, scopes, security annotations, build configuration: `@SpringComponent`, session scope, `vaadin.allowed-packages`, access annotations on layouts |
 | [conventions/vaadin/views.md](conventions/vaadin/views.md) | View structure, package layout, navigation: `Composite<T>`, per-view packages, `@Menu` |
 | [conventions/vaadin/components.md](conventions/vaadin/components.md) | Component construction and state: constructor init order, dialog delegation, `NonComponent` events, Signals, `Binder`, `LumoUtility` |
+| [conventions/vaadin/layout-diagram.md](conventions/vaadin/layout-diagram.md) | Text-based layout diagrams in Javadoc `<pre>` blocks: box labeling (`varName(ClassName)`), drawing characters, component content rules, width calculation, custom component placeholders, dynamic/repeated item notation, wall-straightness verification |
 | [conventions/vaadin/uimodel.md](conventions/vaadin/uimodel.md) | `{app}-uimodel` patterns: `HasCaption` for enums and picker records, `HasActive`/`HasRole` capability interfaces |
 | [conventions/vaadin/datetime.md](conventions/vaadin/datetime.md) | Date/time display: `ClientDetailsService` bridge, `DateTimeUtil` (short/medium/long formatting, per-call zone/locale resolution) |
 | [conventions/naming.md](conventions/naming.md) | Naming conventions: entities, services, UI models, DB columns (`_key` vs `_id`), packages, methods |

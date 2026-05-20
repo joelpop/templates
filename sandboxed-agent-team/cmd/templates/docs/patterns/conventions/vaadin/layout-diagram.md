@@ -1,6 +1,7 @@
 # Vaadin Layout Diagram Convention
 
-Text-based layout diagrams in Javadoc `<pre>` blocks: placement, box labeling,
+Every Vaadin view and custom component class should have a text-based layout
+diagram in its class Javadoc. This convention defines placement, box labeling,
 drawing rules, component content, width calculation, custom components, and
 repeated items.
 

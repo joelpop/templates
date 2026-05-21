@@ -5,6 +5,45 @@ data loading, and MapStruct mapping in Vaadin 24+ with Spring Boot 3+ and Spring
 JPA projects. The patterns in this document are identical across every supported Vaadin
 and Spring Boot line.
 
+## Service Naming Conventions
+
+### Class Naming
+
+| Role                    | Convention                             | Example                                                                           |
+|-------------------------|----------------------------------------|-----------------------------------------------------------------------------------|
+| Service interface       | Suffix `Service`                       | `EmployeeService`, `DepartmentService`, `CurrentUserTenantService`                |
+| Service implementation  | Technology prefix + suffix `Service`   | `JpaEmployeeService`, `RestDepartmentService`, `VaadinSessionCurrentUserTenantService` |
+
+The prefix names the **actual backing technology** — not a generic label. Use the prefix
+that names what the implementation actually does:
+
+| Implementation strategy                     | Prefix         | Example                                  |
+|---------------------------------------------|----------------|------------------------------------------|
+| Spring Data JPA                             | `Jpa`          | `JpaEmployeeService`                     |
+| Vaadin session / `AuthenticationContext`    | `VaadinSession`| `VaadinSessionCurrentUserTenantService`  |
+| REST / HTTP client                          | `Rest`         | `RestDepartmentService`                  |
+| In-memory / test double                     | `Mock`         | `MockEmployeeService`                    |
+
+The prefix names the actual backing technology — use whatever word best describes what
+the implementation depends on. `Jpa` is correct only for implementations backed by
+Spring Data JPA. Never apply it to a service that has no JPA dependency.
+
+### Method Naming
+
+| Pattern          | Used for                         | Example                                  |
+|------------------|----------------------------------|------------------------------------------|
+| `listAll*()`     | Query — returns full collection  | `listAll()`, `listAllActive()`           |
+| `findByKey()`    | Query — returns single result    | `findByKey(long key)`                    |
+| `is*Available()` | Query — uniqueness check         | `isDisplayIdAvailable(id, excludeKey)`   |
+| `create*()`      | Mutation — insert                | `createEmployee(detail)`                 |
+| `update*()`      | Mutation — update                | `updateEmployee(detail)`                 |
+| `deactivate*()`  | Mutation — logical delete        | `deactivateEmployee(key)`                |
+| `setActive()`    | Mutation — toggle active state   | `setActive(key, active)`                 |
+
+`listAll*` returns a full `List<T>` (see Grid Data Loading Pattern below). `findByKey`
+returns the UI model directly and throws `EntityNotFoundException` when not found —
+no `Optional` wrapper at the service boundary.
+
 ## Service Interface Contracts
 
 Service interfaces operate exclusively on UI model objects (POJOs from the `{app}-uimodel`

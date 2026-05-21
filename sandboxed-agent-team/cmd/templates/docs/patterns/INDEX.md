@@ -11,19 +11,19 @@ sensitive patterns carry inline "Vaadin ≥X / <X" notes; see [`README.md`](READ
 
 ## Conventions
 
-| Path | Description |
-|------|-------------|
-| [conventions/java.md](conventions/java.md) | Java coding conventions: `var`, member variable init, local variable declaration, nested types, event handler naming, lambdas, unused params, null checks, DI, SOLID, access modifiers, suppressing warnings, JavaDoc |
-| [conventions/vaadin/spring.md](conventions/vaadin/spring.md) | Spring bean registration, scopes, security annotations, build configuration: `@SpringComponent`, session scope, `vaadin.allowed-packages`, access annotations on layouts |
-| [conventions/vaadin/views.md](conventions/vaadin/views.md) | View structure, package layout, navigation: `Composite<T>`, per-view packages, `@Menu` |
-| [conventions/vaadin/components.md](conventions/vaadin/components.md) | Component construction and state: constructor init order, dialog delegation, `NonComponent` events, Signals, `Binder`, `LumoUtility` |
-| [conventions/vaadin/layout-diagram.md](conventions/vaadin/layout-diagram.md) | Every Vaadin view and custom component class should have a layout diagram in its class Javadoc. Defines placement, box labeling (`varName(ClassName)`), drawing characters, component content rules, width calculation, custom component placeholders, dynamic/repeated item notation, and wall-straightness verification |
-| [conventions/vaadin/uimodel.md](conventions/vaadin/uimodel.md) | `{app}-uimodel` patterns: `HasCaption` for enums and picker records, `HasActive`/`HasRole` capability interfaces |
-| [conventions/vaadin/datetime.md](conventions/vaadin/datetime.md) | Date/time display: `ClientDetailsService` bridge, `DateTimeUtil` (short/medium/long formatting, per-call zone/locale resolution) |
-| [conventions/naming.md](conventions/naming.md) | Naming conventions: entities, services, UI models, DB columns (`_key` vs `_id`), packages, methods |
-| [conventions/lombok.md](conventions/lombok.md) | Lombok guidelines: safe and unsafe annotations on JPA entities (`@Data` / `@EqualsAndHashCode` / `@ToString` pitfalls, managed collection fields, `@Builder`); `@Getter` + `@RequiredArgsConstructor` for enums with properties; `@Slf4j` for SLF4J logger declarations |
-| [conventions/comments.md](conventions/comments.md) | Code comment discipline: default to no comments, comments justify invariants not history, the fix-mode trap (don't paste conversational explanations into the code), where the *why* of a fix actually belongs (commit message, PR description, architecture docs) |
-| [conventions/abstraction.md](conventions/abstraction.md) | Abstraction recognition: the third-instance rule; value-object patterns (`ContentData`, `PersonName`); sizing the abstraction (value object → shared base class → component-family package) with wrong-size signs for each tier; where extracted abstractions live; when to leave duplication alone |
+| Path                                                                         | Description                                                                                                                                                                                                             |
+|------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [conventions/java.md](conventions/java.md)                                   | When writing Java code in this project, follow these style and idiom conventions so every class reads consistently regardless of author                                                                                 |
+| [conventions/vaadin/spring.md](conventions/vaadin/spring.md)                 | When registering Vaadin components as Spring beans, use `@SpringComponent` and the appropriate scope so Vaadin's lifecycle and Spring's DI work together correctly and to avoid name collision with Vaadin's `Component` |
+| [conventions/vaadin/views.md](conventions/vaadin/views.md)                   | When creating a Vaadin view, use `Composite<T>`, place it in its own sub-package, and annotate it with `@Menu` so navigation and package structure stay consistent                                                      |
+| [conventions/vaadin/components.md](conventions/vaadin/components.md)         | When building Vaadin components, initialize member variables in the constructor, delegate dialogs, and use Signals for reactive state so components stay cohesive and testable                                          |
+| [conventions/vaadin/layout-diagram.md](conventions/vaadin/layout-diagram.md) | Every Vaadin view and custom component class should have a layout diagram in its class Javadoc so the intended structure is visible without running the application                                                     |
+| [conventions/vaadin/uimodel.md](conventions/vaadin/uimodel.md)               | Types in `{app}-uimodel` should be named for their UI context, implement `HasCaption` when used in selection components, and implement capability interfaces when generic UI components bind to their structure         |
+| [conventions/vaadin/datetime.md](conventions/vaadin/datetime.md)             | When displaying dates and times, use `DateTimeUtil` with a zone and locale resolved per-call from `ClientDetailsService` so values reflect the user's local settings                                                    |
+| [conventions/singular-form.md](conventions/singular-form.md)                 | Every named artifact (class, table, module, package leaf, route path) should use the singular form, not the plural                                                                                                      |
+| [conventions/lombok.md](conventions/lombok.md)                               | When using Lombok on JPA entities or enums with properties, apply only the safe annotations so runtime failures from proxies, lazy loading, and bidirectional relationships are avoided                                 |
+| [conventions/comments.md](conventions/comments.md)                           | When writing code, default to no comments and add one only when the WHY is non-obvious so comments signal constraints and invariants, not history                                                                       |
+| [conventions/abstraction.md](conventions/abstraction.md)                     | When encountering duplication, wait for the third instance before extracting an abstraction so the right abstraction size becomes clear from real usage                                                                 |
 
 ## Writing
 
@@ -32,51 +32,57 @@ above). The `conventions/comments.md` rule above straddles —
 it's about comments *inside code* but is about writing as well.
 The entries here are about writing the documents themselves.
 
-| Path | Description |
-|------|-------------|
-| [writing/requirements.md](writing/requirements.md) | Requirement-writing form: system-facing imperative ("the system must..."), modal verbs (must/shall vs. should/may), one concept per requirement, testability, unambiguous agnostic vocabulary, distinguishing requirements from user stories and from acceptance criteria, active voice |
-| [writing/conventions.md](writing/conventions.md) | How to write convention and pattern documents: open with a scope statement ("X should…"), write INDEX.md entries that lead with the obligation rather than a topic list; when to split multi-practice documents |
+| Path                                                          | Description                                                                                                                                                                          |
+|---------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [writing/requirements.md](writing/requirements.md)           | When writing requirements, use system-facing imperative voice and modal verbs so each statement is unambiguous, testable, and distinguishable from user stories                      |
+| [writing/conventions.md](writing/conventions.md)             | When writing a convention or pattern document, open with a scope statement and lead INDEX.md entries with the obligation so readers immediately know when and why the pattern applies |
 
 ## Architecture
 
-| Path | Description |
-|------|-------------|
-| [architecture/modules.md](architecture/modules.md) | Multi-module Maven structure, compile-time layer separation, route scanning, `vaadin.allowed-packages`, `JpaConfig`, MapStruct |
-| [architecture/persistence.md](architecture/persistence.md) | JPA best practices: entity hierarchy, `equals`/`hashCode`, `@Version`, auditing, OSIV disabled, `@ManyToOne LAZY`, `@Enumerated STRING`, insert vs update, `@DynamicUpdate`, projections, cascade strategies, `@Embeddable`, batch/bulk ops, N+1 prevention, `@DataJpaTest` |
-| [architecture/services.md](architecture/services.md) | Service layer patterns: query/mutation separation, `@Transactional`, dirty-checking updates, grid loading, `@Cacheable` caching, error contracts, MapStruct mapper pattern |
-| [architecture/security.md](architecture/security.md) | Auth patterns: BCrypt, entropy-based password validation, passkey/WebAuthn, session management, RBAC via Jakarta Security annotations, `@AnonymousAllowed` on layout, conditional nav/component rendering, security headers, CSRF, rate limiting, SQL injection prevention, PII in logs, file upload validation |
+| Path                                                            | Description                                                                                                                                                                                                              |
+|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [architecture/modules.md](architecture/modules.md)             | When setting up a new application, structure it as a multi-module Maven project with runtime-scoped `*service` implementation dependencies so the UI layer cannot reference service implementation types at compile time |
+| [architecture/persistence.md](architecture/persistence.md)     | When working with Spring Data JPA, follow these entity design and query patterns so lifecycle, lazy loading, and dirty checking behave predictably                                                           |
+| [architecture/services.md](architecture/services.md)           | When implementing services, use a technology-prefix name, separate queries from mutations, apply `@Transactional` at the service layer, and never pass JPA entities or Vaadin types across the boundary                  |
+| [architecture/security.md](architecture/security.md)           | When adding authentication and authorization, follow these patterns for BCrypt, passkey, OIDC, session management, RBAC, and security headers so the application meets baseline security requirements                    |
+
+## Persistence
+
+| Path                                                                              | Description                                                                                                                                                    |
+|-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [persistence/spring-data-jpa/naming.md](persistence/spring-data-jpa/naming.md)   | When creating JPA entities, enums, repositories, or projections, use these naming conventions so the persistence-layer role of each artifact is unambiguous from its name alone |
 
 ## UI
 
-| Path | Description |
-|------|-------------|
-| [ui/theming.md](ui/theming.md) | Lumo theme, `LumoUtility`, component variants, brand customization via CSS custom properties |
-| [ui/navigation.md](ui/navigation.md) | `AppLayout` + `SideNav`, `@Menu` annotation, route-path grouping, `DrawerToggle`, conditional nav rendering, navigation guards, mobile bottom tab bar |
-| [ui/components.md](ui/components.md) | Quick Filter, Avatar, grid standards (`ListDataProvider`, record count, row click), form standards (`Binder`, inline validation), dialogs, notification toasts, confirmation dialogs, loading indicators |
-| [ui/responsive.md](ui/responsive.md) | Breakpoints (mobile/tablet/desktop), Vaadin responsive tools, full-width dialogs on mobile, reduced grid columns, server-side breakpoint detection |
-| [ui/error-views.md](ui/error-views.md) | Error view types (404, 403-as-404, 500, 400), shared base / chrome, action row pattern, sensitive information protection, logging standards |
+| Path                                            | Description                                                                                                                                                          |
+|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [ui/theming.md](ui/theming.md)                  | When styling the application, use Lumo CSS custom properties and `LumoUtility` classes so the theme stays consistent and maintainable without custom CSS              |
+| [ui/navigation.md](ui/navigation.md)            | When building navigation, use `AppLayout` + `SideNav` with `@Menu`-annotated routes so the nav structure is declarative and conditionally rendered by role           |
+| [ui/components.md](ui/components.md)            | When building grids, forms, and dialogs, follow these UI component patterns so interaction behavior stays consistent across views                                     |
+| [ui/responsive.md](ui/responsive.md)            | When building views, follow these responsive layout patterns so the UI adapts correctly to mobile, tablet, and desktop breakpoints                                    |
+| [ui/error-views.md](ui/error-views.md)          | When handling navigation and server errors, use these error view patterns so error pages are consistent and do not leak sensitive information                         |
 
 ## Testing
 
-| Path | Description |
-|------|-------------|
-| [testing/patterns.md](testing/patterns.md) | Testing pyramid, one test class per production class, JUnit + Mockito unit tests, Vaadin browserless UI tests, `@DataJpaTest`, `@Transactional` rollback, H2 compatibility mode, N+1 detection, Playwright E2E, **acceptance-criteria traceability** (every AC has a passing test; tests named for the behavior they verify) |
+| Path                                              | Description                                                                                                                                                                                             |
+|---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [testing/patterns.md](testing/patterns.md)        | When writing tests, follow the pyramid structure with one test class per production class and trace every acceptance criterion to a passing test so coverage is intentional and verifiable               |
 
 ## Deployment
 
-| Path | Description |
-|------|-------------|
-| [deployment/patterns.md](deployment/patterns.md) | Fat JAR, Docker, Spring profiles (dev/staging/prod), Flyway migrations, versioned/immutable/idempotent scripts, seed data, rollback documentation, structured logging, HikariCP, health check |
+| Path                                                  | Description                                                                                                                                                                        |
+|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [deployment/patterns.md](deployment/patterns.md)      | When deploying, use a fat JAR or Docker image with profile-specific properties and versioned Flyway migrations so the deployment is reproducible and rollback-safe                 |
 
 ## Figma
 
-| Path | Description |
-|------|-------------|
-| [figma/figma-to-lumo-theme.md](figma/figma-to-lumo-theme.md) | Translating a Figma design system into a Vaadin Lumo theme — color tokens, spacing scale, component variants |
-| [figma/figma-to-vaadin.md](figma/figma-to-vaadin.md) | Translating Figma layouts and components into Vaadin component compositions |
+| Path                                                                        | Description                                                                                                                                                                  |
+|-----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [figma/figma-to-lumo-theme.md](figma/figma-to-lumo-theme.md)               | When translating a Figma design system, map color tokens and spacing to Lumo CSS custom properties so the implementation stays in sync with the design source                |
+| [figma/figma-to-vaadin.md](figma/figma-to-vaadin.md)                       | When implementing a Figma design, translate layouts and component structures to Vaadin compositions using these patterns so the result matches the design intent              |
 
 ## Recipes
 
-| Path | Description |
-|------|-------------|
-| [recipes/INDEX.md](recipes/INDEX.md) | Step-by-step how-to guides for capabilities that recur across projects on this stack — passkey auth, OIDC/SSO integration, conditional auth via `application.properties`, multi-tenancy patterns, etc. Distinct from `conventions/`/`architecture/` (rules and idioms) — recipes are *implementation walkthroughs* anchored to the framework stack |
+| Path                                    | Description                                                                                                                                                                                                                  |
+|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [recipes/INDEX.md](recipes/INDEX.md)    | When implementing a recurring capability (passkey auth, OIDC/SSO, multi-tenancy, etc.), follow the relevant recipe for a step-by-step walkthrough anchored to the specific framework and library versions in use             |

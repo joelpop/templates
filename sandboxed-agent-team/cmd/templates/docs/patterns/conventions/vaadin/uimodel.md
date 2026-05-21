@@ -2,6 +2,33 @@
 
 Patterns for the `{app}-uimodel` module — the no-Vaadin-dependency layer that defines the data shapes the UI works with.
 
+## Naming Conventions
+
+UI model types are named for the UI context they serve — not for the entity or data source.
+
+| Type          | Convention                                      | Example                                |
+|---------------|-------------------------------------------------|----------------------------------------|
+| Data POJO     | No suffix — named for its UI context            | `EmployeeListItem`, `EmployeeDetail`   |
+| Enum          | No suffix — named for the concept it represents | `EmploymentStatus`, `PhoneType`        |
+| Picker record | Suffix `PickerItem`                             | `EmployeePickerItem`                   |
+
+Avoid generic suffixes like `Summary`, `Info`, or `Data` — `EmployeeListItem` is
+self-explaining; `EmployeeSummary` is not.
+
+### Pairing with the Implementation Layer
+
+UI model POJOs sit at the service boundary — what they pair with on the implementation
+side depends on the backing technology:
+
+| Implementation   | Counterpart                                                        | Reference                                              |
+|------------------|--------------------------------------------------------------------|--------------------------------------------------------|
+| Spring Data JPA  | JPA interface projection (`EmployeeListItemProjection`)            | `docs/patterns/persistence/spring-data-jpa/naming.md` |
+| REST client      | Response DTO or deserialized payload mapped by the service impl    | `docs/patterns/architecture/services.md`               |
+| Internal/derived | Assembled in the service impl from other sources — no counterpart  | `docs/patterns/architecture/services.md`               |
+
+The UI model name is chosen for the UI context it serves — not for the counterpart it
+comes from. The name stays stable even if the backing technology changes.
+
 ## Enum Display — `HasCaption`
 
 UI model enums that appear in selection components (`ComboBox`, `Select`, etc.) implement

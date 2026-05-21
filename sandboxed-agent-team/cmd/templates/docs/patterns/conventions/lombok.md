@@ -1,6 +1,6 @@
 # Lombok Guidelines
 
-Lombok works well with JPA entities and with enums that carry properties. Most pitfalls
+Use Lombok only on JPA entities and enums that carry properties; most pitfalls
 here cause runtime failures, not compile errors — easy to miss in development.
 
 ## for JPA Entities

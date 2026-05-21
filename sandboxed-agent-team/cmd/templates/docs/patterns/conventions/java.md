@@ -1,6 +1,6 @@
 # Java Coding Conventions
 
-Standards for Java code style, organization, and idiomatic usage in Vaadin + Spring Boot projects.
+All Java code in this project should follow these standards for code style, organization, and idiomatic usage in Vaadin + Spring Boot projects.
 
 ## Type Inference
 

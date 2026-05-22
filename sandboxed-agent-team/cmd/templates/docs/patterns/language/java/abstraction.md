@@ -1,8 +1,8 @@
 # Abstraction Recognition
 
-When to extract a value object, type, helper, or shared mechanism — and
-when not to. The cost of catching this late is high; the cost of
-catching it early is small.
+When the same code shape appears a second time, recognize the extraction
+window so the duplication doesn't harden before the third instance makes
+refactoring expensive.
 
 ## The third-instance rule
 
@@ -140,11 +140,11 @@ Wrong-size signs:
   the duplication was apparent, not structural.
 - A new feature requires changing the base to accommodate one
   caller → the base is leaking caller-specific knowledge; either
-  parameterise or split.
+  parameterize or split.
 
 ### Cohesive multi-class capability → component-family package
 
-When N classes together realise one capability the requirements name
+When N classes together realize one capability the requirements name
 as a unit, the abstraction is a *package*, not a class. Each class
 is a partial answer; the capability is the package. Recognition
 signal: the package boundary maps to a requirement boundary, and the
@@ -173,11 +173,18 @@ ui/customers/CustomersView.java extends BaseView {
 
 Wrong-size signs:
 
-- A package with one class → it's a class, not a package.
+- A package whose name is just the class it contains (e.g., `itembrowser/ItemBrowser.java`
+  with nothing else) → the package adds no organizational meaning; collapse it. Two example
+  exceptions: a **category package** like `*.ui.component` is fine with one entry if the
+  name reflects intent and mirrors a recognizable structure (e.g.,
+  `com.vaadin.flow.component`); a **convention-driven per-item package** like
+  `*.ui.view.useradmin` for `UserAdminView` is correct even with one class today, because
+  consistency requires every view to own its sub-package whether or not it currently has
+  companions (dialogs, editors, sub-enums).
 - Internals reused independently outside the package → either the
   capability isn't really cohesive (split the package) or you've
   built a feature-specific subsystem where a generic mechanism
-  belonged (broaden, move to `docs/patterns/architecture/`).
+  belonged (broaden, move to `docs/patterns/`).
 - Extending the package requires deep cross-knowledge of its
   internals → it's a directory, not a package; the public surface
   is too narrow or the parts are too coupled.
@@ -203,20 +210,20 @@ isn't ready.
 
 ## Where extracted abstractions live
 
-| Duplication shape | Right size | Where the abstraction goes |
-|-------------------|-----------|-----------------------------|
-| State bundle (fields used together) | Value object | Record / value type / Java class |
-| Logic shape (algorithmic duplication) | Method | On the relevant class, or a utility |
-| Repeated try/catch + error wrapping | Method | Wrapper method or higher-order helper |
-| Branching on type | Polymorphism | Split the type, dispatch via virtual call |
-| Repeated structural template (chrome, lifecycle, fixture) | Shared base class | Abstract or concrete base class — see "Sizing the abstraction" |
-| N classes realising one named capability | Component-family package | A package; capability boundary = package boundary — see "Sizing the abstraction" |
-| Cross-cutting concern (validation, logging, mapping, etc.) | Shared mechanism | Interface + implementation (or aspect); document the contract in `docs/solutions/` |
+| Duplication shape                                          | Right size               | Where the abstraction goes                                                         |
+|------------------------------------------------------------|--------------------------|------------------------------------------------------------------------------------|
+| State bundle (fields used together)                        | Value object             | Record / value type / Java class                                                   |
+| Logic shape (algorithmic duplication)                      | Method                   | On the relevant class, or a utility                                                |
+| Repeated try/catch + error wrapping                        | Method                   | Wrapper method or higher-order helper                                              |
+| Branching on type                                          | Polymorphism             | Split the type, dispatch via virtual call                                          |
+| Repeated structural template (chrome, lifecycle, fixture)  | Shared base class        | Abstract or concrete base class — see "Sizing the abstraction"                     |
+| N classes realising one named capability                   | Component-family package | A package; capability boundary = package boundary — see "Sizing the abstraction"  |
+| Cross-cutting concern (validation, logging, mapping, etc.) | Shared mechanism         | Interface + implementation (or aspect); document the contract in `docs/solutions/` |
 
-When the answer is "shared mechanism," that mechanism deserves an
-[architecture entry](../../architecture/) describing its contract — not
-just a piece of code that exists. Future implementers should be able to
-find the mechanism without grepping.
+When the answer is "shared mechanism," that mechanism deserves a
+`docs/patterns/` entry describing its contract — not just a piece of
+code that exists. Future implementers should be able to find the
+mechanism without grepping.
 
 ## Architect's role
 
@@ -231,7 +238,7 @@ highest-leverage activities. Specifically:
   it. Subsequent implementers should read the pattern, not re-derive
   it.
 - If the pattern is project-agnostic (like the `ContentData` shape
-  above), the entry also goes in `docs/patterns/architecture/` so it
+  above), the entry also goes in `docs/patterns/` so it
   carries to other projects.
 
 ## When to leave duplication alone

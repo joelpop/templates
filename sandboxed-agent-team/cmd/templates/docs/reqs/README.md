@@ -1,10 +1,9 @@
 # Requirement Writing
 
-How requirement statements are phrased in `docs/reqs/`. The form
-matters: a well-formed requirement is testable, unambiguous, and
-binding on the implementation. A poorly formed requirement reads
-like a description of what users will probably do, which leaves the
-implementer guessing.
+When writing requirements in `docs/reqs/`, use system-facing imperative
+form with modal verbs of obligation (`must`, `shall`) so each statement
+is testable, unambiguous, and binding on the implementation rather than
+a description of what users will probably do.
 
 ## System-facing imperative form
 

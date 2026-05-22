@@ -1,7 +1,9 @@
 # Code Comment Discipline
 
-When to write a comment, when not to, and the specific failure mode that
-shows up during fixes.
+When writing code, add a comment only when a non-obvious constraint, invariant,
+or workaround would surprise a future reader — all other explanations belong in
+commit messages and PR descriptions, not in the source unless otherwise noted by
+another pattern.
 
 ## Default: no comment
 

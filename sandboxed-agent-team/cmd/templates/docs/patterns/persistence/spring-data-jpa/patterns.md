@@ -1,7 +1,7 @@
 # Persistence Patterns
 
-JPA best practices for Spring Data JPA projects using Hibernate. Adapt `{base_package}`
-to your root Java package.
+When working with Spring Data JPA, follow these entity design and query patterns so
+Hibernate's lifecycle, lazy loading, and dirty checking behave predictably.
 
 ## Entity Base Class Hierarchy
 
@@ -26,7 +26,7 @@ RootEntity<KEY>              @MappedSuperclass
                              - extends AuditedEntity; most principal entities extend this
 ```
 
-Note: The field is named `key`, not `id`. See `docs/patterns/conventions/naming.md` for
+Note: The field is named `key`, not `id`. See `docs/patterns/persistence/spring-data-jpa/naming.md` for
 the `_key` vs `_id` distinction.
 
 ### RootEntity Implementation
@@ -110,7 +110,7 @@ public abstract class AuditedEntity<KEY> extends VersionedEntity<KEY> {
 
 `@EnableJpaAuditing` must be present on a `@Configuration` class, and an
 `AuditorAware<UserEntity>` bean must be registered (see
-`docs/patterns/architecture/modules.md`).
+`docs/patterns/structure/modules.md`).
 
 `created_by` and `updated_by` are `@ManyToOne` references to the users
 table. The `AuditorAware` bean reads the surrogate key off the
@@ -168,7 +168,7 @@ public abstract class OrderMapper {
 
 **Timezone source:** The `InstantMapper` is injected with a `ClientDetailsService`
 that provides the user's timezone (typically resolved from the user's profile or
-session configuration). See `conventions/vaadin/datetime.md` → "Browser Client Details —
+session configuration). See `docs/patterns/ui/vaadin/datetime.md` → "Browser Client Details —
 Bridging the SoC Wall" for the full `ClientDetailsService` pattern, including
 version-specific notes and `VaadinSession` caching guidance.
 
@@ -400,7 +400,7 @@ public interface EmployeePickerItemProjection {
 ```
 
 The corresponding UI model record implements `HasCaption` to carry the display
-label. See `docs/patterns/conventions/vaadin/uimodel.md` — "Enum Display — `HasCaption`" and
+label. See `docs/patterns/ui/vaadin/uimodel.md` — "Enum Display — `HasCaption`" and
 "UI Model Capability Interfaces" for the UI-side pattern.
 
 ## Relationship Cascade Strategies
@@ -442,7 +442,7 @@ Removing from the collection deletes from the database.
            orphanRemoval = true)
 private List<PhoneEntity> phones = new ArrayList<>();
 
-// Manual collection management — see docs/patterns/conventions/lombok.md
+// Manual collection management — see docs/patterns/language/java/lombok.md
 public List<PhoneEntity> getPhones() { return Collections.unmodifiableList(phones); }
 public void addPhone(PhoneEntity... phones) { ... }
 public void removePhone(PhoneEntity... phones) { ... }

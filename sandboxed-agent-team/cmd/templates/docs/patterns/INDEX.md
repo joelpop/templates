@@ -7,16 +7,7 @@ sensitive patterns carry inline "Vaadin ≥X / <X" notes; see [`README.md`](READ
 
 | Path | Description |
 |------|-------------|
-| [README.md](README.md) | What the kit provides and how to reuse it |
-
-## Writing
-
-Documentation-writing conventions (distinct from code conventions below).
-
-| Path                                                          | Description                                                                                                                                                                          |
-|---------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [writing/conventions.md](writing/conventions.md)             | When writing a convention or pattern document, open with a scope statement and lead INDEX.md entries with the obligation so readers immediately know when and why the pattern applies |
-| [writing/requirements.md](writing/requirements.md)           | When writing requirements, use system-facing imperative voice and modal verbs so each statement is unambiguous, testable, and distinguishable from user stories                      |
+| [README.md](README.md) | What the kit provides, how to reuse it, and how to write pattern documents for it |
 
 ## Language
 
@@ -54,7 +45,7 @@ Persistence-technology-specific patterns and naming.
 | Path                                                                            | Description                                                                                                                                                                      |
 |---------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [persistence/spring-data-jpa/naming.md](persistence/spring-data-jpa/naming.md)     | When creating JPA entities, enums, repositories, or projections, use these naming conventions so the persistence-layer role of each artifact is unambiguous from its name alone |
-| [persistence/spring-data-jpa/patterns.md](persistence/spring-data-jpa/patterns.md) | When working with JPA, follow these entity design and query patterns so Hibernate's lifecycle, lazy loading, and dirty checking behave predictably                               |
+| [persistence/spring-data-jpa/patterns.md](persistence/spring-data-jpa/patterns.md) | When working with Spring Data JPA, follow these entity design and query patterns so Hibernate's lifecycle, lazy loading, and dirty checking behave predictably                   |
 
 ## Security
 

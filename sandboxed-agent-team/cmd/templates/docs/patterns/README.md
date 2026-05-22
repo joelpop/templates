@@ -6,15 +6,16 @@ specific content — designed to carry across projects on this stack.
 
 ## What This Provides
 
-| Directory | Contents |
-|-----------|----------|
-| `conventions/` | Java, Vaadin, naming, and Lombok coding conventions; comment, abstraction, and fix discipline |
-| `architecture/` | Module structure, persistence, service layer, and security patterns |
-| `ui/` | Theming, navigation, components, responsive layout, and error views |
-| `testing/` | Unit, browserless UI, and E2E testing patterns; acceptance-criteria traceability |
-| `deployment/` | Fat JAR, Docker, Spring profiles, migrations, logging, health check |
-| `figma/` | Translating Figma designs into Lumo themes and Vaadin component compositions |
-| `recipes/` | Step-by-step how-to guides (passkey auth, OIDC/SSO, etc.) — distinct from rules and idioms above |
+| Directory      | Contents                                                                                                                                     |
+|----------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| `language/`    | Universal Java idioms, Lombok guidelines, comment discipline, abstraction patterns, singular-form naming                                      |
+| `structure/`   | Multi-module project organization and service-layer design                                                                                    |
+| `cicd/`        | Build tooling and deployment operations                                                                                                       |
+| `persistence/` | Spring Data JPA naming, entity design, and query patterns                                                                                    |
+| `security/`    | Spring Security config, RBAC, session management, and auth-method recipes (passkey, OIDC, form login)                                        |
+| `ui/vaadin/`   | Vaadin coding conventions, UI component patterns, and view recipes                                                                           |
+| `design/`      | Translating Figma designs into Lumo themes and Vaadin component compositions                                                                 |
+| `testing/`     | Unit, browserless UI, and E2E testing patterns; acceptance-criteria traceability                                                             |
 
 ## Version Compatibility
 
@@ -25,13 +26,13 @@ carry an inline **"Vaadin ≥X" / "Vaadin <X"** note describing each side of the
 
 The matrix below summarizes the version-sensitive areas:
 
-| Area | Vaadin 24.0 – 24.x | Vaadin 25.0 | Vaadin ≥25.1 |
-|------|--------------------|-------------|--------------|
-| Main layout + access checker | `@PermitAll` on main layout; `@Layout` annotation available from 24.1. Earlier 24.0 uses `MainLayout implements RouterLayout` + explicit `layout = MainLayout.class` on each `@Route`. | `@AnonymousAllowed` **required** on `@Layout` class — `AnnotatedViewAccessChecker` does not reliably find `@PermitAll` on layouts. | Same as 25.0. |
-| `@Menu` annotation for nav entries | Available from Vaadin 24.4+. On older 24.x, register `SideNavItem` instances manually in `MainLayout`. | Available. | Available. |
-| Vaadin Signals (cross-session reactive state) | Not available — use private state-management methods (fields, listeners, manual rebind). | Available; use for cross-session reactive data and `Binder`-external state where it adds value. | **Preferred for all non-`Binder` component state management.** `Binder` is still preferred for bean-backed forms. Pre-25.1 projects fall back to private state-management methods. |
-| Phone bottom tab bar via `addToNavbar(true, ...)` touch-optimized slot | Not available — compose a `Tabs` component manually at the bottom of the main layout for touch navigation. | Available. | Available. |
-| Extended client details API (for timezone, etc.) | `UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> ...)` asynchronous callback. Cache in `VaadinSession`. | Consult current docs — may be synchronous. | Consult current docs. |
+| Area                                                         | Vaadin 24.0 – 24.x                                                                                                                                                           | Vaadin 25.0                                                                                                              | Vaadin ≥25.1                                                                                                      |
+|--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Main layout + access checker                                 | `@PermitAll` on main layout; `@Layout` annotation available from 24.1. Earlier 24.0 uses `MainLayout implements RouterLayout` + explicit `layout = MainLayout.class` on each `@Route`. | `@AnonymousAllowed` **required** on `@Layout` class — `AnnotatedViewAccessChecker` does not reliably find `@PermitAll` on layouts. | Same as 25.0.                                                                                                     |
+| `@Menu` annotation for nav entries                           | Available from Vaadin 24.4+. On older 24.x, register `SideNavItem` instances manually in `MainLayout`.                                                                      | Available.                                                                                                               | Available.                                                                                                        |
+| Vaadin Signals (cross-session reactive state)                | Not available — use private state-management methods (fields, listeners, manual rebind).                                                                                     | Available; use for cross-session reactive data and `Binder`-external state where it adds value.                          | **Preferred for all non-`Binder` component state management.** `Binder` is still preferred for bean-backed forms. Pre-25.1 projects fall back to private state-management methods. |
+| Phone bottom tab bar via `addToNavbar(true, ...)` touch-optimized slot | Not available — compose a `Tabs` component manually at the bottom of the main layout for touch navigation.                                                          | Available.                                                                                                               | Available.                                                                                                        |
+| Extended client details API (for timezone, etc.)             | `UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> ...)` asynchronous callback. Cache in `VaadinSession`.                                                   | Consult current docs — may be synchronous.                                                                               | Consult current docs.                                                                                             |
 
 Spring Boot's patterns used here (`AuditorAware`, `BCryptPasswordEncoder`, `@Transactional`,
 `@EnableJpaAuditing`, `HttpSessionRequestCache`, `spring.jpa.open-in-view`, `@Cacheable`) are
@@ -56,7 +57,50 @@ the single side that applies to your project.
 5. Create application-specific docs in the parent `docs/` tree that reference these patterns
    using relative links (e.g., `See docs/patterns/architecture/persistence.md`).
 
+## Patterns vs. Recipes
+
+**Patterns** establish what to do and why — the rule, the obligation, the rationale.
+**Recipes** are reference implementations of those patterns — concrete, copy-adaptable
+code showing *how* to satisfy the pattern in a specific technology context.
+
+A recipe lives under a `recipes/` sub-directory of the relevant technology directory
+and assumes the reader has already read the corresponding pattern. It does not
+re-argue the why.
+
 ## Conventions vs. Requirements
 
 `patterns/` contains descriptive guidance, not checkbox requirements. Application-specific
 docs carry the `[ ]` checkboxes that reference these patterns.
+
+## Writing Pattern Documents
+
+Every convention and pattern document in this kit should follow two structural
+rules so agents and developers know when and how to apply the practice.
+
+### Open with a scope statement
+
+The first sentence (before any section heading) should answer: "what should this
+be applied to?" State the obligation directly:
+
+> Every Vaadin view and custom component class should have a layout diagram in
+> its class Javadoc.
+
+Without a scope statement the document describes mechanics with no stated
+audience or trigger. A reader scanning the file cannot tell whether it applies
+to their current task.
+
+If the document covers multiple unrelated practices, it should be split into
+separate single-practice files — possibly grouped into a subdirectory — so each
+file can carry its own concise, unambiguous obligation.
+
+### Write INDEX.md entries that lead with the obligation
+
+The INDEX.md description is the only thing an agent sees when scanning the index.
+It should answer "when do I apply this?" at a glance, not enumerate topics:
+
+**Avoid** — topic list only:
+> Text-based layout diagrams in Javadoc `<pre>` blocks: placement, box labeling…
+
+**Prefer** — obligation first, then topics:
+> Every Vaadin view and custom component class should have a layout diagram in
+> its class Javadoc. Defines placement, box labeling…

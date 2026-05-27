@@ -1,10 +1,9 @@
 # Recipe: Parallel TestBench E2E Tests
 
-This recipe configures parallel execution for TestBench integration tests.
-The non-obvious part: TestBench's `ParallelConfigurationStrategy` reads the
-concurrent limit during JUnit launcher setup — before `@ExtendWith` extension
-classes are loaded. `TestBenchParallelLimiter`, a `LauncherSessionListener` SPI,
-fires at the right moment to set the limit in both Maven and IDE runs.
+When implementing parallel execution for TestBench integration tests, follow
+this recipe to register a `TestBenchParallelLimiter` `LauncherSessionListener`
+that sets the concurrent limit early enough — before `@ExtendWith` extensions
+load — for both Maven and IDE runs.
 
 **Requires:** `testbench-e2e-server` recipe applied first (provides
 `vaadin-testbench-junit6`, `ServerExtension`, and `it-test.properties`).

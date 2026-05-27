@@ -1,9 +1,10 @@
 # Error View Patterns
 
-Pattern guidance for user-facing error views and sensitive-information
-protection in Vaadin 24+ applications. The Vaadin APIs named below
-(`RouteNotFoundError`, `HasErrorParameter`, `ErrorHandler`) are stable across
-every supported Vaadin line.
+When implementing the application's error views (404, access-denied, system
+error), conform to the per-type shape rules in this document — including the
+"display 403 as 404" rule and the no-stack-trace constraint — so users get a
+consistent friendly view across all error conditions and attackers cannot probe
+the system by triggering errors.
 
 This document describes the *shape* each error view must conform to; the
 project picks its own copy, layout primitives, icons, class names, and

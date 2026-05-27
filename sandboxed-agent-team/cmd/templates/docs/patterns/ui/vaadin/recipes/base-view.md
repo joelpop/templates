@@ -1,9 +1,9 @@
 # Recipe: `BaseView` — Consistent Per-View Chrome
 
-A shared base class that gives every routed view the same structural
-chrome — icon, title, right-side action slot, body slot — without
-`MainLayout` involvement. Build it once; each view supplies only what
-makes it distinct.
+When implementing a per-view chrome shared by every routed view (icon, title,
+right-side action slot, body slot) without involving `MainLayout`, follow this
+recipe to produce a `BaseView` base class that subclasses populate by supplying
+only what makes them distinct.
 
 ## What this produces
 

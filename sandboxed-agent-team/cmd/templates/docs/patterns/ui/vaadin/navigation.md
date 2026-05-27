@@ -1,8 +1,13 @@
 # Navigation Patterns
 
-AppLayout, SideNav, route-path grouping, responsive navigation, and navigation guards
-for Vaadin 24+ applications. Version-sensitive APIs (`@Menu`, `@Layout`, touch-optimized
-bottom tab bar) carry inline "Vaadin ≥X / <X" notes.
+When building the application's navigation shell, use `AppLayout` as the route
+container, populate the drawer with a `SideNav` driven by `@Menu`-annotated routes,
+and gate items by role at construction (not via `setVisible(false)`) so the nav
+structure is declaratively derived from routes and unauthorized entries leave no
+DOM artifact for users to discover.
+
+Version-sensitive APIs (`@Menu`, `@Layout`, touch-optimized bottom tab bar) carry
+inline "Vaadin ≥X / <X" notes.
 
 ## AppLayout + SideNav
 

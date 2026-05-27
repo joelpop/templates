@@ -1,9 +1,9 @@
 # Recipe: Parallel Browserless UI Tests with BrowserlessTest + ComponentTester
 
-This recipe adds the `browserless-test-junit6` dependency and configures Maven
-surefire for parallel execution. Tests run entirely in the JVM — no browser,
-no servlet container, no Spring startup cost — and belong in the surefire
-(unit) tier: `*Test.java` suffix, run on every commit.
+When implementing the surefire (unit) tier of UI tests that exercise Vaadin
+views without a browser, servlet container, or Spring startup, follow this
+recipe to add the `browserless-test-junit6` dependency and configure Maven
+surefire for parallel execution.
 
 For `BrowserlessTest` vs `SpringBrowserlessTest` base class selection and
 `ComponentTester<T>` page object conventions, see

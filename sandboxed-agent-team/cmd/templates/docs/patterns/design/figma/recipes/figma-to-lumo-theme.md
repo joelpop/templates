@@ -3,11 +3,13 @@ name: figma-to-lumo-theme
 description: Map Figma design tokens to Lumo CSS variables by extracting tokens, categorizing them, and generating CSS declarations in the styles.css file with only non-default values.
 ---
 
-# Figma to Lumo CSS Variables Mapping Template
+# Figma to Lumo CSS Variables Mapping
 
-## Overview
-Maps Figma design tokens to Lumo CSS variables using the `get_variable_defs` tool.
-Customizes Lumo Style Properties in `styles.css` to match the Figma design system.
+When translating a Figma design system into the application's Vaadin theme,
+extract Figma variables via `get_variable_defs`, map each token to a Lumo CSS
+custom property, and emit only the non-default declarations into `styles.css`
+so the implementation tracks the design source without overriding Lumo defaults
+that already match.
 
 ## Styles.css Location by Vaadin Version
 

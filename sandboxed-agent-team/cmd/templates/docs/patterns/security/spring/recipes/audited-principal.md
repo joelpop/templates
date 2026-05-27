@@ -1,14 +1,10 @@
 # Recipe: Audited Principal — `AuditedPrincipal`, `CurrentUser`, and JPA Auditing
 
-The shared foundation that connects authentication to audit
-columns. Every auth method (form login, passkey, OIDC) wraps its
-own framework-supplied principal type, but they all expose two
-things via a common interface — the **user key** (surrogate FK
-into the user table) and the **username** (whatever
-`Authentication.getName()` returns for that flow). With those two
-methods the audit pipeline populates `@CreatedBy` /
-`@LastModifiedBy` columns without a per-write database lookup, and
-non-JPA code reads "who is logged in" from a single helper.
+When implementing the foundation that connects every authentication method
+(form login, passkey, OIDC) to JPA's `@CreatedBy` / `@LastModifiedBy` columns
+without per-write database lookups, follow this recipe to produce an
+`AuditedPrincipal` interface, a `CurrentUser` helper, an `AuditedEntity`
+mapped-superclass, and an `AuditorAware` bean that wires them together.
 
 ## What this produces
 

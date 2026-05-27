@@ -3,13 +3,13 @@ name: figma-to-vaadin
 description: Translate Figma designs to well-structured Vaadin Flow code using Figma MCP and Vaadin MCP. Always extract design context first, check annotations, review documentation, then implement proper Vaadin components with correct themes and semantic structure.
 ---
 
-# Figma to Vaadin Implementation Guidelines
+# Figma to Vaadin Implementation
 
-## Overview
-Guidelines for translating Figma designs to well-structured Vaadin Flow code. Semantic
-correctness and maintainability over speed. Use existing project services and data
-classes (or mock new ones); generated UI is not expected to be functional — focus on
-accuracy of the interface design, not logic.
+When translating a Figma frame into a Vaadin Flow view, extract design context
+via the Figma MCP first, resolve any Figma/`docs/reqs` discrepancies before
+coding, and map design primitives to Vaadin components plus Lumo tokens so the
+resulting view matches the design's semantic structure rather than reproducing
+absolute-positioned layout.
 
 
 ## Figma ↔ Requirements: Resolving Discrepancies

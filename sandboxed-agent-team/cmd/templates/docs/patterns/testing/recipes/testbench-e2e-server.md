@@ -1,10 +1,9 @@
 # Recipe: TestBench E2E Server — Maven `it` Profile and IDE-Compatible Startup
 
-This recipe wires Jetty start/stop around Maven failsafe and a `ServerExtension`
-JUnit extension so integration tests run identically from Maven
-(`mvn verify -Pit`) and from the IDE without prestarting anything.
-`ServerExtension` detects whether Maven already started a server on the
-configured port and is a no-op in that case.
+When implementing the TestBench E2E tier so it runs identically from Maven
+(`mvn verify -Pit`) and from the IDE without prestarting anything, follow this
+recipe to wire Jetty start/stop around Maven failsafe and add a
+`ServerExtension` that no-ops when Maven already started the server.
 
 **Requires:** Vaadin 25.1+. For parallel execution, apply the
 `testbench-e2e-parallel` recipe alongside this one.

@@ -29,7 +29,7 @@ spring-boot-starter-parent
 | `{app}-jpamodel` | JPA entities (`@Entity`), code enums (`*Code`), interface projections (`*Projection`) | `{app}-common` |
 | `{app}-jpaclient` | Spring Data JPA repositories; `JpaConfig` (`@EntityScan`, `@EnableJpaRepositories`) | `{app}-jpamodel` |
 | `{app}-uimodel` | Plain POJOs for the UI layer (no persistence annotations); UI-layer enums | `{app}-common` |
-| `{app}-service` | Service interfaces operating on UI model objects only | `{app}-uimodel` |
+| `{app}-service` | Service interfaces operating on UI model objects only; `ClientDetailsService` default methods provide `Instant` ↔ `LocalDateTime` conversion | `{app}-uimodel` |
 | `{app}-jpaservice` | Service implementations using MapStruct to convert JPA projections ↔ UI models ↔ entities | `{app}-service`, `{app}-jpaclient` |
 | `{app}-ui` | Vaadin views, layouts, and UI components | `{app}-service` only |
 | `{app}-app` | Spring Boot entry point; assembles all modules; `application.properties`; frontend resources | `{app}-ui`, `{app}-jpaservice` (runtime only) |
@@ -114,7 +114,7 @@ without a per-write DB lookup. `EntityManager.getReference` returns a Hibernate 
 holding just the key — JPA persists the FK from the proxy with no `SELECT` issued.
 
 `spring.jpa.open-in-view=false` must be set in `application.properties`. See
-`docs/patterns/architecture/persistence.md` for why OSIV must be disabled.
+`docs/patterns/persistence/spring-data-jpa/jpa-config.md` for why OSIV must be disabled.
 
 ## MapStruct Configuration
 

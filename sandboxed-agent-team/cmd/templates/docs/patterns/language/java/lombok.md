@@ -1,116 +1,16 @@
 # Lombok Guidelines
 
-Use Lombok only on JPA entities and enums that carry properties; most pitfalls
-here cause runtime failures, not compile errors — easy to miss in development.
+When writing an enum with properties, a data POJO, or a class that needs a
+logger, apply Lombok's annotation subset for the class type so boilerplate is
+eliminated without proxy failures, lazy-load exceptions, or identity errors.
 
 ## for JPA Entities
 
-### Safe Annotations
+See `docs/patterns/persistence/spring-data-jpa/entity-lombok.md` for the full
+treatment — safe vs. unsafe annotations and managed collection suppression.
 
-| Annotation | Notes |
-|------------|-------|
-| `@Getter` | Generates accessors without touching `equals`/`hashCode` |
-| `@Setter` | Safe on entities; use selectively on immutable fields |
-| `@NoArgsConstructor` | JPA requires a no-arg constructor |
-| `@RequiredArgsConstructor` | Safe when used carefully |
-| `@Builder` | Requires explicit `@NoArgsConstructor` and `@AllArgsConstructor` alongside it — see "@Builder" below |
-
-### Unsafe Annotations — Never Use
-
-| Annotation | Why it breaks |
-|------------|---------------|
-| `@Data` | Bundles `@EqualsAndHashCode` and `@ToString`, so it brings every problem below at once. Also implies `@Setter` on every field, which is rarely what you want on an audited entity. |
-| `@EqualsAndHashCode` | Generates `equals`/`hashCode` from field values. Hibernate may return a proxy rather than the actual entity; uninitialized proxy fields compare as `null`, making two references to the same row appear unequal. On bidirectional relationships, field-based `equals`/`hashCode` also recurses into related entities. |
-| `@ToString` | Traverses all fields including lazy-loaded relationships — triggers `LazyInitializationException` outside a transaction and `StackOverflowError` on bidirectional relationships (A → B → A → …). |
-
-### Do Not Use @ToString on Entities with Relationships
-
-`@ToString` traverses all fields, including lazy-loaded relationships. This triggers:
-- `LazyInitializationException` outside a transaction
-- `StackOverflowError` on bidirectional relationships (A → B → A → ...)
-
-If you need a `toString` on an entity, use:
-```java
-@ToString(onlyExplicitlyIncluded = true)
-```
-and mark only simple scalar fields with `@ToString.Include`.
-
-### Suppress Lombok on Managed Collection Fields
-
-For `@OneToMany` and `@ManyToMany` collections that require bidirectional synchronization,
-suppress Lombok's getter and setter and provide manual implementations:
-
-```java
-@Getter(AccessLevel.NONE)
-@Setter(AccessLevel.NONE)
-@OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<PhoneEntity> phones = new ArrayList<>();
-
-// Manual getter — returns unmodifiable view so callers cannot bypass sync helpers
-public List<PhoneEntity> getPhones() {
-    return Collections.unmodifiableList(phones);
-}
-
-// Manual setter — routes through addPhone to maintain both sides of the relationship
-public void setPhones(List<PhoneEntity> phones) {
-    this.phones.clear();
-    phones.forEach(this::addPhone);
-}
-
-// Varargs add helper — maintains the back-reference
-public void addPhone(PhoneEntity... phones) {
-    Stream.of(phones).forEach(p -> {
-        this.phones.add(p);
-        p.setEmployee(this);
-    });
-}
-
-// Varargs remove helper
-public void removePhone(PhoneEntity... phones) {
-    Stream.of(phones).forEach(this.phones::remove);
-}
-```
-
-This pattern ensures:
-- Callers cannot mutate the collection and bypass back-reference synchronization
-- Orphan removal works correctly (items removed from the collection are deleted)
-- The bidirectional relationship is always consistent
-
-### @Builder
-
-When using `@Builder` on a JPA entity, you must also declare `@NoArgsConstructor` and
-`@AllArgsConstructor` explicitly, because `@Builder` alone replaces the no-arg constructor
-that JPA requires:
-
-```java
-@Entity
-@NoArgsConstructor          // required by JPA
-@AllArgsConstructor         // required by @Builder
-@Builder
-@Getter
-@Setter
-public class SomeEntity extends BaseEntity<Long> {
-    // fields
-    // manual equals/hashCode inherited from BaseEntity — do not override
-}
-```
-
-### Recommended Annotation Set
-
-For most principal entities:
-
-```java
-@Entity
-@Table(name = "employees")
-@NoArgsConstructor
-@Getter
-@Setter
-public class EmployeeEntity extends BaseEntity<Long> {
-    // fields with @Column, @ManyToOne, @OneToMany, etc.
-}
-```
-
-No `@Data`, no `@ToString`, no `equals`/`hashCode` override — all inherited from `BaseEntity`.
+Short form: use `@NoArgsConstructor`, `@Getter`, and `@Setter`. Never use
+`@Data`, `@EqualsAndHashCode`, or `@ToString` on an entity.
 
 ## for Enumerations
 
@@ -142,6 +42,53 @@ different from the constant name (most code should call the dedicated getter —
 Fields on an enum should be `private final` so each constant is immutable; `@Setter`
 has no place here.
 
+## for POJOs
+
+For mutable POJOs (DTOs, request/response objects, service data containers), use
+`@Data`. It generates getters, setters, `equals`/`hashCode`, `toString`, and a
+required-args constructor in one annotation — correct for plain Java objects where
+field-based identity is expected:
+
+```java
+@Data
+public class EmployeeDetail {
+    private Long key;
+    private String firstName;
+    private String lastName;
+    private EmploymentStatus status;
+}
+```
+
+For immutable POJOs, use `@Value`. It declares all fields `private final`, generates
+only getters (no setters), and produces a stable `equals`/`hashCode`:
+
+```java
+@Value
+public class EmployeeFilter {
+    String lastName;
+    EmploymentStatus status;
+}
+```
+
+When a POJO needs a builder for complex construction, add `@Builder`. On a plain POJO
+(not a JPA entity), `@Builder` works standalone — it generates the required all-args
+constructor automatically:
+
+```java
+@Data
+@Builder
+public class EmployeeDetail {
+    private Long key;
+    private String firstName;
+    private String lastName;
+}
+```
+
+`@Data` and `@EqualsAndHashCode` are safe on POJOs because there are no Hibernate
+proxies, lazy-loading side effects, or bidirectional relationships to navigate. The
+same annotations are unsafe on JPA entities for exactly those reasons — see
+`docs/patterns/persistence/spring-data-jpa/entity-lombok.md`.
+
 ## for Logging
 
 Use Lombok's `@Slf4j` annotation on any class that needs a logger. It generates a
@@ -166,5 +113,5 @@ Use SLF4J parameterized logging (`log.debug("loaded {} records", count)`), not s
 concatenation. Parameters are stringified only when the level is enabled, which matters
 for DEBUG/TRACE paths.
 
-See `docs/patterns/architecture/security.md` → "PII Not in Logs" for the rule against
+See `docs/patterns/security/data-protection/pii-logging.md` for the rule against
 logging user-identifying information at INFO level and below.

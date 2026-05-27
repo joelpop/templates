@@ -1,8 +1,9 @@
 # Recipe: `@ViewIcon` — Type-Safe View Icon Declaration
 
-A runtime annotation that declares a view's icon as a type-safe enum
-value — one source of truth, no string literals, no knowledge of icon
-collection names required.
+When implementing a type-safe icon declaration for view classes that needs to
+be readable from navigation components and view headers without string
+literals, follow this recipe to produce a `@ViewIcon` annotation holding an
+`IconFactory`-implementing enum value and the reflection pattern that reads it.
 
 ## What this produces
 

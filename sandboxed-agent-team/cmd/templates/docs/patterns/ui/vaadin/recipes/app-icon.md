@@ -1,9 +1,9 @@
 # Recipe: Application Icon Catalog — `AppIcon` and `IconFactory` Adapters
 
-A type-safe, intent-named icon catalog that decouples icon *meaning* from
-icon *appearance* and lets any icon library plug in through Vaadin's
-`IconFactory` interface. Build this once; call sites never reference a
-collection name or icon name string again.
+When implementing an intent-named icon catalog that decouples icon *meaning*
+from icon *appearance* and lets any icon library plug in through Vaadin's
+`IconFactory` interface, follow this recipe to produce an `AppIcon` enum plus
+per-library adapter enums callable as `AppIcon.EDIT.create()` everywhere.
 
 ## What this produces
 

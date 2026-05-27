@@ -55,22 +55,22 @@ the single side that applies to your project.
    "Vaadin ≥X / <X" notes that don't apply to your target. The matrix above identifies every
    place those notes appear.
 5. Create application-specific docs in the parent `docs/` tree that reference these patterns
-   using relative links (e.g., `See docs/patterns/architecture/persistence.md`).
-
-## Patterns vs. Recipes
-
-**Patterns** establish what to do and why — the rule, the obligation, the rationale.
-**Recipes** are reference implementations of those patterns — concrete, copy-adaptable
-code showing *how* to satisfy the pattern in a specific technology context.
-
-A recipe lives under a `recipes/` sub-directory of the relevant technology directory
-and assumes the reader has already read the corresponding pattern. It does not
-re-argue the why.
+   using relative links (e.g., `See docs/patterns/persistence/spring-data-jpa/entity-hierarchy.md`).
 
 ## Conventions vs. Requirements
 
-`patterns/` contains descriptive guidance, not checkbox requirements. Application-specific
-docs carry the `[ ]` checkboxes that reference these patterns.
+- `patterns/` contains descriptive guidance, not checkbox requirements
+- Application-specific docs carry the `[ ]` checkboxes that reference these patterns.
+
+## Patterns vs. Recipes
+
+- **Patterns** establish what to do and why — the rule, the obligation, the rationale.
+- **Recipes** are reference implementations of those patterns — concrete, copy-adaptable
+code showing *how* to satisfy the pattern in a specific technology context.
+
+A recipe lives under a `recipes/` sub-directory of the relevant technology directory
+and assumes the reader has already read the corresponding patterns. It does not
+re-argue the why.
 
 ## Writing Pattern Documents
 
@@ -79,19 +79,78 @@ rules so agents and developers know when and how to apply the practice.
 
 ### Open with a scope statement
 
-The first sentence (before any section heading) should answer: "what should this
-be applied to?" State the obligation directly:
+The first sentence (before any section heading) states the obligation directly:
+when to apply it, what to do, and why. Three criteria for a precise scope statement:
 
-> Every Vaadin view and custom component class should have a layout diagram in
-> its class Javadoc.
+- **"When"** names a specific artifact or task — not a broad domain ("security")
+  or technology area ("JPA"). If you can't name the specific thing being created
+  or configured, the scope is too vague.
+- **The obligation** states the actual rule — not "follow these patterns"
+  (circular). It names what to do, use, or avoid.
+- **"So"** names a specific failure prevented or benefit gained — not "so it
+  works" or "so it is correct."
 
-Without a scope statement the document describes mechanics with no stated
-audience or trigger. A reader scanning the file cannot tell whether it applies
-to their current task.
+**Avoid** — domain-scoped, circular obligation, vague benefit:
+> *When working on security, follow these patterns so the application is secure.*
 
-If the document covers multiple unrelated practices, it should be split into
-separate single-practice files — possibly grouped into a subdirectory — so each
-file can carry its own concise, unambiguous obligation.
+**Prefer** — artifact-scoped, specific rule, concrete benefit:
+> *When annotating a `@Route` view, add exactly one of `@AnonymousAllowed`,
+> `@PermitAll`, `@RolesAllowed`, or `@DenyAll` so `AnnotatedViewAccessChecker`
+> has an unambiguous access rule for every route.*
+
+If a single precise scope statement cannot be written for the file, the file
+covers too many independent practices and must be split. Each split-out file
+gets its own scope statement.
+
+### Code examples illustrate the rule; they don't replace it
+
+A code block inside a pattern shows what the obligation looks like in practice —
+it only makes sense alongside the surrounding explanation. When a code block
+becomes detailed enough to copy-adapt for a complete feature without reading the
+prose, it belongs in a recipe instead.
+
+## Writing Recipes
+
+### Open with a scope statement
+
+The scope statement for a recipe names a concrete implementation goal:
+
+> *When implementing [specific task], follow this recipe to [produce specific output].*
+
+The task is not a pattern name — it is what the developer is about to build.
+
+### Recipes are working examples, not law
+
+A recipe demonstrates one valid way to implement the relevant patterns. It is
+not the only acceptable implementation. Projects must adapt recipes to their
+actual technology choices — a recipe that uses Keycloak is a starting point for
+an Okta implementation, not a mandate to use Keycloak.
+
+### Recipes demonstrate multiple patterns
+
+Recipes are not constrained to a single pattern. A realistic implementation
+task routinely demonstrates several patterns together, and the recipe should
+reflect that reality.
+
+### Prerequisites
+
+Reference the pattern documents the recipe demonstrates. The reader is assumed
+to have read those patterns; the recipe does not re-argue the why.
+
+### Structure
+
+Numbered steps with copy-adaptable code blocks. Keep prose to a minimum —
+the code is the primary communication.
+
+### Don't introduce new patterns inline
+
+If writing the recipe surfaces a pattern not yet documented, document it in a
+pattern file first and reference it from the recipe. Recipes are implementations,
+not the authoritative source for pattern rules.
+
+---
+
+## Writing INDEX.md Entries
 
 ### Write INDEX.md entries that lead with the obligation
 

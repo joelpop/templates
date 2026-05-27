@@ -19,7 +19,8 @@ List<ItemListItem> items = itemService.listAll();
 ## Member Variable Initialization
 
 Initialize member variables in constructors, not at the declaration site. All initialization
-is visible in one place; components needed only during construction stay as locals.
+is visible in one place, initialization order is explicit, and components needed only during
+construction stay as locals.
 
 ```java
 // Preferred

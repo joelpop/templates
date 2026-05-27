@@ -1,6 +1,10 @@
 # UI Model Conventions
 
-Patterns for the `{app}-uimodel` module — the no-Vaadin-dependency layer that defines the data shapes the UI works with.
+When defining types in the `{app}-uimodel` module, name them for their UI
+context, implement `HasCaption` on types used in selection components, and
+implement capability interfaces when generic UI components bind to their
+structure so each type carries a predictable contract and the view layer never
+needs `instanceof` checks.
 
 ## Naming Conventions
 

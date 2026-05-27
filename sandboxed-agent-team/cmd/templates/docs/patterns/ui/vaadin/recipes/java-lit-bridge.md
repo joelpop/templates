@@ -1,11 +1,10 @@
 # Recipe: Java–Lit Bridge — Wrapping Browser APIs as Flow Components
 
-The pattern for confining browser-side logic to a Lit web component
-while keeping the Vaadin view layer in pure server-side Java. Flow
-never sees the browser API; the Lit component never sees Java types.
-The bridge is a pair: a `@Tag`/`@JsModule`-annotated Java `Component`
-subclass and a matching `LitElement` that dispatches `CustomEvent`s Flow
-maps to typed Java events.
+When implementing a Vaadin component that needs to invoke a browser-only API
+(WebAuthn, clipboard, geolocation, MediaDevices), follow this recipe to produce
+a Java `Component` / Lit `LitElement` pair that hides the browser side behind
+typed Java events so Flow code stays in pure server-side Java and the Lit code
+stays in pure TypeScript.
 
 ## What this produces
 

@@ -1,12 +1,10 @@
 # Recipe: Item Browser — List + Detail Component Family
 
-A reusable component-family for every "list of items with optional
-CRUD" view. `ItemBrowser` owns the list half (grid, toolbar, filters);
-`EditableItemBrowser` defines the CRUD contract; `ItemEditor` defines the
-detail-form contract. Concrete `EditableItemBrowser` implementations
-choose the layout (split pane, dialog, or separate view) independently
-of the list and editor configuration — the same wiring code works across
-all three.
+When implementing a "list of items with optional CRUD" view, follow this recipe
+to produce the `ItemBrowser` / `EditableItemBrowser` / `ItemEditor` component
+family — a list half (grid, toolbar, filters) plus a swappable detail half (split
+pane, dialog, or separate view) that share the same wiring code regardless of
+layout.
 
 ## What this produces
 

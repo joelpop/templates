@@ -1,10 +1,10 @@
 # Recipe: Conditional Authentication Methods via `application.properties`
 
-A configuration-driven pattern for enabling any combination of
-authentication methods — form login, passkey (WebAuthn), OIDC SSO —
-with **invalid combinations failing fast at startup**. Build this
-foundation once, then layer the per-method recipes
-([passkey](passkey.md), [oidc-sso](oidc-sso.md)) on top.
+When implementing a deployment-configurable selection of authentication
+methods (form login, passkey, OIDC) with invalid combinations rejected at
+startup, follow this recipe to produce the `AuthProperties` config record,
+the `AuthMethods` runtime API, the `AuthMethodCombinabilityValidator`, and the
+`SecurityConfig` filter chain that branches on them.
 
 ## What this produces
 

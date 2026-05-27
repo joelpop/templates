@@ -1,15 +1,9 @@
 # Recipe: OIDC / SSO Authentication
 
-OpenID Connect single sign-on for Vaadin Flow apps. Spring
-Security's OAuth2 client handles the authorization code flow,
-token exchange, and userinfo call; this recipe covers the Vaadin
-integration — wiring the IdP redirect to the login view, handling
-RP-initiated logout through Vaadin's UIDL channel, and mapping
-IdP-supplied identities to your domain user model. It assumes
-**existing-user-only authentication** by default — the IdP's
-authentication is trusted, but a user must already exist in the
-application database to be granted access. Auto-provisioning is a
-project decision; see "Decisions" below.
+When implementing OIDC single sign-on for a Vaadin Flow app, follow this recipe
+to produce the OAuth2 client configuration, the `AuditedOidcUser` principal,
+the `OidcUserAdapter` that maps IdP claims to the existing-user-only domain
+model, and the RP-initiated logout wired through Vaadin's UIDL channel.
 
 ## What this produces
 

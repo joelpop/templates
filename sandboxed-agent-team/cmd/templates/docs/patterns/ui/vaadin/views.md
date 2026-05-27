@@ -1,6 +1,10 @@
 # Vaadin View Conventions
 
-Structure, package layout, and navigation configuration for routed views.
+When creating a routed Vaadin view, extend `Composite<T>` rather than a layout class,
+place the view class in its own sub-package under `*.ui.view.<viewname>`, and declare
+navigation via `@Route` plus `@Menu` so layout primitives stay encapsulated, per-view
+companions (dialogs, editors) have a stable home, and the navigation tree is
+discoverable without manually registering each entry.
 
 ## Views Must Extend Composite<T>
 

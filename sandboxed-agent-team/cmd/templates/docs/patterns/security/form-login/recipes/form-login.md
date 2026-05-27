@@ -1,9 +1,9 @@
 # Recipe: Form Login — Username/Password with Vaadin `LoginForm`
 
-The classic auth method, integrated with Vaadin's `LoginForm`
-component and Spring Security's `DaoAuthenticationProvider`. Most
-of the wiring is in `VaadinSecurityConfigurer` — your job is to
-provide the user lookup, the principal, and the password encoder.
+When implementing username/password form login backed by a JPA user table and
+participating in the audited-principal contract, follow this recipe to produce
+the `UserLookup` seam, the `AuditedUserDetails` principal, the password-encoder
+bean, and the `LoginView` that hosts Vaadin's `LoginForm`.
 
 > **Naming note.** Spring Security calls the identity field
 > *username*. Whether your project's username column actually

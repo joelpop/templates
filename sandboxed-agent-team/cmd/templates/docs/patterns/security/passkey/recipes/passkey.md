@@ -1,14 +1,10 @@
 # Recipe: Passkey (WebAuthn) Authentication
 
-Spring Security 7's WebAuthn DSL handles the cryptographic
-ceremonies and HTTP endpoints; this recipe covers the integration
-surface — the user-entity adapter, credential persistence,
-handle-lifecycle bookkeeping, and the Vaadin component that runs
-the browser-side ceremony. Spring Security's own WebAuthn docs
-are thin and assume an in-memory or JDBC repository; this recipe
-is for projects that need their own JPA-backed credential store
-and want their auth to participate in the kit's
-audited-principal contract.
+When implementing passkey (WebAuthn) authentication backed by a JPA credential
+store and participating in the audited-principal contract, follow this recipe
+to produce the Spring Security 7 WebAuthn integration: the user-entity
+adapter, credential persistence, handle-lifecycle bookkeeping, and the Vaadin
+component that runs the browser-side ceremony.
 
 > **Prerequisite reminder.** Passkey is *supplementary* to form
 > login per the conditional-auth combinability rule — users sign

@@ -1,10 +1,13 @@
 # Responsive Layout Patterns
 
-Breakpoints, device detection, and adaptive behavior for Vaadin 24+ across phone, tablet,
-and desktop. `FormLayout` responsive steps, `AppLayout` drawer behavior, and LumoUtility
-classes are stable across all supported Vaadin lines. The `retrieveExtendedClientDetails`
-API for server-side width detection differs between Vaadin 24 and 25 — see
-`docs/patterns/README.md` → "Version Compatibility".
+When laying out a view that must render across phone, tablet, and desktop, use
+`FormLayout` responsive steps, `AppLayout` drawer modes, and `LumoUtility`
+breakpoint classes to declare the breakpoint behavior so the layout adapts at the
+documented widths without horizontal scrolling, clipped content, or per-view media
+queries.
+
+The `retrieveExtendedClientDetails` API for server-side width detection differs
+between Vaadin 24 and 25 — see `docs/patterns/README.md` → "Version Compatibility".
 
 ## Breakpoints
 

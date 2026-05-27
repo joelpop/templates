@@ -64,31 +64,54 @@ invariant. Every consumer benefits: signatures shrink, validation is
 single-sourced, and downstream code can ask `content.contentType()`
 without worrying whether some caller passed mismatched arguments.
 
-### "First name plus last name" → a name type, not five string variants
+### "First name plus last name" → a name type
 
 ```java
-// Avoid — the model exposes the components, then five string
-// variants get added across views as needs arise
+// Avoid — components exposed as primitives; every consumer reimplements
+// display order, locale choices, and casing independently
 String firstName;
 String lastName;
-// ... and elsewhere ...
-String fullName;       // "Alice Smith"
-String firstLast;      // "Alice Smith"
-String lastFirst;      // "Smith, Alice"
-String displayName;    // varies by locale
 
 // Preferred — components stay structured; rendering is the consumer's
-// job, not the model's
+// responsibility, not the model's
 public record PersonName(String first, String last) {
-    String full()      { return "%s %s".formatted(first, last); }
+    String firstLast() { return "%s, %s".formatted(first, last); }
     String lastFirst() { return "%s, %s".formatted(last, first); }
+    String fullName()  { return firstLast(); }
 }
 ```
 
-The model carries structure (first, last). Display order, locale-aware
-composition, and abbreviation choices live in renderers — formatting
-code, not the data model. Every "we need yet another variant" pull is a
-sign the rendering responsibility has leaked into the model.
+The `PersonName` type localizes the "these two fields belong together"
+invariant. Every consumer benefits: signatures shrink, formatting choices
+are single-sourced in the record's methods, and no caller can pass
+`lastName` where `firstName` was expected.
+
+**When the same name-formatting helpers appear on multiple domain types**,
+the interface form is the next extraction. `User`, `Employee`, `Contact`,
+and `PersonName` may all carry `firstName`/`lastName` — and copying the
+same formatting methods onto each class is the same duplication the record
+solved, one level up. Extract them once as interface defaults:
+
+```java
+public interface HasNames {
+    String getFirstName();
+    String getLastName();
+    default String firstLast() { return "%s, %s".formatted(getFirstName(), getLastName()); }
+    default String lastFirst() { return "%s, %s".formatted(getLastName(), getFirstName()); }
+    default String fullName()  { return firstLast(); }
+}
+```
+reducing `PersonName` to
+```java
+public record PersonName(String first, String last) {
+    @Override String getFirstName() { return first; }
+    @Override String getLastName()  { return last; }
+}
+```
+
+Each type implements `HasNames` and declares its own fields; none
+re-implements the default methods. The second-instance signal: "I'm
+about to copy these formatting methods into a second class."
 
 ## Beyond value objects: sizing the abstraction
 

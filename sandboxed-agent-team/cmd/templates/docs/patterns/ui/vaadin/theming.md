@@ -1,8 +1,9 @@
 # Theming
 
-Lumo theme usage, LumoUtility conventions, component variants, and brand customization
-patterns for Vaadin 24+ applications. Lumo tokens and `LumoUtility` class names are stable
-across every supported Vaadin line.
+When styling a Vaadin component or view, apply Lumo CSS custom properties via
+`LumoUtility` class names and component theme variants rather than hand-written CSS
+so visual choices stay aligned with the design tokens and brand overrides remain
+isolated to the central theme module.
 
 ## Lumo Is the Only Theme
 

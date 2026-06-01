@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "java": {
+      "type": "http",
+      "url": "https://www.javadocs.dev/mcp"
+    },
+    "vaadin": {
+      "type": "http",
+      "url": "https://mcp.vaadin.com/docs"
+    },
+    "spring-docs": {
+      "command": "npx",
+      "args": ["-y", "@enokdev/springdocs-mcp@latest"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"]
+    },
+    "fetch": {
+      "command": "npm",
+      "args": ["exec", "--silent", "--", "fetch-mcp"]
+    },
+    "figma": {
+      "type": "sse",
+      "url": "http://127.0.0.1:3845/sse"
+    }
+  }
+}

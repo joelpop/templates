@@ -109,7 +109,7 @@ wrapping multiple sub-fields, or anything else.
 Five built-in tones via CSS `part` names on the grid row:
 
 ```java
-browser.muteRowsWhen(item -> !item.isActive());          // secondary colour, italic
+browser.muteRowsWhen(item -> !item.isActive());          // secondary color, italic
 browser.markRowsAsPrimaryWhen(item -> item.isCurrent()); // primary tint, semibold
 browser.markRowsAsSuccessWhen(item -> item.isHealthy());
 browser.markRowsAsWarningWhen(item -> item.isExpiring());

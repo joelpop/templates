@@ -18,14 +18,16 @@ the application's Vaadin-facing modules (typically `app` and `ui`). Non-Vaadin
 modules — services, JPA model, repositories, utilities — continue to use `@Component`.
 
 ```java
+// Avoid — plain @Component in a Vaadin module
+@Component
+public class AuthMethodCombinabilityValidator { ... }
+```
+
+```java
 // Preferred — in the app or ui module
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 @SpringComponent
-public class AuthMethodCombinabilityValidator { ... }
-
-// Avoid — plain @Component in a Vaadin module
-@Component
 public class AuthMethodCombinabilityValidator { ... }
 ```
 

@@ -69,7 +69,7 @@ Locale is resolved from `UI.getCurrent()` on each call rather than captured at
 construction time. A locale preference change (`UI.setLocale(...)`) flows through
 every existing `format()` call automatically without re-wiring.
 
-### Fallback behaviour
+### Fallback behavior
 
 When `UI.getCurrent()` returns `null` (background threads, unit tests) the locale
 falls back to `Locale.ROOT`.

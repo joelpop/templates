@@ -1,10 +1,7 @@
 # Vaadin Signals
 
-When managing non-`Binder` component state on Vaadin ≥25.1, use Vaadin Signals as
-the default state primitive and name Signal fields with their type suffix so reactive
-changes propagate without manual listener wiring and field types are unambiguous.
-
-## When to Use Signals
+When managing non-`Binder` component state, choose the mechanism based on
+Vaadin version so reactive changes propagate without manual listener wiring.
 
 > **Vaadin ≥25.1:** Vaadin Signals are the **preferred mechanism for non-`Binder`
 > component state management** — UI state that is not backed by a JPA-style bean
@@ -18,26 +15,12 @@ changes propagate without manual listener wiring and field types are unambiguous
 > (cross-session updates, computed values); private state-management methods remain
 > acceptable for simple cases.
 >
-> **Vaadin <25 (24.x):** Signals are **not available**. Manage non-`Binder` state
+> **Vaadin 24.x:** Signals are **not available**. Manage non-`Binder` state
 > through private fields, manual listener wiring, and explicit rebind/refresh methods
 > on the view or composite. Do not try to backport Signals.
->
-> **`Binder` is always preferred for bean-backed forms**, regardless of Vaadin
-> version — field-to-property binding with validation is the job `Binder` does best.
-> Signals complement `Binder`; they do not replace it.
 
-## Signal Field Naming
+**`Binder` is always preferred for bean-backed forms**, regardless of Vaadin
+version — field-to-property binding with validation is the job `Binder` does
+best. Signals complement `Binder`; they do not replace it.
 
-Suffix Signal fields with their signal type for clarity:
-
-- `ListSignal` fields: `itemsListSignal`
-- `ValueSignal` fields: `selectedItemSignal`, `editingSignal`
-- Computed signals: `totalValueSignal`, `filteredCountSignal`
-
-```java
-private final ListSignal<ItemListItem> itemsListSignal;
-private final ValueSignal<Boolean> editingSignal;
-
-// computed signal — local variable in constructor is fine
-Signal<Integer> visibleCountSignal = Signal.computed(() -> ...);
-```
+For Signal field naming, see `signal-naming.md`.

@@ -6,27 +6,35 @@ match across the specified columns — so every grid view has consistent search
 behavior.
 
 ```java
+var provider = new CachingDataProvider<>(itemService::listAll);
+var dataView = grid.setItems(provider::fetch, provider::count);
+
 var quickFilter = new TextField();
 quickFilter.setPlaceholder("Search…");
 quickFilter.setPrefixComponent(VaadinIcon.SEARCH.create());
 quickFilter.setClearButtonVisible(true);
 quickFilter.setValueChangeMode(ValueChangeMode.LAZY);
 
-// Wire to ListDataProvider filter
 quickFilter.addValueChangeListener(e -> {
-    dataProvider.setFilter(item ->
-        matchesQuickFilter(item, e.getValue())
-    );
+    var term = e.getValue().strip().toLowerCase();
+    if (term.isEmpty()) {
+        provider.clearFilter(dataView);
+    } else {
+        provider.setFilter(item -> matchesQuickFilter(item, term), dataView);
+    }
 });
 
-private boolean matchesQuickFilter(ItemListItem item, String query) {
-    if (query == null || query.isBlank()) return true;
-    var q = query.strip().toLowerCase();
-    return item.getName().toLowerCase().contains(q)
-        || item.getCode().toLowerCase().contains(q);
+private boolean matchesQuickFilter(ItemListItem item, String term) {
+    return item.getName().toLowerCase().contains(term)
+        || item.getCode().toLowerCase().contains(term);
 }
 ```
 
 The columns that participate in the Quick Filter are defined per view in the feature
 requirements. The Quick Filter may coexist with additional filter controls (status
 toggle, role filter, date range) — it does not replace view-specific filters.
+
+## Related
+
+- `docs/patterns/ui/vaadin/grid-loading-state.md` — when and why to use `CachingDataProvider`.
+- `docs/patterns/ui/vaadin/recipes/caching-data-provider.md` — full `CachingDataProvider` implementation including sort and reload.

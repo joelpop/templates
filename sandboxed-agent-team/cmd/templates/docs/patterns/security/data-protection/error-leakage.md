@@ -16,9 +16,3 @@ Stack traces appear only in server-side logs. Spring Boot's default `/error`
 endpoint must be suppressed or overridden. See
 `docs/patterns/ui/vaadin/error-views.md` for error view patterns.
 
-## HTTP Response Headers
-
-HTTP response headers must not reveal the server technology stack:
-
-- `Server` header: absent or generic
-- `X-Powered-By` header: absent

@@ -26,24 +26,17 @@ carry an inline **"Vaadin ≥X" / "Vaadin <X"** note describing each side of the
 
 The matrix below summarizes the version-sensitive areas:
 
-| Area                                                         | Vaadin 24.0 – 24.x                                                                                                                                                           | Vaadin 25.0                                                                                                              | Vaadin ≥25.1                                                                                                      |
-|--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| Main layout + access checker                                 | `@PermitAll` on main layout; `@Layout` annotation available from 24.1. Earlier 24.0 uses `MainLayout implements RouterLayout` + explicit `layout = MainLayout.class` on each `@Route`. | `@AnonymousAllowed` **required** on `@Layout` class — `AnnotatedViewAccessChecker` does not reliably find `@PermitAll` on layouts. | Same as 25.0.                                                                                                     |
-| `@Menu` annotation for nav entries                           | Available from Vaadin 24.4+. On older 24.x, register `SideNavItem` instances manually in `MainLayout`.                                                                      | Available.                                                                                                               | Available.                                                                                                        |
-| Vaadin Signals (cross-session reactive state)                | Not available — use private state-management methods (fields, listeners, manual rebind).                                                                                     | Available; use for cross-session reactive data and `Binder`-external state where it adds value.                          | **Preferred for all non-`Binder` component state management.** `Binder` is still preferred for bean-backed forms. Pre-25.1 projects fall back to private state-management methods. |
-| Phone bottom tab bar via `addToNavbar(true, ...)` touch-optimized slot | Not available — compose a `Tabs` component manually at the bottom of the main layout for touch navigation.                                                          | Available.                                                                                                               | Available.                                                                                                        |
-| Extended client details API (for timezone, etc.)             | `UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> ...)` asynchronous callback. Cache in `VaadinSession`.                                                   | Consult current docs — may be synchronous.                                                                               | Consult current docs.                                                                                             |
+| Area                                                                   | Vaadin 24.0 – 24.x                                                                                                                                                                     | Vaadin 25.0                                                                                                                        | Vaadin ≥25.1                                                                                                                                                                       |
+|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Main layout + access checker                                           | `@PermitAll` on main layout; `@Layout` annotation available from 24.1. Earlier 24.0 uses `MainLayout implements RouterLayout` + explicit `layout = MainLayout.class` on each `@Route`. | `@AnonymousAllowed` **required** on `@Layout` class — `AnnotatedViewAccessChecker` does not reliably find `@PermitAll` on layouts. | Same as 25.0.                                                                                                                                                                      |
+| `@Menu` annotation for nav entries                                     | Available from Vaadin 24.4+. On older 24.x, register `SideNavItem` instances manually in `MainLayout`.                                                                                 | Available.                                                                                                                         | Available.                                                                                                                                                                         |
+| Vaadin Signals (cross-session reactive state)                          | Not available — use private state-management methods (fields, listeners, manual rebind).                                                                                               | Available; use for cross-session reactive data and `Binder`-external state where it adds value.                                    | **Preferred for all non-`Binder` component state management.** `Binder` is still preferred for bean-backed forms. Pre-25.1 projects fall back to private state-management methods. |
+| Phone bottom tab bar via `addToNavbar(true, ...)` touch-optimized slot | Not available — compose a `Tabs` component manually at the bottom of the main layout for touch navigation.                                                                             | Available.                                                                                                                         | Available.                                                                                                                                                                         |
+| Extended client details API (for timezone, etc.)                       | `UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> ...)` asynchronous callback. Cache in `VaadinSession`.                                                             | Consult current docs — may be synchronous.                                                                                         | Consult current docs.                                                                                                                                                              |
+| Spring Boot compatibility                                              | Spring Boot 3.x and 4.x patterns are identical for the APIs used here. Spring Boot 3 requires Java 17+; Spring Boot 4 raises the floor further — pick the JDK to match.                | Same.                                                                                                                              | Same.                                                                                                                                                                              |
+| Java version                                                           | Java 17–20: use a conventional short name (e.g., `unused`) for unused lambda parameters — `_` is not available.                                                                        | Java 21+: use `_` (unnamed variable) for unused lambda parameters.                                                                 | Java 21+.                                                                                                                                                                          |
 
-Spring Boot's patterns used here (`AuditorAware`, `BCryptPasswordEncoder`, `@Transactional`,
-`@EnableJpaAuditing`, `HttpSessionRequestCache`, `spring.jpa.open-in-view`, `@Cacheable`) are
-identical between Spring Boot 3.x and 4.x. Spring Boot 3 requires Java 17+; Spring Boot 4
-raises the floor further — pick the JDK to match the Spring Boot line you target.
-
-Java 21+ is assumed for the `_` unnamed-variable syntax shown in the Java conventions. On
-Java 17 projects, use a conventional short name (e.g., `e` or the specific event type) for
-the unused lambda parameter instead.
-
-If you're targeting a specific Vaadin version, you can tighten any inline "≥X / <X" split to
+If you're targeting a specific Vaadin version, tighten any inline "≥X / <X" split to
 the single side that applies to your project.
 
 ## How to Reuse
@@ -59,14 +52,14 @@ the single side that applies to your project.
 
 ## Conventions vs. Requirements
 
-- `patterns/` contains descriptive guidance, not checkbox requirements
+- `patterns/` contains descriptive guidance, not checkbox requirements.
 - Application-specific docs carry the `[ ]` checkboxes that reference these patterns.
 
 ## Patterns vs. Recipes
 
 - **Patterns** establish what to do and why — the rule, the obligation, the rationale.
 - **Recipes** are reference implementations of those patterns — concrete, copy-adaptable
-code showing *how* to satisfy the pattern in a specific technology context.
+  code showing *how* to satisfy the pattern in a specific technology context.
 
 A recipe lives under a `recipes/` sub-directory of the relevant technology directory
 and assumes the reader has already read the corresponding patterns. It does not
@@ -101,6 +94,11 @@ when to apply it, what to do, and why. Three criteria for a precise scope statem
 If a single precise scope statement cannot be written for the file, the file
 covers too many independent practices and must be split. Each split-out file
 gets its own scope statement.
+
+### Formatting conventions
+
+- **"Avoid" before "Preferred"** — always place the avoid example first, the preferred example second, each in a separate fenced code block.
+- **Language tags** — use ` ```java `, ` ```xml `, ` ```sql `, ` ```properties `, etc. on every fenced code block. Do not omit the tag to suppress IDE warnings.
 
 ### Code examples illustrate the rule; they don't replace it
 
@@ -152,10 +150,9 @@ not the authoritative source for pattern rules.
 
 ## Writing INDEX.md Entries
 
-### Write INDEX.md entries that lead with the obligation
-
 The INDEX.md description is the only thing an agent sees when scanning the index.
-It should answer "when do I apply this?" at a glance, not enumerate topics:
+Apply the same "When … use/do … so …" obligation form as the scope statement — it
+should answer "when do I apply this?" at a glance, not enumerate topics:
 
 **Avoid** — topic list only:
 > Text-based layout diagrams in Javadoc `<pre>` blocks: placement, box labeling…

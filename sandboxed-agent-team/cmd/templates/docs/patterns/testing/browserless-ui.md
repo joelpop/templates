@@ -50,26 +50,3 @@ class EmployeeViewTest extends SpringBrowserlessTest {
 Browserless UI tests live in the same package as the view they test with the
 `*Test.java` suffix (surefire, not failsafe).
 
-## What Browserless Tests Cannot Cover
-
-A real browser (TestBench) is required for anything the browser engine
-mediates:
-
-| Capability | Browserless | TestBench |
-|---|---|---|
-| Component state, server events | ✓ | ✓ |
-| Focus | — | ✓ (`hasAttribute("focused")`) |
-| Text selection | — | ✓ (`executeScript()` on `selectionStart`/`selectionEnd`) |
-| Scroll position | — | ✓ (`getRect()` comparison) |
-| CSS rendering, hover states | — | ✓ |
-| Web component internals (slots, shadow DOM) | — | ✓ |
-
-For browser-only assertions, use `waitUntil()` to let the browser settle before
-asserting:
-
-```java
-waitUntil(_ -> view.isNameFieldFocused());
-assertTrue(view.isNameFieldFocused());
-```
-
-See `docs/patterns/testing/recipes/testbench-browserless.md` for setup.

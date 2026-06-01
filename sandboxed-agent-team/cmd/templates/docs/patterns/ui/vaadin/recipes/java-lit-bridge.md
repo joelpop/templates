@@ -283,7 +283,7 @@ instances.
   light DOM is needed.
 - Renaming the `@Tag` or `@customElement` value without updating the
   other causes the component to silently render as an empty unknown
-  element with no JS behaviour — confirms the names must match.
+  element with no JS behavior — confirms the names must match.
 
 ## Related
 

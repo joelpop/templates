@@ -23,27 +23,3 @@ slow browser tests are reserved for the pre-PR gate.
 - **E2E tests** run only at the pre-PR gate via Maven failsafe (`*IT.java` suffix with
   TestBench) or Node.js test runner in `e2e/` (Playwright)
 
-## One Test Class Per Production Class
-
-Every production class has a corresponding test class named with the production
-class name plus a `Test` suffix:
-
-```
-EmployeeService       →  EmployeeServiceTest
-EmployeeView          →  EmployeeViewTest
-EmployeeMapper        →  EmployeeMapperTest
-```
-
-No test class covers multiple unrelated production classes.
-
-## Coverage Targets
-
-| Layer | Target |
-|-------|--------|
-| Service layer | ≥ 80% line coverage |
-| Utility classes | ≥ 80% line coverage |
-| UI views | All form interactions, validation errors, grid interactions covered by browserless tests |
-
-Coverage is measured per module. The UI module is covered by browserless tests,
-not line-coverage tools (which cannot easily instrument Vaadin component
-interactions).

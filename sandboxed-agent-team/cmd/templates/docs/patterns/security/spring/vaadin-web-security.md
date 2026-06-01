@@ -43,8 +43,3 @@ in subtle, breakage-prone ways:
 **Verify session fixation works:** the session cookie value changes between
 pre-login and post-login responses.
 
-## CSRF for Non-Vaadin Endpoints
-
-`VaadinWebSecurity` configures CSRF protection automatically for Vaadin
-endpoints. Endpoints outside Vaadin's filter chain (actuator, custom REST) must
-implement CSRF protection independently.

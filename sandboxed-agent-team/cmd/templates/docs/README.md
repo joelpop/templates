@@ -58,3 +58,8 @@ implementation task.
 The project's canonical vocabulary — business terms (Analyst) and
 technical terms (Architect). Used by requirement docs, patterns,
 solutions, and code via inline Markdown links.
+
+## Writing Conventions
+
+All documentation in this tree uses **US English spellings** — "behavior" not
+"behaviour", "color" not "colour", "realizing" not "realising", etc.

@@ -63,17 +63,3 @@ Not `@RolesAllowed({"ADMIN", "MANAGER"})`. String literals scatter role names
 across the codebase; renaming becomes a project-wide grep, and typos are silent
 (a misspelled `"ADMNI"` compiles but never matches anyone).
 
-## Where the Enum Lives
-
-Place it in a module accessible from both persistence (where the role is stored
-on the user record) and UI (where the constants are referenced in
-`@RolesAllowed`). In a typical multi-module Vaadin/Spring layout that is the
-`uimodel` module — `service` already depends on it, and so does `ui`
-transitively.
-
-## Why `getSecurityName()`
-
-Spring Security represents authorities as strings and some integrations need a
-method-of-an-instance accessor — e.g., when mapping a `UserEntity` field to a
-granted-authority list. The getter is the seam; the constants are the
-compile-time form for annotations.

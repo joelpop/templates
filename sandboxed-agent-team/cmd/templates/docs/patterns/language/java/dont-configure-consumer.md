@@ -18,8 +18,8 @@ var dataView = provider.setItems(grid);
 **Preferred** — consumer wires itself from the provider's interface:
 
 ```java
-public Stream<T> fetch(Query<T, Void> query) { ... }
-public int count(Query<T, Void> query) { ... }
+public Stream<T> fetch(Query<T, Void> query) { /* ... */ }
+public int count(Query<T, Void> query) { /* ... */ }
 
 var dataView = grid.setItems(provider::fetch, provider::count);
 ```

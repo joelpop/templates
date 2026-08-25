@@ -1,8 +1,9 @@
 # Member Variable Initialization
 
 When declaring member variables, declare without initialization and assign in
-the constructor body so creation and configuration of each field are together
-and fields can be `final`.
+the constructor body so all configuration for each field is in one place — since
+creation can itself include configuration, splitting initialization across the
+declaration and the constructor body scatters related setup.
 
 ```java
 // Avoid — creation at declaration, configuration in constructor; each field split across two places

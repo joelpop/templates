@@ -1,41 +1,50 @@
 # Dialog Delegation
 
-When building a Vaadin dialog class, wrap `Dialog` via delegation — never
-extend it — so the class exposes a focused public API rather than `Dialog`'s
-50+ public methods.
+When building a Vaadin dialog class, extend `Composite<Dialog>` or
+`Composite<ConfirmationDialog>` rather than `Dialog` itself so the class exposes
+a focused public API rather than `Dialog`'s  50+ public methods, and the dialog stays
+in the DOM when added to a parent for draggable positioning.
 
 ```java
 // Avoid
-public class EditItemDialog extends Dialog { }
+public class EditItemDialog extends Dialog { /* ... */ }
 ```
 
 ```java
 // Preferred
-public class EditItemDialog {
+public class EditItemDialog extends Composite<Dialog> {
     private final Dialog dialog;
 
     public EditItemDialog(/* dependencies */) {
-        dialog = new Dialog();
+        dialog = getContent();
         // configure dialog contents
+        var cancelButton = new Button("Cancel");
+        cancelButton.addClickListener(this::onCancelButtonClick);
+        var saveButton = new Button("Save");
+        saveButton.addClickListener(this::onSaveButtonClick);
     }
 
-    public void open()  { dialog.open(); }
-    public void close() { dialog.close(); }
+    private void onCancelButtonClick(ClickEvent<Button> _) {
+        dialog.close();
+    }
+
+    private void onSaveButtonClick(ClickEvent<Button> event) {
+        fireEvent(new SaveEvent(this, event.isFromClient()));
+        dialog.close();
+    }
+
+    public void open()  {
+        dialog.open();
+    }
+
+    public Registration addSaveListener(ComponentEventListener<SaveEvent> listener) {
+        return addListener(SaveEvent.class, listener);
+    }
+
+    public static class SaveEvent extends ComponentEvent<EditItemDialog> {
+        public SaveEvent(EditItemDialog source, boolean fromClient) {
+            super(source, fromClient);
+        }
+    }
 }
 ```
-
-**Draggable dialogs — attachment required:** A draggable `Dialog` retains its
-screen position across close/reopen only when it is explicitly added to a
-parent component before opening — otherwise Vaadin auto-attaches it to the UI
-on `open()` and removes it from the DOM on `close()`, resetting the position.
-A delegating wrapper handles this by providing an `attachTo(HasComponents parent)`
-method that adds the inner `dialog` to the given parent without exposing it:
-
-```java
-public void attachTo(HasComponents parent) { parent.add(dialog); }
-```
-
-The view calls `attachTo(this)` once during construction, and position is
-preserved across open/close cycles.
-
-For event publishing from a delegating dialog, see `non-component-events.md`.

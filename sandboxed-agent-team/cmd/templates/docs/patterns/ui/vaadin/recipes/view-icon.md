@@ -16,7 +16,7 @@ literals, follow this recipe to produce a `@ViewIcon` annotation holding an
 ## Dependencies
 
 - Vaadin 24+ (`IconFactory`, `Icon`, `@Menu`, `MenuConfiguration`).
-- The [app-icon recipe](app-icon.md) if using `AppIcon` as the value
+- The `ui/vaadin/recipes/app-icon.md` recipe if using `AppIcon` as the value
   type (recommended for projects with multiple icon libraries or a
   curated catalog). Projects that only use `VaadinIcon` do not need
   `AppIcon`.
@@ -90,7 +90,7 @@ Place `@ViewIcon` on the view class alongside `@Route` and `@Menu`:
 @Menu(order = 2, title = "Users")
 @RolesAllowed(UserRole.ROLE_ADMIN)
 @ViewIcon(AppIcon.USER_MANAGEMENT)
-public class UserManagementView extends BaseView { ... }
+public class UserManagementView extends BaseView { /* ... */ }
 ```
 
 `@Menu` is still present for Vaadin's auto-discovered sidebar
@@ -166,7 +166,9 @@ if (annotation != null) {
 
 ## Related
 
-- [app-icon.md](app-icon.md) — `AppIcon` and `IconFactory` adapters;
+- `ui/vaadin/app-icon.md` — `AppIcon` and the intent-named catalog;
   the enum that `@ViewIcon` carries as its value.
-- `docs/patterns/ui/navigation.md` — `@Menu` and sidebar navigation;
-  the string-literal icon pattern that `@ViewIcon` replaces.
+- `ui/vaadin/recipes/app-icon.md` — `IconFactory` adapter enums and
+  custom iconsets; the full implementation behind `AppIcon`.
+- `ui/vaadin/navigation/menu-annotation.md` — `@Menu` and sidebar
+  navigation; the string-literal icon pattern that `@ViewIcon` replaces.

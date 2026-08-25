@@ -5,10 +5,20 @@ When actions are needed after every navigation — closing the mobile drawer, up
 ```java
 public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
+    private final ClientDetailsService clientDetailsService;
+
+    public MainLayout(ClientDetailsService clientDetailsService) {
+        this.clientDetailsService = clientDetailsService;
+    }
+
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        // Close drawer on mobile after navigation
-        setDrawerOpened(false);
+        if (clientDetailsService.isTouchDevice()) {
+            setDrawerOpened(false);
+        }
     }
 }
 ```
+
+**Related:** `client-details-service.md` — `ClientDetailsService` interface including `isTouchDevice()`;
+`client-details-impl.md` — version-specific implementation.

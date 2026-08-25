@@ -194,10 +194,10 @@ site automatically.
 
 ## Related
 
-- [view-icon.md](view-icon.md) — `@ViewIcon` annotation: type-safe icon
+- `ui/vaadin/recipes/view-icon.md` — `@ViewIcon` annotation: type-safe icon
   declaration on view classes, backed by `AppIcon`. Eliminates
   the string literal in `@Menu(icon = "vaadin:xxx")`.
-- `docs/patterns/ui/navigation.md` — `@Menu` and sidebar navigation;
+- `ui/vaadin/navigation/menu-annotation.md` — `@Menu` and sidebar navigation;
   explains the string-literal icon problem that `@ViewIcon` addresses.
-- `docs/patterns/conventions/vaadin/uimodel.md` — `HasCaption` for display enums;
+- `ui/vaadin/uimodel/has-caption.md` — `HasCaption` for display enums;
   a related pattern for enum display in selection components.

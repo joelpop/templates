@@ -1,18 +1,22 @@
 # AppLayout and SideNav
 
-When building the navigation shell, use `AppLayout` as the shell for all authenticated views — it provides the drawer, navbar, and content slot. `SideNav` populates the drawer.
+When creating the application layout, use `AppLayout` as the navigation shell so
+views share a consistent drawer, navbar, and content slot.
 
 ```java
 @Layout
-@AnonymousAllowed  // See docs/patterns/conventions/vaadin/spring.md — do NOT use @PermitAll
+@PermitAll
 public class MainLayout extends AppLayout {
-    // DO NOT add "implements RouterLayout" — already inherited from AppLayout
 
     public MainLayout(AuthenticatedUser currentUser) {
         var nav = new SideNav();
-        // Add nav items based on role — see conditional-nav.md
         addToDrawer(nav);
         addToNavbar(new DrawerToggle());
     }
 }
 ```
+
+**Related:** `layout-annotation.md` — `@Layout` version compatibility;
+`router-layout-interface.md` — why `implements RouterLayout` is not needed;
+`conditional-nav.md` — filtering nav items by role;
+`docs/patterns/security/authorization/layout-access.md` — access annotation choice and inheritance.

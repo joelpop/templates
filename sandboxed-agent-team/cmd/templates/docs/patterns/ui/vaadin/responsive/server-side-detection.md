@@ -1,16 +1,22 @@
 # Server-Side Breakpoint Detection
 
-When server-side layout decisions depend on viewport width, use Vaadin's `Page` API — but prefer CSS-based responsive rules for visual-only changes.
+When a view must adjust its component structure based on viewport width — not
+just its visual appearance — call `clientDetailsService.getWindowInnerWidth()`
+and compare against the standard breakpoints so the server applies the correct
+layout before the first render.
+
+Prefer CSS-based responsive rules via `LumoUtility` or `@media` queries for
+purely visual changes. Use server-side detection only when components must be
+added, removed, or structurally reconfigured.
 
 ```java
-UI.getCurrent().getPage().retrieveExtendedClientDetails(details -> {
-    var isMobile = details.getWindowInnerWidth() < 600;
-    // adjust layout server-side
-});
+var width = clientDetailsService.getWindowInnerWidth();
+var isMediumOrWider = width >= Breakpoints.MD.minWidthPx;
 ```
 
-Use sparingly — prefer CSS-based responsive rules via `LumoUtility` or `@media` queries
-for visual-only changes.
+Use `clientDetailsService.isTouchDevice()` for interaction decisions such as
+rendering a touch-optimized navigation layout — orthogonal to viewport width.
 
-The `retrieveExtendedClientDetails` API differs between Vaadin 24 and 25 — see
-`docs/patterns/README.md` → "Version Compatibility".
+**Related:** `responsive/breakpoints.md` — breakpoint pixel values;
+`client-details-service.md` — the `ClientDetailsService` interface;
+`client-details-impl.md` — how details are retrieved per Vaadin version.

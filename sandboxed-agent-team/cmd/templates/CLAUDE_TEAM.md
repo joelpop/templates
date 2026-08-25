@@ -27,6 +27,19 @@ The following MCP servers are configured in `.mcp.json` at the
 project root and available to all teammates. Prefer these over training
 data — training data may be outdated or describe deprecated patterns.
 
+**API and coding authority — consult each tier only when the tiers above it do not fully cover the topic:**
+
+1. **MCP servers** — query the configured MCP tools first (see table below)
+2. **Official documentation** — fetch from authoritative docs if MCP doesn't cover it
+3. **Dependency sources** — inspect library source or Javadoc artifacts directly
+4. **Project source** — read the local codebase for how the stack is wired
+5. **Web research** — search the web for current information
+6. **Training knowledge** — last resort only; use for orientation but always verify; software versions change rapidly and training data routinely describes deprecated APIs and patterns
+
+**Official documentation (tiers 1–2) shows *how to use the API* — not necessarily best practices.** For best practices, consult:
+- `docs/patterns/` first — authoritative best practices for this project
+- Industry best practices (web research) secondarily — when no project pattern covers the topic
+
 | Server | Provides | Primary Users |
 |--------|----------|---------------|
 | `java` | Java standard library and ecosystem Javadoc | Coder, Architect, Unit Tester |

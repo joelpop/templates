@@ -20,8 +20,8 @@ public MyView(...) {
     getContent().add(createToolbar(), createGrid());
 }
 
-private HorizontalLayout createToolbar() { ... }
-private Grid<Item> createGrid() { ... }
+private HorizontalLayout createToolbar() { /* ... */ }
+private Grid<Item> createGrid() { /* ... */ }
 ```
 
 ```java
@@ -41,7 +41,9 @@ public MyView(...) {
     grid.addItemClickListener(this::onGridItemClick);
 
     // ---------- Assembly ----------
-    getContent().add(toolbar, grid);
+    var content = getContent();
+    content.add(toolbar);
+    content.add(grid);
 }
 ```
 

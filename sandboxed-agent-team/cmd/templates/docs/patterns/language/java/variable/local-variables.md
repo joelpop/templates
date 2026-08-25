@@ -1,10 +1,12 @@
 # Local Variable Declaration
 
-Declare local variables close to their first use, not at the top of the method:
+When declaring a local variable, place it as close as possible to its first use —
+not at the top of the method — so the declaration, initialization, and usage are
+readable together without scrolling.
 
 ```java
 // Avoid
-var content = new VerticalLayout();   // declared too early
+var content = new VerticalLayout();   // declared before needed - too early
 var form = new FormLayout();
 // ... configure form ...
 content.add(form);

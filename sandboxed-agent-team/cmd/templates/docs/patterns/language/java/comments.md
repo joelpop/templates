@@ -30,7 +30,7 @@ for (User u : users) sendEmail(u);
 
 // `authProvider` may be null during the first request after a hot reload;
 // this branch is what `SecurityFilter` falls back to in that window.
-if (authProvider == null) { ... }
+if (authProvider == null) { /* ... */ }
 ```
 
 For doc comments on public types and methods, see `javadoc.md` — that is a

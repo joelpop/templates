@@ -22,7 +22,7 @@ This is **Artifact**, a Vaadin 25 + Spring Boot 4 application using Java 25. It 
 
 This project was preconfigured with Model Context Protocol (MCP) servers in `.mcp.json` to provide specialized tooling assistance to Claude Code. These servers were selected based on the project's toolchain and the broad, cross-platform availability of the tooling needed to run the MCP servers (http and node/npm/npx).
 
-### Sample MPC Server File
+### Sample MCP Server File
 
 ```json
 {

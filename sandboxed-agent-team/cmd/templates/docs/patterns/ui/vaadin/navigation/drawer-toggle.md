@@ -1,10 +1,8 @@
 # DrawerToggle
 
-Always include `DrawerToggle` in the navbar so users can open and close the drawer.
+When adding the main navigation drawer, include `DrawerToggle` in the navbar so
+users can open and close the drawer on all screen sizes.
 
 ```java
 addToNavbar(new DrawerToggle());
 ```
-
-On tablet-width viewports (600px–1023px), the drawer overlays the content rather than
-pushing it aside. This is Vaadin `AppLayout`'s default responsive behavior.

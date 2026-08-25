@@ -1,8 +1,9 @@
 # Service Error Contracts
 
-When a service method encounters a predictable failure, throw `EntityNotFoundException`
-or `ValidationException` rather than surfacing raw database errors or Vaadin UI
-notifications so views control how errors are presented.
+When a service method encounters a predictable failure, throw a named exception,
+such as `EntityNotFoundException` or `ValidationException`,
+rather than surfacing raw database errors so views
+control how errors are presented.
 
 Define exceptions in the `{app}-service` module so both service implementations and views
 can reference them without violating layer boundaries:
@@ -33,16 +34,7 @@ public class ValidationException extends RuntimeException {
 }
 ```
 
-Only these two typed exceptions are defined. Uniqueness violations, required-field
-omissions, cross-entity checks, and every other predictable business-rule failure surface
-as a `ValidationException` with a field-specific message — not as a dedicated subclass
-per field. A dedicated `DuplicateKeyException` / `DuplicateDisplayIdException` / etc.
-proliferates exception types for no benefit; callers distinguish cases by the message,
-not by the class.
-
-Service implementations catch `DataIntegrityViolationException` from the database and
-translate them to `ValidationException` before propagating to the UI. Raw database
-error messages must never reach the user.
+Raw database error messages must never reach the user.
 
 Services must not import or reference Vaadin — no `Notification.show(...)`, no
 `UI.getCurrent()`, no component creation. An exception thrown from a service carries a

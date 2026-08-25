@@ -1,9 +1,9 @@
 # Conditional Component Rendering
 
-When deciding how to present a control the current user may not be able to
+When deciding how to present a control the current user might not be allowed to
 interact with, choose the mode based on the reason: "do not generate" for
 authorization, `setVisible(false)` for contextually inapplicable, `setEnabled(false)`
-with a tooltip for temporarily blocked — so each mode communicates the correct
+for temporarily blocked — so each mode communicates the right
 signal and no authorization gate can be bypassed via the browser DOM.
 
 ## Three Modes
@@ -16,9 +16,9 @@ signal and no authorization gate can be bypassed via the browser DOM.
   could apply in another state the same user encounters (e.g., a Reactivate button
   hidden on an active record, shown on an inactive one). Component is constructed
   and lives in the layout so it can be revealed without a rebuild.
-- **Disable** (`setEnabled(false)` + tooltip) — **applicable and authorized, but
-  not possible right now** (e.g., cannot deactivate the last remaining admin, cannot
-  submit while a save is in flight). Tooltip must explain *why*.
+- **Disable** (`setEnabled(false)`) — **applicable and authorized, but not possible
+  right now** (e.g., cannot deactivate the last remaining admin, cannot submit while
+  a save is in flight).
 
 ```java
 // Do not generate — e.g., security gating by role. The button is never constructed for
@@ -33,10 +33,8 @@ if (currentUser.hasRole(UserRole.ROLE_ADMIN)) {
 // record's current state; it re-appears when the state changes.
 reactivateButton.setVisible(!record.isActive());
 
-// Disable — applicable and authorized, temporarily blocked. Show a tooltip explaining why.
+// Disable — applicable and authorized, temporarily blocked.
 deactivateButton.setEnabled(!isLastAdmin);
-deactivateButton.setTooltipText(isLastAdmin
-    ? "Cannot deactivate the only admin account" : null);
 ```
 
 **Do not** use `setVisible(false)` for authorization gating — that is the "do not
@@ -65,9 +63,8 @@ interactive.
 
 Options, in preference order:
 
-1. **Rethink the mode.** If a missing control would disrupt layout, "disable with
-   tooltip" preserves the slot by design, blocks interaction on the server, and
-   communicates intent more clearly than an empty placeholder.
+1. **Rethink the mode.** If a missing control would disrupt layout, "disable"
+   preserves the slot by design and blocks interaction on the server.
 2. **An inert placeholder** the same size as the control — a `Div`, empty `Span`,
    or subdued "—" label. A separate component, not the real control styled invisible
    — no enabled element hiding in the DOM.

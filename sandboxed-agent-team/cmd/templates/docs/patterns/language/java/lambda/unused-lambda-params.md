@@ -1,16 +1,17 @@
 # Unused Lambda Parameters
 
-> **Java 21+:** use `_` (the unnamed variable) for unused lambda parameters and unused
-> catch clause variables. This is the preferred form on any Java-21-or-newer project
-> (including Vaadin 24.1+ on Java 21 and every Vaadin 25+ project).
->
-> **Java 17–20:** `_` is not available. Name the parameter `unused` to signal intent at
-> the call site — the name itself tells any reader the value is deliberately ignored.
+When a lambda or catch clause has a parameter whose value is not used, name it
+explicitly so readers know the omission is deliberate rather than an oversight.
+The correct form depends on the Java version.
 
 ```java
-// Java 21+: preferred
+// Avoid — undeclared intent; readers can't tell if the parameter was forgotten
+saveButton.addClickListener(e -> save());
+```
+
+```java
+// Preferred — Java 21+: unnamed variable makes intent unambiguous
 saveButton.addClickListener(_ -> save());
-cancelButton.addClickListener(_ -> close());
 
 try {
     // ...
@@ -18,7 +19,7 @@ try {
     Notification.show("Please fix the validation errors");
 }
 
-// Java 17–20: name the parameter `unused`
+// Preferred — Java 17–20: name the parameter `unused`
 saveButton.addClickListener(unused -> save());
 
 try {

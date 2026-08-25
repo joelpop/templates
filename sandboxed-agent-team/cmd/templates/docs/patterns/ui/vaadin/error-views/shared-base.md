@@ -20,8 +20,8 @@ BaseErrorView extends Composite<VerticalLayout>
 
 Vaadin routes each exception to the most specific registered
 `HasErrorParameter` implementation, so `AccessDeniedView` and
-`InvalidRequestView` always win over `SystemErrorView<Exception>` for their
-respective exception types.
+`InvalidRequestView` always win over `SystemErrorView`'s
+`HasErrorParameter<Exception>` for their respective exception types.
 
 ## Action Row
 

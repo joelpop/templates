@@ -13,11 +13,11 @@ PR descriptions, and issue trackers, where they're discoverable via `git blame`,
 
 // Added per Joel's request in PR #482 to handle the case where
 // the dashboard widget loads before auth completes.
-if (authProvider == null) { ... }
+if (authProvider == null) { /* ... */ }
 
 // Avoid
 
 // FIX: removed the null check that was causing NPEs in the
 // reporting flow when the customer field is empty
-public void process(Order order) { ... }
+public void process(Order order) { /* ... */ }
 ```

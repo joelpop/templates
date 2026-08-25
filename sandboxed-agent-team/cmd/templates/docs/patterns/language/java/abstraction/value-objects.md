@@ -13,18 +13,18 @@ public class Asset {
     private String contentType;
 }
 
-void process(byte[] data, String contentType) { ... }
+void process(byte[] data, String contentType) { /* ... */ }
 ```
 
 ```java
 // Preferred — the relationship is encoded in a type
-public record ContentData(byte[] bytes, String contentType) { ... }
+public record ContentData(byte[] bytes, String contentType) { /* ... */ }
 
 public class Asset {
     private ContentData content;
 }
 
-void process(ContentData content) { ... }
+void process(ContentData content) { /* ... */ }
 ```
 
 ## "First name plus last name" → a name type

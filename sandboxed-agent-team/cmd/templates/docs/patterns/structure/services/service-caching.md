@@ -7,11 +7,11 @@ the data it guards.
 ```java
 @Cacheable("departments")
 @Transactional(readOnly = true)
-public List<DepartmentListItem> listAllDepartments() { ... }
+public List<DepartmentListItem> listAllDepartments() { /* ... */ }
 
 @CacheEvict(value = "departments", allEntries = true)
 @Transactional
-public void createDepartment(DepartmentDetail detail) { ... }
+public void createDepartment(DepartmentDetail detail) { /* ... */ }
 ```
 
 Enable caching with `@EnableCaching` on a configuration class. This approach is simpler

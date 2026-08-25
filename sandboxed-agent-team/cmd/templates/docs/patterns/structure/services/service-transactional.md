@@ -10,23 +10,23 @@ public class JpaEmployeeService implements EmployeeService {
 
     @Override
     @Transactional(readOnly = true)
-    public EmployeeDetail findByKey(long key) { ... }
+    public EmployeeDetail findByKey(long key) { /* ... */ }
 
     @Override
     @Transactional(readOnly = true)
-    public List<EmployeeListItem> listAll() { ... }
+    public List<EmployeeListItem> listAll() { /* ... */ }
 
     @Override
     @Transactional
-    public EmployeeDetail create(EmployeeDetail detail) { ... }
+    public EmployeeDetail create(EmployeeDetail detail) { /* ... */ }
 
     @Override
     @Transactional
-    public EmployeeDetail update(EmployeeDetail detail) { ... }
+    public EmployeeDetail update(EmployeeDetail detail) { /* ... */ }
 
     @Override
     @Transactional
-    public void deactivate(long key) { ... }
+    public void deactivate(long key) { /* ... */ }
 }
 ```
 

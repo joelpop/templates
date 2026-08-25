@@ -7,13 +7,13 @@ the file to understand why a warning was silenced.
 ```java
 // Avoid — no context
 @SuppressWarnings("java:S2160")
-public class EmployeeEntity extends BaseEntity<Long> { ... }
+public class EmployeeEntity extends BaseEntity<Long> { /* ... */ }
 ```
 
 ```java
 // Preferred
 @SuppressWarnings("java:S2160") // key-based equality is inherited from RootEntity
-public class EmployeeEntity extends BaseEntity<Long> { ... }
+public class EmployeeEntity extends BaseEntity<Long> { /* ... */ }
 
 @SuppressWarnings("unchecked") // raw type comes from legacy third-party API
 var bean = (Map<String, Object>) legacyApi.getProperties();

@@ -1,6 +1,8 @@
 # Variable Naming
 
-Use the full semantic name — do not shorten or collapse a type into a generic alias:
+When naming a variable, field, or parameter, use the full semantic name — do not
+shorten or collapse a type into a generic alias — so the role is unambiguous at
+the declaration site without reading surrounding context:
 
 ```java
 // Avoid — "preference" could be the dialog, binder, service, model, or component
@@ -18,14 +20,16 @@ When multiple artifacts exist for the same domain concept (dialog, binder, compo
 service, utility), a shortened name forces the reader to guess the role. The full name
 makes the role unambiguous at the declaration site.
 
-**UI component fields** follow the same rule — suffix with the component type
-so the field's role is unambiguous alongside other fields of the same domain:
+**UI component fields** follow the same rule — suffix with the component's role, which
+is usually the component type but may be a more descriptive semantic name when the type
+alone is too generic:
 
 ```java
-private final Span   totalValueSpan;
-private final Button saveButton;
+private final Span                   totalValueSpan;
+private final Button                 saveButton;
 private final TextField              displayIdField;
 private final Grid<ItemListItem>     itemGrid;
+private final Div                    buttonBar;    // role is clearer than buttonDiv
 ```
 
 **Signal fields** follow the same rule — suffix with the signal type so the

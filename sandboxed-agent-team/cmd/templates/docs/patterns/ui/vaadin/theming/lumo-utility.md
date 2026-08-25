@@ -1,6 +1,6 @@
 # LumoUtility for Spacing, Color, and Layout
 
-When applying padding, margin, color, flexbox, or sizing, use `LumoUtility` class constants rather than custom CSS so styling stays theme-aware and correct across light and dark modes.
+When using the Lumo theme and neither theme variants nor `addThemeNames()` covers the need, use `LumoUtility` class constants (step 3 of the styling progression) rather than custom CSS so styling stays theme-aware without leaving the framework.
 
 ```java
 // Avoid — custom CSS for things Lumo provides
@@ -30,3 +30,7 @@ to include padding within the declared width:
 ```java
 element.addClassNames(LumoUtility.BoxSizing.BORDER);
 ```
+
+**Related:** `theming/component-variants.md` — full styling progression;
+`theming/theme-selection.md` — Lumo vs Aura trade-offs;
+`theming/tailwind.md` — utility classes for Aura.

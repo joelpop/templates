@@ -1,8 +1,8 @@
 # Vaadin Layout Diagram Convention
 
-Every Vaadin view and custom component class should have a text-based layout
-diagram in its class Javadoc so the intended component structure is visible
-without running the application.
+When writing a Vaadin view or custom component class, include a text-based
+layout diagram in its class Javadoc so the intended component structure is
+visible without running the application.
 
 ## Placement
 
@@ -40,14 +40,14 @@ Each box is labeled `+-varName(ClassName)--+`:
 
 ## Component Content
 
-| Component | Content shown |
-|---|---|
-| `Button` (text) | Label text, centered |
-| `Button` (icon only) | `[X]`, centered |
-| `TextField` | Empty interior (or placeholder if set); label text on the row above the box |
-| `Checkbox` | `[ ] Label text`, left-aligned |
-| `ComboBox` | value with `\| V` dropdown cell on right |
-| `Span` / `Div` | Sample/representative text, left-aligned |
+| Component            | Content shown                                                               |
+|----------------------|-----------------------------------------------------------------------------|
+| `Button` (text)      | Label text, centered                                                        |
+| `Button` (icon only) | `[X]`, centered                                                             |
+| `TextField`          | Empty interior (or placeholder if set); label text on the row above the box |
+| `Checkbox`           | `[ ] Label text`, left-aligned                                              |
+| `ComboBox`           | value with `\| V` dropdown cell on right                                    |
+| `Span` / `Div`       | Sample/representative text, left-aligned                                    |
 
 Individual component examples:
 

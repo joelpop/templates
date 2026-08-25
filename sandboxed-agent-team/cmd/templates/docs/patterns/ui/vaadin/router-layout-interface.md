@@ -4,10 +4,10 @@ When creating the `MainLayout` class, do not add `implements RouterLayout` — `
 
 ```java
 // Avoid — redundant and potentially harmful in Vaadin ≥25
-public class MainLayout extends AppLayout implements RouterLayout { ... }
+public class MainLayout extends AppLayout implements RouterLayout { /* ... */ }
 ```
 
 ```java
 // Preferred
-public class MainLayout extends AppLayout { ... }
+public class MainLayout extends AppLayout { /* ... */ }
 ```

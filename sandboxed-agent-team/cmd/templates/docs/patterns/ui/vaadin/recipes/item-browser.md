@@ -1,22 +1,23 @@
 # Recipe: Item Browser — List + Detail Component Family
 
-When implementing a "list of items with optional CRUD" view, follow this recipe
-to produce the `ItemBrowser` / `EditableItemBrowser` / `ItemEditor` component
-family — a list half (grid, toolbar, filters) plus a swappable detail half (split
-pane, dialog, or separate view) that share the same wiring code regardless of
+When implementing a "list of items with optional CRUD" view (often used for admin
+views), follow this recipe to produce the `ItemBrowser` / `EditableItemBrowser` /
+`ItemEditor` component family — a list half (grid, toolbar, filters) plus a swappable
+detail half (split pane, dialog, or separate view) that share the same wiring code
+regardless of
 layout.
 
 ## What this produces
 
-| Class / Interface | Role |
-|---|---|
-| `ItemBrowser<T>` | List half: grid + toolbar (quick filter, filter popover, new-entity button) + row styling. Used standalone for read-only lists or as the inner list of any `EditableItemBrowser` implementation. |
-| `EditableItemBrowser<T>` | Interface: contract for CRUD-capable wrappers around `ItemBrowser`. |
-| `ItemEditor<T>` | Interface: contract for the detail-form component shown inside an `EditableItemBrowser`. |
-| `MasterDetailItemBrowser<T>` | Concrete `EditableItemBrowser`: split-pane layout (Vaadin `MasterDetailLayout`), responsive overlay below master min-width. The built implementation. |
-| `DialogItemBrowser<T>` | Concrete `EditableItemBrowser` (project-built as needed): editor in a modal `Dialog`; list stays visible behind the dimmer. |
-| `ViewItemBrowser<T>` | Concrete `EditableItemBrowser` (project-built as needed): editor is a separate routed view; `ItemEditor` implementation drives navigation. |
-| `FilterOption<V>` | Interface: closed-set filter options (enums) each carrying a match predicate. |
+| Class / Interface            | Role                                                                                                                                                                                             |
+|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ItemBrowser<T>`             | List half: grid + toolbar (quick filter, filter popover, new-entity button) + row styling. Used standalone for read-only lists or as the inner list of any `EditableItemBrowser` implementation. |
+| `EditableItemBrowser<T>`     | Interface: contract for CRUD-capable wrappers around `ItemBrowser`.                                                                                                                              |
+| `ItemEditor<T>`              | Interface: contract for the detail-form component shown inside an `EditableItemBrowser`.                                                                                                         |
+| `MasterDetailItemBrowser<T>` | Concrete `EditableItemBrowser`: split-pane layout (Vaadin `MasterDetailLayout`), responsive overlay below master min-width. The built implementation.                                            |
+| `DialogItemBrowser<T>`       | Concrete `EditableItemBrowser` (project-built as needed): editor in a modal `Dialog`; list stays visible behind the dimmer.                                                                      |
+| `ViewItemBrowser<T>`         | Concrete `EditableItemBrowser` (project-built as needed): editor is a separate routed view; `ItemEditor` implementation drives navigation.                                                       |
+| `FilterOption<V>`            | Interface: closed-set filter options (enums) each carrying a match predicate.                                                                                                                    |
 
 ## Dependencies
 
@@ -26,10 +27,8 @@ layout.
   imperative `setVisible` calls at each state-mutation site.
 - `MasterDetailLayout` — a Vaadin preview feature at time of writing;
   enable it in `vaadin-featureflags.properties`.
-- `HasCaption` — for filter-option enum display (see
-  `docs/patterns/conventions/vaadin/uimodel.md` — "Enum Display — `HasCaption`").
-- `AppIcon` — for toolbar and action icons (see
-  [app-icon.md](app-icon.md)).
+- `HasCaption` — for filter-option enum display (see `ui/vaadin/uimodel/has-caption.md`).
+- `AppIcon` — for toolbar and action icons (see `ui/vaadin/app-icon.md`).
 
 ## Component family overview
 
@@ -69,7 +68,7 @@ each configuration site.
 ### Quick filter
 
 ```java
-public final void setQuickFilter(SerializableFunction<T, String>... fieldExtractors) { ... }
+public final void setQuickFilter(SerializableFunction<T, String>... fieldExtractors) { /* ... */ }
 ```
 
 Case-insensitive substring match across all extractors. Visibility binds
@@ -89,7 +88,7 @@ transition, not a full recount.
 ```java
 public <V, C extends Component & HasValue<?, V>> CustomFilter<V> addCustomFilter(
         String key, String label, C input, V defaultValue,
-        SerializableBiPredicate<V, T> matches) { ... }
+        SerializableBiPredicate<V, T> matches) { /* ... */ }
 ```
 
 - `key` — stable identifier for save/restore.
@@ -246,7 +245,7 @@ public boolean trySave() {
         return true;           // host proceeds: close (CREATE) or flip to VIEW (EDIT)
     } catch (ValidationException e) {
         e.getErrors().forEach(msg ->
-                Notification.show(msg).addThemeVariants(NotificationVariant.LUMO_ERROR));
+                Notification.show(msg).addThemeVariants(NotificationVariant.ERROR));  // v25.1+; use LUMO_ERROR on v24/v25.0
         return false;
     }
 }
@@ -432,15 +431,14 @@ is meaningless in this layout, the interface contract relaxes: the
 
 ## Related
 
-- [base-view.md](base-view.md) — `BaseView` chrome that hosts
+- `ui/vaadin/recipes/base-view.md` — `BaseView` chrome that hosts
   `ItemBrowser` via `setContent(browser)`.
-- [app-icon.md](app-icon.md) — `AppIcon` used for toolbar and action
+- `ui/vaadin/app-icon.md` — `AppIcon` used for toolbar and action
   icons (`FILTER`, `SEARCH`, `OVERFLOW_MENU`, `EDIT`, `REMOVE`).
-- `docs/patterns/conventions/vaadin/uimodel.md` — `HasCaption` for filter-option
+- `ui/vaadin/uimodel/has-caption.md` — `HasCaption` for filter-option
   enum display; `ComboBox` / `Select` item-label-generator convention;
   UI model capability interfaces (`HasActive`, `HasRole`, …)
   that `muteRowsWhen` and `FilterOption.matches()` bind against.
-- `docs/patterns/architecture/services.md` — service error contracts
+- `structure/services/service-errors.md` — service error contracts
   (`ValidationException`, `EntityNotFoundException`); `trySave()`
-  catch pattern follows `docs/patterns/ui/components.md` — "Service
-  Error Handling."
+  catch pattern follows `ui/vaadin/service-error-handling.md`.

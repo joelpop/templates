@@ -6,12 +6,15 @@ When a MapStruct mapper needs `Instant` → `LocalDateTime` conversion, declare 
 @Mapper(
         componentModel = MappingConstants.ComponentModel.SPRING,
         injectionStrategy = InjectionStrategy.CONSTRUCTOR,
-        uses = {AuditMapper.class, ClientDetailsService.class})
+        uses = {ClientDetailsService.class})
 public interface EquipmentMapper {
     EquipmentDetail toDetail(EquipmentDetailProjection projection);
 }
 ```
 
 MapStruct injects `ClientDetailsService` as a constructor dependency and routes
-`Instant` → `LocalDateTime` field conversions through `toBrowserTime` automatically — no
-explicit `@Mapping` is needed for those fields.
+`Instant` → `LocalDateTime` field conversions through its `toBrowserTime` method
+automatically — no explicit `@Mapping` is needed for those fields.
+
+**Related:** `client-details-service.md` — the `ClientDetailsService` interface definition;
+`client-details-impl.md` — the Vaadin implementation.

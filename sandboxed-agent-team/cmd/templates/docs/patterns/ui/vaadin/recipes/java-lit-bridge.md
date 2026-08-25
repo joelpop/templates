@@ -27,12 +27,6 @@ component and cannot be called server-side:
 - Async browser-initiated flows where the result must return to server
   state.
 
-**Don't use for** browser *details* (timezone, locale, screen size)
-that only need to cross the module-boundary once — the
-`ClientDetailsService` pattern in
-`docs/patterns/conventions/vaadin/datetime.md` covers that case with less
-overhead.
-
 ## Dependencies
 
 - Vaadin 24+ (`Component`, `ComponentEvent`, `DomEvent`, `EventData`,
@@ -41,11 +35,95 @@ overhead.
   compiles `.ts` files under
   `src/main/resources/META-INF/resources/frontend/`).
 
-## Step 1 — Define the Java wrapper
+## Step 1 — Write the Lit component
+
+Place the TypeScript file at
+`src/main/resources/META-INF/resources/frontend/{app}-geolocation-button.ts`:
+
+```typescript
+import { html, LitElement } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+
+@customElement('{app}-geolocation-button')     // must match @Tag on the Java class
+export class AppGeolocationButton extends LitElement {
+
+    @property({ type: String }) label = 'Share location';
+
+    // Render in light DOM so the host page's Lumo theme styles the
+    // inner <vaadin-button>. Shadow DOM would isolate the component
+    // from Lumo variables, breaking theme consistency.
+    createRenderRoot() {
+        return this;
+    }
+
+    render() {
+        return html`
+            <vaadin-button @click="${this._onClick}">
+                ${this.label}
+            </vaadin-button>
+        `;
+    }
+
+    private _onClick() {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                this.dispatchEvent(new CustomEvent('{app}-geolocation-success', {
+                    detail: {
+                        latitude:  position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    },
+                    bubbles: true,    // let the event propagate up the DOM
+                    composed: true,   // cross shadow DOM boundaries (defensive; required if
+                                      // any ancestor uses shadow DOM)
+                }));
+            },
+            (error) => {
+                this.dispatchEvent(new CustomEvent('{app}-geolocation-error', {
+                    detail: { message: error.message },
+                    bubbles: true,
+                    composed: true,
+                }));
+            }
+        );
+    }
+}
+
+// TypeScript global type registration — enables IDE autocompletion
+// for the custom element name. Not required by Flow.
+declare global {
+    interface HTMLElementTagNameMap {
+        '{app}-geolocation-button': AppGeolocationButton;
+    }
+}
+```
+
+### Light DOM vs. shadow DOM
+
+`createRenderRoot() { return this; }` opts into **light DOM** rendering.
+The rendered content (the `<vaadin-button>`) becomes a direct child of
+the custom element, visible to the host page's CSS and Lumo variables.
+
+Omitting `createRenderRoot` uses Lit's default **shadow DOM** rendering:
+the content is isolated in a shadow root and Lumo theme variables do not
+apply. Use shadow DOM only for components that are fully self-contained
+and have no Vaadin element children.
+
+### Event dispatch requirements
+
+Always set `bubbles: true` and `composed: true` when dispatching events:
+
+- `bubbles: true` — the event propagates up the DOM tree so Flow's
+  listener (registered on the element) can receive it regardless of
+  where in the template it originates.
+- `composed: true` — the event crosses shadow DOM boundaries. Defensive
+  even with light DOM rendering; required if any ancestor component
+  uses shadow DOM.
+
+## Step 2 — Define the Java wrapper
 
 The Java class extends `Component` directly — not `Composite` — because
-it wraps a custom HTML element, not a Vaadin layout. The constructor is
-private; static factory methods enforce the valid configurations:
+it wraps a custom HTML element. The constructor is private; static
+factory methods enforce the valid configurations:
 
 ```java
 package {base_package}.ui.component;
@@ -125,97 +203,13 @@ public class GeolocationButton extends Component {
 
 ### Coordination points
 
-| Java | TypeScript | Rule |
-|---|---|---|
-| `@Tag("x-foo")` | `@customElement('x-foo')` | Must match exactly — Flow uses the tag name to connect the two |
-| `@JsModule("./x-foo.ts")` | file path | Relative to `src/main/resources/META-INF/resources/frontend/` |
-| `getElement().setAttribute("label", value)` | `@property({type: String}) label` | Attribute names are kebab-case in HTML; camelCase in TS `@property` with `attribute: 'kebab-name'` when they differ |
-| `@DomEvent("x-success")` | `new CustomEvent('x-success', ...)` | Must match exactly |
-| `@EventData("event.detail.foo")` | `detail: { foo: value }` | The expression is evaluated in the browser against the DOM `Event` object |
-
-## Step 2 — Write the Lit component
-
-Place the TypeScript file at
-`src/main/resources/META-INF/resources/frontend/{app}-geolocation-button.ts`:
-
-```typescript
-import { html, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-
-@customElement('{app}-geolocation-button')     // must match @Tag on the Java class
-export class AppGeolocationButton extends LitElement {
-
-    @property({ type: String }) label = 'Share location';
-
-    // Render in light DOM so the host page's Lumo theme styles the
-    // inner <vaadin-button>. Shadow DOM would isolate the component
-    // from Lumo variables, breaking theme consistency.
-    createRenderRoot() {
-        return this;
-    }
-
-    render() {
-        return html`
-            <vaadin-button @click="${this._onClick}">
-                ${this.label}
-            </vaadin-button>
-        `;
-    }
-
-    private _onClick() {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                this.dispatchEvent(new CustomEvent('{app}-geolocation-success', {
-                    detail: {
-                        latitude:  position.coords.latitude,
-                        longitude: position.coords.longitude,
-                    },
-                    bubbles: true,    // let the event propagate up the DOM
-                    composed: true,   // cross shadow DOM boundaries (defensive; required if
-                                      // any ancestor uses shadow DOM)
-                }));
-            },
-            (error) => {
-                this.dispatchEvent(new CustomEvent('{app}-geolocation-error', {
-                    detail: { message: error.message },
-                    bubbles: true,
-                    composed: true,
-                }));
-            }
-        );
-    }
-}
-
-// TypeScript global type registration — enables IDE autocompletion
-// for the custom element name. Not required by Flow.
-declare global {
-    interface HTMLElementTagNameMap {
-        '{app}-geolocation-button': AppGeolocationButton;
-    }
-}
-```
-
-### Light DOM vs shadow DOM
-
-`createRenderRoot() { return this; }` opts into **light DOM** rendering.
-The rendered content (the `<vaadin-button>`) becomes a direct child of
-the custom element, visible to the host page's CSS and Lumo variables.
-
-Omitting `createRenderRoot` uses Lit's default **shadow DOM** rendering:
-the content is isolated in a shadow root and Lumo theme variables do not
-apply. Use shadow DOM only for components that are fully self-contained
-and have no Vaadin element children.
-
-### Event dispatch requirements
-
-Always set `bubbles: true` and `composed: true` when dispatching events:
-
-- `bubbles: true` — the event propagates up the DOM tree so Flow's
-  listener (registered on the element) can receive it regardless of
-  where in the template it originates.
-- `composed: true` — the event crosses shadow DOM boundaries. Defensive
-  even with light DOM rendering; required if any ancestor component
-  uses shadow DOM.
+| TypeScript                              | Java                                         | Rule                                                                                                                       |
+|-----------------------------------------|----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `@customElement('x-foo')`               | `@Tag("x-foo")`                              | Must match exactly — Flow uses the tag name to connect the two                                                             |
+| file path                               | `@JsModule("./x-foo.ts")`                    | Relative to `src/main/resources/META-INF/resources/frontend/`                                                              |
+| `@property({type: String}) label`       | `getElement().setAttribute("label", value)`  | Attribute names are kebab-case in HTML; camelCase in TS `@property` with `attribute: 'kebab-name'` when they differ        |
+| `new CustomEvent('x-success', ...)`     | `@DomEvent("x-success")`                     | Must match exactly                                                                                                         |
+| `detail: { foo: value }`                | `@EventData("event.detail.foo")`             | The expression is evaluated in the browser against the DOM `Event` object                                                  |
 
 ## Step 3 — Use in a view
 
@@ -224,12 +218,12 @@ var locationButton = GeolocationButton.create("Share my location");
 
 locationButton.addSuccessListener(event -> {
     locationService.save(event.getLatitude(), event.getLongitude());
-    Notification.show("Location saved.").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    Notification.show("Location saved.").addThemeVariants(NotificationVariant.SUCCESS);  // v25.1+; use LUMO_SUCCESS on v24/v25.0
 });
 
 locationButton.addErrorListener(event -> {
     Notification.show("Could not get location: " + event.getMessage())
-            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            .addThemeVariants(NotificationVariant.ERROR);  // v25.1+; use LUMO_ERROR on v24/v25.0
 });
 
 add(locationButton);
@@ -241,13 +235,13 @@ error handling, event formatting — lives in the TypeScript file.
 ## Passing complex data
 
 HTML attributes are strings. For richer configuration, use
-`getElement().setPropertyList(...)` (Flow serialises a `List` or `Map`
+`getElement().setPropertyList(...)` (Flow serializes a `List` or `Map`
 to a JSON array / object) or encode as a JSON string attribute and parse
 in the Lit component.
 
 For data flowing the other direction (from Lit to Java), `@EventData`
 expressions are evaluated client-side against the `Event` object — any
-serialisable value in `event.detail` is extractable. Stick to
+serializable value in `event.detail` is extractable. Stick to
 primitives and plain JSON objects; `@EventData` cannot extract class
 instances.
 
@@ -287,13 +281,12 @@ instances.
 
 ## Related
 
-- `docs/patterns/conventions/vaadin/datetime.md` — "Browser Client Details —
-  Bridging the SoC Wall": the related pattern for passing browser
-  *details* (timezone, locale) across the module boundary without a
-  full Lit component.
-- [passkey.md](passkey.md) — the WebAuthn `PasskeyButton` is a
-  concrete instance of this pattern with additional Spring Security
-  7 CSRF coordination and backend coupling specifics.
-- [app-icon.md](app-icon.md) — `@JsModule` is also used by
+- `ui/vaadin/client-details-service.md` — the related pattern for
+  passing browser *details* (timezone, locale) across the module
+  boundary without a full Lit component.
+- `security/passkey/recipes/passkey.md` — the WebAuthn `PasskeyButton`
+  is a concrete instance of this pattern with additional Spring Security
+  CSRF coordination and backend coupling specifics.
+- `ui/vaadin/app-icon.md` — `@JsModule` is also used by
   `UntitledUiIcon` to register a custom Vaadin iconset; a simpler
   use of the same annotation without the `@Tag` / event machinery.

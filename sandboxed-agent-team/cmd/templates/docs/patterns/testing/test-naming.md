@@ -4,14 +4,14 @@ When naming a test method, use the `subject_verb_condition` pattern so a reader 
 
 ```java
 // Avoid — name describes the test mechanics
-@Test void testCase1() { ... }
-@Test void emailServiceMockTest() { ... }
+@Test void testCase1() { /* ... */ }
+@Test void emailServiceMockTest() { /* ... */ }
 ```
 
 ```java
 // Preferred — name describes the behavior
-@Test void requestReset_sendsEmail_whenEmailIsRegistered() { ... }
-@Test void consumeResetToken_failsAfter30Minutes() { ... }
+@Test void requestReset_sendsEmail_whenEmailIsRegistered() { /* ... */ }
+@Test void consumeResetToken_failsAfter30Minutes() { /* ... */ }
 ```
 
 The `subject_verb_condition` pattern reads as a sentence and matches acceptance criterion phrasing. When the requirement evolves, the test name evolves with it.

@@ -20,7 +20,7 @@ timeout would expire sessions across all tests:
 ```java
 @SpringBootTest
 @TestPropertySource(properties = "server.servlet.session.timeout=10s")
-class SessionExpiryTest { ... }
+class SessionExpiryTest { /* ... */ }
 ```
 
 When a session expires during an active Vaadin session, Vaadin's built-in

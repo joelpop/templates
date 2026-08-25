@@ -1,6 +1,6 @@
 # ClientDetailsService UI-Module Implementation
 
-When implementing `ClientDetailsService`, place `VaadinClientDetailsService` in the UI module — it only needs to implement `getBrowserTimezone()` since the conversion defaults are inherited.
+When implementing `ClientDetailsService`, place `VaadinClientDetailsService` in the UI module — it has access to Vaadin APIs (`UI`, `Page`, `ComponentUtil`) that only the UI module may depend on.
 
 ## Vaadin ≥25
 
@@ -13,12 +13,29 @@ public class VaadinClientDetailsService implements ClientDetailsService {
 
     @Override
     public ZoneId getBrowserTimezone() {
-        var ui = UI.getCurrent();
-        if (ui == null) {
+        var details = getDetails();
+        if (details == null) {
             return ZoneId.systemDefault();
         }
-        var tzId = ui.getPage().getExtendedClientDetails().getTimeZoneId();
+        var tzId = details.getTimeZoneId();
         return tzId == null ? ZoneId.systemDefault() : ZoneId.of(tzId);
+    }
+
+    @Override
+    public boolean isTouchDevice() {
+        var details = getDetails();
+        return details != null && details.isTouchDevice();
+    }
+
+    @Override
+    public int getWindowInnerWidth() {
+        var details = getDetails();
+        return details != null ? details.getWindowInnerWidth() : 0;
+    }
+
+    private ExtendedClientDetails getDetails() {
+        var ui = UI.getCurrent();
+        return ui == null ? null : ui.getPage().getExtendedClientDetails();
     }
 }
 ```
@@ -26,18 +43,25 @@ public class VaadinClientDetailsService implements ClientDetailsService {
 ## Vaadin 24.x
 
 The API is asynchronous: `Page.retrieveExtendedClientDetails(callback)` fires
-once the browser responds. Pre-cache the result in `VaadinSession` attributes
-early in the session so subsequent calls — including those from Push threads —
-can read it without a UI context.
+once the browser responds. Cache the result per-UI using `ComponentUtil` so
+each browser tab has its own details and subsequent calls can read them without
+a round-trip.
 
-**Trigger retrieval in the main layout:**
+Trigger retrieval via a `VaadinServiceInitListener` so it fires for every new
+UI regardless of which layout or view the user lands on first:
 
 ```java
-@Override
-protected void onAttach(AttachEvent event) {
-    super.onAttach(event);
-    event.getUI().getPage().retrieveExtendedClientDetails(details ->
-            VaadinSession.getCurrent().setAttribute(ExtendedClientDetails.class, details));
+@SpringComponent
+public class ExtendedClientDetailsInitializer implements VaadinServiceInitListener {
+
+    @Override
+    public void serviceInit(ServiceInitEvent event) {
+        event.getSource().addUIInitListener(uiEvent -> {
+            var ui = uiEvent.getUI();
+            ui.getPage().retrieveExtendedClientDetails(details ->
+                    ComponentUtil.setData(ui, ExtendedClientDetails.class, details));
+        });
+    }
 }
 ```
 
@@ -49,22 +73,35 @@ public class VaadinClientDetailsService implements ClientDetailsService {
 
     @Override
     public ZoneId getBrowserTimezone() {
-        var session = VaadinSession.getCurrent();
-        if (session != null) {
-            var details = session.getAttribute(ExtendedClientDetails.class);
-            if (details != null && details.getTimeZoneId() != null) {
-                return ZoneId.of(details.getTimeZoneId());
-            }
+        var details = getDetails();
+        if (details != null && details.getTimeZoneId() != null) {
+            return ZoneId.of(details.getTimeZoneId());
         }
         return ZoneId.systemDefault();
+    }
+
+    @Override
+    public boolean isTouchDevice() {
+        var details = getDetails();
+        return details != null && details.isTouchDevice();
+    }
+
+    @Override
+    public int getWindowInnerWidth() {
+        var details = getDetails();
+        return details != null ? details.getWindowInnerWidth() : 0;
+    }
+
+    private ExtendedClientDetails getDetails() {
+        var ui = UI.getCurrent();
+        return ui == null ? null : ComponentUtil.getData(ui, ExtendedClientDetails.class);
     }
 }
 ```
 
-Use `VaadinSession` attributes, not `@SessionScope` beans — `@SessionScope` is
-backed by `HttpSession` and is inaccessible from Push threads. `VaadinSession`
-works on both HTTP request and Push threads.
-
 When `UI.getCurrent()` returns `null` — Push threads, background tasks, unit
 tests — the implementation falls back to `ZoneId.systemDefault()`. Tests that
 exercise timezone-dependent logic should mock `ClientDetailsService` directly.
+
+**Related:** `client-details-service.md` — the interface this implements;
+`client-details-mapstruct.md` — wiring `ClientDetailsService` into MapStruct mappers.

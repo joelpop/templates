@@ -43,9 +43,8 @@ public class InvalidRequestView extends BaseErrorView
                                  ErrorParameter<IllegalArgumentException> parameter) {
         String safeMessage;
         if (parameter.hasCustomMessage()) {
-            var custom = parameter.getCustomMessage();
-            safeMessage = custom;
-            details.setText(custom);
+            safeMessage = parameter.getCustomMessage();
+            details.setText(safeMessage);
             details.setVisible(true);
         } else {
             safeMessage = FALLBACK_MESSAGE;

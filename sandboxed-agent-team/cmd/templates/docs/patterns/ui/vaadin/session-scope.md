@@ -1,9 +1,10 @@
 # Vaadin Session Scope
 
-When a Spring bean holds per-session state that Push callbacks must access, use
+When a Spring bean holds per-session state, use
 `@Scope(VaadinSessionScope.VAADIN_SESSION_SCOPE_NAME)` with
-`proxyMode = ScopedProxyMode.INTERFACES` so the bean is resolvable from both
-HTTP request threads and Push threads.
+`proxyMode = ScopedProxyMode.INTERFACES` so the bean lifecycle is tied to
+`VaadinSession` rather than `HttpSession` and is correct whether push is
+enabled or not.
 
 ```java
 @SpringComponent

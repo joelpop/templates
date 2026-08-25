@@ -1,8 +1,14 @@
 # Active Route Highlighting
 
-Vaadin's `SideNavItem` automatically highlights the current route — no manual highlighting code is needed when using the class-reference constructor form.
+When adding navigation items, use the class-reference `SideNavItem` constructor
+so active-route highlighting works automatically without manual highlighting code.
 
 ```java
-// Automatic highlighting — use class reference, not string path
+// Avoid — string path, no automatic highlighting
+new SideNavItem("Items", "items", "vaadin:list")
+```
+
+```java
+// Preferred — class reference, automatic highlighting
 new SideNavItem("Items", ItemView.class, "vaadin:list")
 ```

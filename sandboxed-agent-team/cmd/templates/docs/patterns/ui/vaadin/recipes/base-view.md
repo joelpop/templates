@@ -124,17 +124,28 @@ toolbar actions.
 @ViewIcon(AppIcon.USER_MANAGEMENT)
 public class UserManagementView extends BaseView {
 
+    private final Grid<User> grid;
+    private final TextField quickFilter;
+
     public UserManagementView(UserService userService) {
         super("Users");
-        setHeader(new UserToolbar(userService));
-        setContent(new UserGrid(userService));
+
+        grid = new Grid<>(User.class);
+        grid.setItems(query -> userService.list(query, quickFilter.getValue()));
+
+        quickFilter = new TextField();
+        quickFilter.setPlaceholder("Search…");
+        quickFilter.addValueChangeListener(e -> grid.getDataProvider().refreshAll());
+
+        setHeader(quickFilter);
+        setContent(grid);
     }
 }
 ```
 
-The icon appears next to "Users" in the subheader automatically. The
-view's visual identity in the drawer nav and in the page header is the
-same icon from the same source — no separate declaration.
+The header and content are wired together inside the view. The icon
+appears next to "Users" in the subheader automatically — the same icon
+used by the drawer nav entry.
 
 ## Decisions this recipe imposes
 
@@ -175,12 +186,11 @@ same icon from the same source — no separate declaration.
 
 ## Related
 
-- [view-icon.md](view-icon.md) — `@ViewIcon` annotation read by
+- `ui/vaadin/recipes/view-icon.md` — `@ViewIcon` annotation read by
   `BaseView` to render the in-header icon.
-- [app-icon.md](app-icon.md) — `AppIcon` enum; the value type carried
+- `ui/vaadin/app-icon.md` — `AppIcon` enum; the value type carried
   by `@ViewIcon`.
-- `docs/patterns/conventions/abstraction.md` — the shared-base-class
-  sizing guidance that explains when `BaseView` is the right abstraction
-  and when it is not.
-- `docs/patterns/ui/navigation.md` — `MainLayout`, `@Menu`, and the
+- `language/java/abstraction/base-class.md` — when a shared base class
+  is the right abstraction and when it is not.
+- `ui/vaadin/navigation/app-layout.md` — `MainLayout`, `@Menu`, and the
   drawer navigation that shares the same icon via `@ViewIcon`.

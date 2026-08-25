@@ -1,15 +1,16 @@
 # Type Inference
 
-Use `var` for local variable type inference whenever the type is obvious from the right-hand side:
+When declaring a local variable, use `var` so the type declaration is not
+repeated when it is already expressed on the right-hand side:
 
 ```java
 // Avoid — type is redundant
-FormLayout form = new FormLayout();
-List<ItemListItem> items = itemService.listAll();
+FormLayout userFormLayout = new FormLayout();
+List<ItemListItem> itemListItems = itemService.listAll();
 ```
 
 ```java
 // Preferred
-var form = new FormLayout();
-var items = itemService.listAll();
+var userFormLayout = new FormLayout();
+var itemListItems = itemService.listAll();
 ```

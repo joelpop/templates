@@ -3,10 +3,13 @@
 When laying out form fields, use `FormLayout` so column count adapts to available width automatically.
 
 ```java
-var form = new FormLayout();
-form.add(nameField, codeField, descriptionField, activeCheckbox);
-form.setResponsiveSteps(
-    new FormLayout.ResponsiveStep("0", 1),     // 1 column on small
-    new FormLayout.ResponsiveStep("600px", 2)  // 2 columns on wider
+var formLayout = new FormLayout();
+formLayout.add(nameField);
+formLayout.add(codeField);
+formLayout.add(descriptionField);
+formLayout.add(activeCheckbox);
+formLayout.setResponsiveSteps(
+    new FormLayout.ResponsiveStep(Breakpoints.XS.minWidth, 1),
+    new FormLayout.ResponsiveStep(Breakpoints.SM.minWidth, 2)
 );
 ```

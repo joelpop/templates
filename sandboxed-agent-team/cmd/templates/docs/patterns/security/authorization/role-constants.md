@@ -56,7 +56,7 @@ public enum UserRole {
 ```java
 @Route("admin/user")
 @RolesAllowed({UserRole.ROLE_ADMIN, UserRole.ROLE_MANAGER})
-public class UserView extends BaseView { ... }
+public class UserView extends BaseView { /* ... */ }
 ```
 
 Not `@RolesAllowed({"ADMIN", "MANAGER"})`. String literals scatter role names

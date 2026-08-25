@@ -22,5 +22,5 @@ satisfying `EmployeeListItemProjection` by inheritance:
 
 ```java
 public class EmployeeEntity extends AuditedEntity<Long>
-        implements EmployeeDetailProjection { ... }
+        implements EmployeeDetailProjection { /* ... */ }
 ```

@@ -18,16 +18,20 @@ public class OrderEntity extends BaseEntity<Long> {
 for all timestamps shown to users. Conversion from `Instant` happens in the
 service/mapper layer using the user's configured timezone.
 
-**MapStruct conversion:** An abstract `InstantMapper` class handles the conversion,
-injected with a service that provides the current user's timezone. Include
-`InstantMapper.class` in each mapper's `uses` clause:
+**MapStruct conversion:** Include `ClientDetailsService.class` in each mapper's
+`uses` clause. MapStruct injects it as a constructor dependency and routes
+`Instant` → `LocalDateTime` conversions through `toBrowserTime` and
+`LocalDateTime` → `Instant` conversions through `toServerTime` automatically —
+no explicit `@Mapping` is needed for those fields:
 
 ```java
-@Mapper(componentModel = SPRING, uses = {InstantMapper.class})
-public abstract class OrderMapper {
-    abstract OrderDetail toDetail(OrderDetailProjection projection);
+@Mapper(componentModel = SPRING, uses = {ClientDetailsService.class})
+public interface OrderMapper {
+    OrderDetail toDetail(OrderDetailProjection projection);  // Instant → LocalDateTime
+    OrderEntity toEntity(OrderDetail detail);               // LocalDateTime → Instant
 }
 ```
 
-See `docs/patterns/ui/vaadin/client-details-service.md` for the full
-`ClientDetailsService` pattern.
+**Related:** `docs/patterns/ui/vaadin/client-details-service.md` — the
+`ClientDetailsService` interface; `docs/patterns/ui/vaadin/client-details-mapstruct.md`
+— MapStruct wiring detail.
